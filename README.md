@@ -12,4 +12,4 @@ $ rice embed-syso
 build the package
 =================
 
-
+$ go build
