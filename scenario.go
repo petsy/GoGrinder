@@ -2,9 +2,6 @@ package gogrinder
 
 import(
     "time"
-    "reflect"
-    "runtime"
-    "sync"
     "net/http"
     "github.com/GeertJohan/go.rice"
 )
@@ -15,22 +12,31 @@ func paceMaker(pace time.Duration) {
     time.Sleep(pace)
 }
 
-// assemble the test runner
-func TestFactory(testcase func(map[string]interface{}), meta map[string]interface{},
-        wg *sync.WaitGroup) {
-    wg.Add(1)
-    iterations, pacing := GetTestcaseConfig(runtime.FuncForPC(reflect.ValueOf(testcase).Pointer()).Name())
+// add a testcase to the scenario
+func (scenario *Scenario) Test(testcase string, tc func(map[string]interface{})) {
+    meta := make(map[string]interface{})
+    scenario.wg.Add(1)
+    //iterations, pacing := GetTestcaseConfig(runtime.FuncForPC(reflect.ValueOf(testcase).Pointer()).Name())
+    iterations, pacing := GetTestcaseConfig(testcase)
     go func() {
-        defer wg.Done()
+        defer scenario.wg.Done()
 
         for i := int64(0); i < iterations; i++ {
             start := time.Now()
             meta["Iteration"] = i
             meta["User"] = 0
-            testcase(meta)
+            tc(meta)
             paceMaker(time.Duration(pacing) * time.Millisecond - time.Now().Sub(start))
         }
     }()
+}
+
+// instrumentation of a teststep
+func (scenario *Scenario) Step(teststep string, step func()) func() {
+    // TODO actual instrumentation
+    return func() {
+        step()
+    }
 }
 
 
