@@ -1,54 +1,35 @@
 package gogrinder
 
-
 import (
 	"fmt"
-	"sync"
+	"time"
 )
 
 
-type stats_key struct {
-	sc int8
-	tc int8
-	ts int8
-}
-
 type stats_value struct {
-	avg float64
-	count int
-	min float64
-	max float64
-}
-
-type stats map[stats_key]stats_value
-
-type Scenario struct {
-	stats stats
-	wg sync.WaitGroup
-}
-
-// Constructor takes care of initializing the stats map
-//func NewScenario() *Scenario {
-//	return &Scenario{stats: make(stats)}
-//}
-func NewScenario(name string) *Scenario {
-	return &Scenario{stats: make(stats)}
+	avg time.Duration
+	min time.Duration
+	max time.Duration
+	count int64
 }
 
 
-func (scenario *Scenario) update(t stats_key, mm float64) {
-	// update the statistics with the new measurement
-	val, exists := scenario.stats[t]
+type stats map[string]stats_value
+
+
+// update the statistics with a new measurement
+func (scenario *Scenario) update(testcase string, mm time.Duration) {
+	val, exists := scenario.stats[testcase]
 	if exists {
-		val.avg = (float64(val.count) * val.avg + 
-			mm) / (float64(val.count) + 1.0)
+		val.avg = (time.Duration(val.count) * val.avg + 
+			mm) / time.Duration(val.count + 1)
 		if mm > val.max { val.max = mm }
 		if mm < val.min { val.min = mm }
 		val.count++
-		scenario.stats[t] = val
+		scenario.stats[testcase] = val
 	} else {
 		// create a new statistic for t
-		scenario.stats[t] = stats_value{mm, 1, mm, mm}
+		scenario.stats[testcase] = stats_value{mm, mm, mm, 1}
 	}
 }
 
@@ -56,7 +37,7 @@ func (scenario *Scenario) update(t stats_key, mm float64) {
 // format the statistics to stdout
 func (scenario *Scenario) Report() {
 	for k, v := range scenario.stats {
-		fmt.Println("tc: ", k, " stats: ", v)
+		fmt.Println(k, ",", v.avg, ",", v.min, ",", v.max, ",", v.count)
 	}
 }
 
@@ -64,18 +45,3 @@ func (scenario *Scenario) Report() {
 func (scenario *Scenario) Wait() {
 	scenario.wg.Wait()
 }
-
-
-// func main() {
-// 	scenario := NewScenario()
-
-// 	k := stats_key{0,0,0}
-// 	scenario.update(k, 0.99)
-// 	scenario.update(k, 0.99)
-// 	scenario.update(k, 0.99)
-
-// 	l := stats_key{0,0,1}
-// 	scenario.update(l, 0.11)
-
-// 	scenario.Report()
-// }

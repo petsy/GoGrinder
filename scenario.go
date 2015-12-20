@@ -2,9 +2,25 @@ package gogrinder
 
 import(
     "time"
+    "sync"
     "net/http"
     "github.com/GeertJohan/go.rice"
 )
+
+
+type Scenario struct {
+    stats stats
+    wg sync.WaitGroup
+}
+
+// Constructor takes care of initializing the stats map
+//func NewScenario() *Scenario {
+//  return &Scenario{stats: make(stats)}
+//}
+func NewScenario(name string) *Scenario {
+    return &Scenario{stats: make(stats)}
+}
+
 
 // pacemaker in nanoseconds	
 func paceMaker(pace time.Duration) {
@@ -33,9 +49,11 @@ func (scenario *Scenario) Test(testcase string, tc func(map[string]interface{}))
 
 // instrumentation of a teststep
 func (scenario *Scenario) Step(teststep string, step func()) func() {
-    // TODO actual instrumentation
+    // TODO this should contain meta info in the report, too
     return func() {
+        start := time.Now()
         step()
+        scenario.update(teststep, time.Now().Sub(start))
     }
 }
 
