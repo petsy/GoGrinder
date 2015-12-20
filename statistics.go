@@ -18,30 +18,25 @@ type stats map[string]stats_value
 
 
 // update the statistics with a new measurement
-func (scenario *Scenario) update(testcase string, mm time.Duration) {
-	val, exists := scenario.stats[testcase]
+func (test *Test) update(testcase string, mm time.Duration) {
+	val, exists := test.stats[testcase]
 	if exists {
 		val.avg = (time.Duration(val.count) * val.avg + 
 			mm) / time.Duration(val.count + 1)
 		if mm > val.max { val.max = mm }
 		if mm < val.min { val.min = mm }
 		val.count++
-		scenario.stats[testcase] = val
+		test.stats[testcase] = val
 	} else {
 		// create a new statistic for t
-		scenario.stats[testcase] = stats_value{mm, mm, mm, 1}
+		test.stats[testcase] = stats_value{mm, mm, mm, 1}
 	}
 }
 
 
 // format the statistics to stdout
-func (scenario *Scenario) Report() {
-	for k, v := range scenario.stats {
+func (test *Test) Report() {
+	for k, v := range test.stats {
 		fmt.Println(k, ",", v.avg, ",", v.min, ",", v.max, ",", v.count)
 	}
-}
-
-// wait until everything in the waitgroup is done
-func (scenario *Scenario) Wait() {
-	scenario.wg.Wait()
 }
