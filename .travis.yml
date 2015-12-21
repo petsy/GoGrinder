@@ -1,7 +1,7 @@
 language: go
 
 install:
- #- export PATH=$HOME/gopath/bin:$PATH
+ - export PATH=$HOME/gopath/bin:$PATH
  - go get -v github.com/axw/gocov
  - go install github.com/axw/gocov/gocov
  #- go get -v github.com/finklabs/GoGrinder
