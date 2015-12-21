@@ -24,8 +24,8 @@ func (test *Test) ReadLoadmodel() {
         "type":"object",
         "properties":{
             "Scenario":        { "type":"string"},
-            "Pacing":          { "type":"boolean"},
             "ThinkTimeFactor": { "type": "number"},
+            "ThinkTimeVariance": { "type": "number"},
             "Loadmodel": {
                 "type":"array",
                 "items": {
@@ -41,7 +41,7 @@ func (test *Test) ReadLoadmodel() {
                 }
             }
         },
-        "required": ["Scenario", "Pacing", "ThinkTimeFactor"],
+        "required": ["Scenario", "ThinkTimeFactor", "ThinkTimeVariance"],
         "additionalProperties": false
     }`
 
@@ -64,24 +64,26 @@ func (test *Test) ReadLoadmodelSchema(filename string, schema string) {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		panic(err.Error())
+        fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+        os.Exit(1)
 	}
 
 	if !result.Valid() {
-		fmt.Printf("Error: The loadmodel is not valid :\n")
+        fmt.Fprintf(os.Stderr, "Error: The loadmodel is not valid:\n")
 		for _, desc := range result.Errors() {
-			fmt.Printf("- %s\n", desc)
+			fmt.Fprintf(os.Stderr, "- %s\n", desc)
 		}
+        os.Exit(1)
 	}
 
 	json.Unmarshal([]byte(document), &test.loadmodel)
 }
 
-func (test *Test) GetScenarioConfig() (string, bool, float64) {
+func (test *Test) GetScenarioConfig() (string, float64, float64) {
 	scenario := test.loadmodel["Scenario"].(string)
-	pacing := test.loadmodel["Pacing"].(bool)
-	tt := test.loadmodel["ThinkTimeFactor"].(float64)
-	return scenario, pacing, tt
+    ttf := test.loadmodel["ThinkTimeFactor"].(float64)
+    ttv := test.loadmodel["ThinkTimeVariance"].(float64)
+	return scenario, ttf, ttv
 }
 
 // return iterations, pacing

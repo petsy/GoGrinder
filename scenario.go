@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"sync"
 	"time"
+    "math/rand"
 )
 
 type Test struct {
@@ -117,6 +118,15 @@ func (test *Test) Exec() {
 		os.Exit(1)
 	}
 }
+
+// 
+func (test *Test) Thinktime(tt int64) {
+    _, ttf, ttv := test.GetScenarioConfig()
+    r := rand.Float64() * 2.0 - 1.0  // r in [-1.0 - 1.0)
+    v := r * ttv + 1.0
+    time.Sleep(time.Duration(float64(tt) * ttf * v) * time.Millisecond)   
+}
+
 
 // webserver is terminated once main exits
 func Webserver() {
