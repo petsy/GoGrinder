@@ -5,6 +5,8 @@ install:
  - go get golang.org/x/tools/cmd/cover
  - go get -v github.com/axw/gocov
  - go install github.com/axw/gocov/gocov
+ - go get github.com/GeertJohan/go.rice
+ # we do not need the rice tool!
  #- go get -v github.com/finklabs/GoGrinder
 
 script:
