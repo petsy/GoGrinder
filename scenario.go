@@ -7,8 +7,8 @@ import (
 	"os"
 	"reflect"
 	"sync"
-	"time"
     "math/rand"
+    time "github.com/finklabs/ttime"
 )
 
 type Test struct {
@@ -22,6 +22,7 @@ type Test struct {
 // Constructor takes care of initializing
 func NewTest() *Test {
 	return &Test{
+		loadmodel: make(map[string]interface{}),
 		testscenarios: make(map[string]interface{}),
 		teststeps:     make(map[string]func()),
 		stats:         make(stats),
@@ -119,12 +120,19 @@ func (test *Test) Exec() {
 	}
 }
 
+
+// wrapper around the time.Sleep function that can be replaced by a fake
+//func (test *Test) Sleep(d time.Duration) {
+//    time.Sleep(d)
+//}
+
+
 // 
 func (test *Test) Thinktime(tt int64) {
     _, ttf, ttv := test.GetScenarioConfig()
-    r := rand.Float64() * 2.0 - 1.0  // r in [-1.0 - 1.0)
-    v := r * ttv + 1.0
-    time.Sleep(time.Duration(float64(tt) * ttf * v) * time.Millisecond)   
+    r := (rand.Float64() * 2.0) - 1.0  // r in [-1.0 - 1.0)
+    v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Millisecond)
+    time.Sleep(time.Duration(v))
 }
 
 

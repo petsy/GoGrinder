@@ -2,7 +2,7 @@ package gogrinder
 
 import (
 	"fmt"
-	"time"
+    time "github.com/finklabs/ttime"
 )
 
 type stats_value struct {

@@ -6,19 +6,21 @@
 Efficient load-generator that integrates in Prometheus for reporting and analysis.
 
 
-Run the go package docu (for offline use)
-=========================================
+## Run the go package docu (for offline use)
 
 $ godoc -http=:6060 &
 
 
-embedd the single page app
-==========================
+## Embedd the single page app
 
 $ rice embed-syso
 
 
-build the package
-=================
+## Run the tests with coverage report
+
+$ gocov test | gocov report
+
+
+## build the package
 
 $ go build
