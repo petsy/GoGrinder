@@ -3,6 +3,7 @@ package gogrinder
 import(
 	"testing"
     time "github.com/finklabs/ttime"
+    "reflect"
 )
 
 
@@ -13,7 +14,7 @@ func TestThinktimeNoVariance(t *testing.T) {
 	fake.loadmodel["ThinkTimeFactor"]=1.0
 	fake.loadmodel["ThinkTimeVariance"]=0.0
 
-	time.Freeze(time.Now())  // prepare for testing
+	time.Freeze(time.Now())
 	defer time.Unfreeze()
 
 	start := time.Now()
@@ -32,7 +33,7 @@ func TestThinktimeVariance(t *testing.T) {
 	fake.loadmodel["ThinkTimeVariance"]=0.1
 
 	min, max, avg := 20.0, 20.0, 0.0
-	time.Freeze(time.Now())  // prepare for testing
+	time.Freeze(time.Now())
 	defer time.Unfreeze()
 
 	for i := 0; i < 1000; i++ {
@@ -50,4 +51,40 @@ func TestThinktimeVariance(t *testing.T) {
 	t.Logf("Maximum sleep time %f\n", max)
 	t.Logf("Average sleep time %f\n", avg)
 	if avg < 19.9 || avg > 20.1 { t.Fatalf("Average sleep time %f out of defined range!", avg) }
+}
+
+func TestPaceMaker(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	start := time.Now()
+	paceMaker(10)
+	if time.Now().Sub(start) != 10 { t.Fatal("Function paceMaker sleep out of range!") }
+}
+
+func TestPaceMakerNegativeValue(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	start := time.Now()
+	paceMaker(-10)
+	if time.Now().Sub(start) != 0 { t.Fatal("Function paceMaker sleep out of range!") }
+}
+
+
+func TestTestscenario(t *testing.T) {
+	var fake = NewTest()
+	dummy := func() {}
+
+	fake.Testscenario("sth", dummy)
+
+	if v, ok := fake.testscenarios["sth"]; ok {
+	    sf1 := reflect.ValueOf(v)
+	    sf2 := reflect.ValueOf(dummy)
+		if sf1.Pointer() != sf2.Pointer() {
+			t.Fatal("Testscenario 'sth' does not contain dummy function!")
+		}
+	} else {
+		t.Fatal("Testscenario 'sth' missing!")
+	}
 }

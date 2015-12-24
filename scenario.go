@@ -29,7 +29,7 @@ func NewTest() *Test {
 	}
 }
 
-// pacemaker in nanoseconds
+// internaly used pacemaker in nanoseconds
 func paceMaker(pace time.Duration) {
 	if pace < 0 {
 		return
@@ -121,13 +121,8 @@ func (test *Test) Exec() {
 }
 
 
-// wrapper around the time.Sleep function that can be replaced by a fake
-//func (test *Test) Sleep(d time.Duration) {
-//    time.Sleep(d)
-//}
-
-
-// 
+// this takes ThinkTimeFactor and ThinkTimeVariance into account
+// thinktime is given in ms
 func (test *Test) Thinktime(tt int64) {
     _, ttf, ttv := test.GetScenarioConfig()
     r := (rand.Float64() * 2.0) - 1.0  // r in [-1.0 - 1.0)
