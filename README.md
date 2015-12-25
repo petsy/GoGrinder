@@ -24,3 +24,22 @@ $ gocov test | gocov report
 ## build the package
 
 $ go build
+
+
+## make the code testable
+Once the API of GoGrinder was drafted I started writing tests. Testing in golang takes a little bit more attention. Workaounds for bad design like mocking and monkey-patching are not readly available as they are in other dynamic languages.
+
+### Using Interfaces
+http://nathanleclaire.com/blog/2015/10/10/interfaces-and-composition-for-effective-unit-testing-in-golang/
+http://nathanleclaire.com/blog/2015/03/09/youre-not-using-this-enough-part-one-go-interfaces/
+
+### Dealing with the golang "time" package (careful, I beat my own drum here!)
+https://github.com/finklabs/ttime
+
+### Dealing with the golang "fmt" package (again)
+http://stackoverflow.com/questions/34462355/how-to-deal-with-the-fmt-golang-library-package-for-cli-testing/
+
+### Dealing with os.Exit
+https://code.google.com/p/go/issues/detail?id=8202
+
+

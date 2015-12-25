@@ -7,7 +7,15 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"io"
 )
+
+
+// modify these during testing
+var stdout io.Writer = os.Stdout
+var stderr io.Writer = os.Stderr
+var exit func(code int) = os.Exit
+
 
 type Test struct {
 	loadmodel     map[string]interface{}
@@ -106,16 +114,16 @@ func (test *Test) Exec() {
 				fn.Call([]reflect.Value{reflect.ValueOf(meta)})
 			}
 			if fnType.NumIn() > 1 {
-				panic("Error: Expected a function with zero or one parameter to implement " + sel)
+				fmt.Fprintf(stderr, "Error: Expected a function with zero or one parameter to implement %s.", sel)
 			}
 		} else {
-			panic("Error: Expected a function without return value to implement " + sel)
+			fmt.Fprintf(stderr, "Error: Expected a function without return value to implement %s.", sel)
 		}
 		test.wg.Wait() // wait till end
 		test.Report()
 	} else {
-		fmt.Fprintf(os.Stderr, "Error: scenario %s does not exist.\n", sel)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "Error: scenario %s does not exist.\n", sel)
+		exit(1)
 	}
 }
 

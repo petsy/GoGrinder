@@ -37,6 +37,6 @@ func (test *Test) update(testcase string, mm time.Duration) {
 // format the statistics to stdout
 func (test *Test) Report() {
 	for k, v := range test.stats {
-		fmt.Println(k, ",", v.avg, ",", v.min, ",", v.max, ",", v.count)
+		fmt.Fprintln(stdout, k, ",", v.avg, ",", v.min, ",", v.max, ",", v.count)
 	}
 }

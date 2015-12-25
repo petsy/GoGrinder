@@ -14,8 +14,8 @@ func (test *Test) ReadLoadmodel() {
 	if len(os.Args) == 2 {
 		filename = os.Args[1]
 	} else {
-		fmt.Fprintf(os.Stderr, "Error: argument for loadmodel required!\n")
-		os.Exit(1)
+		fmt.Fprintf(stderr, "Error: argument for loadmodel required!\n")
+		exit(1)
 	}
 
 	schema := `{
@@ -55,8 +55,8 @@ func (test *Test) ReadLoadmodelSchema(filename string, schema string) {
 	buf, err := ioutil.ReadFile(filename)
 	document = string(buf)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "Error: %s\n", err)
+		exit(1)
 	}
 	documentLoader = gojsonschema.NewStringLoader(document)
 
@@ -64,16 +64,16 @@ func (test *Test) ReadLoadmodelSchema(filename string, schema string) {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "Error: %s\n", err)
+		exit(1)
 	}
 
 	if !result.Valid() {
-		fmt.Fprintf(os.Stderr, "Error: The loadmodel is not valid:\n")
+		fmt.Fprintf(stderr, "Error: The loadmodel is not valid:\n")
 		for _, desc := range result.Errors() {
-			fmt.Fprintf(os.Stderr, "- %s\n", desc)
+			fmt.Fprintf(stderr, "- %s\n", desc)
 		}
-		os.Exit(1)
+		exit(1)
 	}
 
 	json.Unmarshal([]byte(document), &test.loadmodel)
@@ -97,7 +97,7 @@ func (test *Test) GetTestcaseConfig(testcase string) (int64, int64) {
 			return iterations, pacing
 		}
 	}
-	fmt.Fprintf(os.Stderr, "Error: configuration for %s not found\n", testcase)
-	os.Exit(1)
+	fmt.Fprintf(stderr, "Error: configuration for %s not found\n", testcase)
+	exit(1)
 	return 0, 0
 }
