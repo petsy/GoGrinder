@@ -2,13 +2,11 @@ package gogrinder
 
 import (
 	"fmt"
-	"github.com/GeertJohan/go.rice"
-	"net/http"
+	time "github.com/finklabs/ttime"
+	"math/rand"
 	"os"
 	"reflect"
 	"sync"
-    "math/rand"
-    time "github.com/finklabs/ttime"
 )
 
 type Test struct {
@@ -22,7 +20,7 @@ type Test struct {
 // Constructor takes care of initializing
 func NewTest() *Test {
 	return &Test{
-		loadmodel: make(map[string]interface{}),
+		loadmodel:     make(map[string]interface{}),
 		testscenarios: make(map[string]interface{}),
 		teststeps:     make(map[string]func()),
 		stats:         make(stats),
@@ -76,6 +74,7 @@ func (test *Test) Run(testcase func(map[string]interface{}),
 			paceMaker(time.Duration(pacing)*time.Millisecond - time.Now().Sub(start))
 		}
 	}
+	// TODO: this is wrong. !multiple! users must run in parallel.
 	if parallel {
 		test.wg.Add(1)
 		go f()
@@ -120,26 +119,11 @@ func (test *Test) Exec() {
 	}
 }
 
-
 // this takes ThinkTimeFactor and ThinkTimeVariance into account
 // thinktime is given in ms
 func (test *Test) Thinktime(tt int64) {
-    _, ttf, ttv := test.GetScenarioConfig()
-    r := (rand.Float64() * 2.0) - 1.0  // r in [-1.0 - 1.0)
-    v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Millisecond)
-    time.Sleep(time.Duration(v))
-}
-
-
-// webserver is terminated once main exits
-func Webserver() {
-	go func() {
-		http.Handle("/", http.FileServer(rice.MustFindBox("static").HTTPBox()))
-		http.ListenAndServe(":3000", nil)
-	}()
-}
-
-// TODO add the API
-func Restserver() {
-
+	_, ttf, ttv := test.GetScenarioConfig()
+	r := (rand.Float64() * 2.0) - 1.0 // r in [-1.0 - 1.0)
+	v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Millisecond)
+	time.Sleep(time.Duration(v))
 }

@@ -64,16 +64,16 @@ func (test *Test) ReadLoadmodelSchema(filename string, schema string) {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-        fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-        os.Exit(1)
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
 	}
 
 	if !result.Valid() {
-        fmt.Fprintf(os.Stderr, "Error: The loadmodel is not valid:\n")
+		fmt.Fprintf(os.Stderr, "Error: The loadmodel is not valid:\n")
 		for _, desc := range result.Errors() {
 			fmt.Fprintf(os.Stderr, "- %s\n", desc)
 		}
-        os.Exit(1)
+		os.Exit(1)
 	}
 
 	json.Unmarshal([]byte(document), &test.loadmodel)
@@ -81,8 +81,8 @@ func (test *Test) ReadLoadmodelSchema(filename string, schema string) {
 
 func (test *Test) GetScenarioConfig() (string, float64, float64) {
 	scenario := test.loadmodel["Scenario"].(string)
-    ttf := test.loadmodel["ThinkTimeFactor"].(float64)
-    ttv := test.loadmodel["ThinkTimeVariance"].(float64)
+	ttf := test.loadmodel["ThinkTimeFactor"].(float64)
+	ttv := test.loadmodel["ThinkTimeVariance"].(float64)
 	return scenario, ttf, ttv
 }
 

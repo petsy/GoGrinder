@@ -1,18 +1,17 @@
 package gogrinder
 
-import(
+import (
+	time "github.com/finklabs/ttime"
+	"reflect"
 	"testing"
-    time "github.com/finklabs/ttime"
-    "reflect"
 )
-
 
 func TestThinktimeNoVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
-	fake.loadmodel["Scenario"]="scenario1"
-	fake.loadmodel["ThinkTimeFactor"]=1.0
-	fake.loadmodel["ThinkTimeVariance"]=0.0
+	fake.loadmodel["Scenario"] = "scenario1"
+	fake.loadmodel["ThinkTimeFactor"] = 1.0
+	fake.loadmodel["ThinkTimeVariance"] = 0.0
 
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
@@ -28,9 +27,9 @@ func TestThinktimeNoVariance(t *testing.T) {
 func TestThinktimeVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
-	fake.loadmodel["Scenario"]="scenario1"
-	fake.loadmodel["ThinkTimeFactor"]=2.0
-	fake.loadmodel["ThinkTimeVariance"]=0.1
+	fake.loadmodel["Scenario"] = "scenario1"
+	fake.loadmodel["ThinkTimeFactor"] = 2.0
+	fake.loadmodel["ThinkTimeVariance"] = 0.1
 
 	min, max, avg := 20.0, 20.0, 0.0
 	time.Freeze(time.Now())
@@ -40,17 +39,27 @@ func TestThinktimeVariance(t *testing.T) {
 		start := time.Now()
 		fake.Thinktime(10)
 		sleep := float64(time.Now().Sub(start)) / float64(time.Millisecond)
-		if sleep < min { min = sleep }
-		if max < sleep { max = sleep }
+		if sleep < min {
+			min = sleep
+		}
+		if max < sleep {
+			max = sleep
+		}
 		avg += sleep
 	}
-	avg = avg/1000
-	if min < 18.0 { t.Errorf("Minimum sleep time %f out of defined range!\n", min) }
-	if max >= 22.0 { t.Errorf("Maximum sleep time %f out of defined range!", max) }
+	avg = avg / 1000
+	if min < 18.0 {
+		t.Errorf("Minimum sleep time %f out of defined range!\n", min)
+	}
+	if max >= 22.0 {
+		t.Errorf("Maximum sleep time %f out of defined range!", max)
+	}
 	t.Logf("Minimum sleep time %f\n", min)
 	t.Logf("Maximum sleep time %f\n", max)
 	t.Logf("Average sleep time %f\n", avg)
-	if avg < 19.9 || avg > 20.1 { t.Fatalf("Average sleep time %f out of defined range!", avg) }
+	if avg < 19.9 || avg > 20.1 {
+		t.Fatalf("Average sleep time %f out of defined range!", avg)
+	}
 }
 
 func TestPaceMaker(t *testing.T) {
@@ -59,7 +68,9 @@ func TestPaceMaker(t *testing.T) {
 
 	start := time.Now()
 	paceMaker(10)
-	if time.Now().Sub(start) != 10 { t.Fatal("Function paceMaker sleep out of range!") }
+	if time.Now().Sub(start) != 10 {
+		t.Fatal("Function paceMaker sleep out of range!")
+	}
 }
 
 func TestPaceMakerNegativeValue(t *testing.T) {
@@ -68,9 +79,10 @@ func TestPaceMakerNegativeValue(t *testing.T) {
 
 	start := time.Now()
 	paceMaker(-10)
-	if time.Now().Sub(start) != 0 { t.Fatal("Function paceMaker sleep out of range!") }
+	if time.Now().Sub(start) != 0 {
+		t.Fatal("Function paceMaker sleep out of range!")
+	}
 }
-
 
 func TestTestscenario(t *testing.T) {
 	var fake = NewTest()
@@ -79,12 +91,89 @@ func TestTestscenario(t *testing.T) {
 	fake.Testscenario("sth", dummy)
 
 	if v, ok := fake.testscenarios["sth"]; ok {
-	    sf1 := reflect.ValueOf(v)
-	    sf2 := reflect.ValueOf(dummy)
+		sf1 := reflect.ValueOf(v)
+		sf2 := reflect.ValueOf(dummy)
 		if sf1.Pointer() != sf2.Pointer() {
 			t.Fatal("Testscenario 'sth' does not contain dummy function!")
 		}
 	} else {
 		t.Fatal("Testscenario 'sth' missing!")
 	}
+}
+
+func TestTeststep(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	var fake = NewTest()
+	step := func() { time.Sleep(20) }
+
+	its := fake.Teststep("sth", step)
+
+	if v, ok := fake.teststeps["sth"]; ok {
+		sf1 := reflect.ValueOf(v)
+		sf2 := reflect.ValueOf(its)
+		if sf1.Pointer() != sf2.Pointer() {
+			t.Fatal("Teststep 'sth' does not contain step function!")
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing!")
+	}
+
+	// run the teststep (note: a different angle would be to mock out update)
+	its()
+	if v, ok := fake.stats["sth"]; ok {
+
+		if v.avg != 20.0 {
+			t.Fatalf("Teststep 'sth' measurement %f not 20ns!\n", v.avg)
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing in stats!")
+	}
+}
+
+func TestRunSequential(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	fake := NewTest()
+	var counter int64 = 0
+	// assemble testcase
+	tc1 := func(meta map[string]interface{}) {
+		// check meta
+		if meta["Iteration"] != counter {
+			t.Errorf("Iteration %d but expected %d!", meta["Iteration"], counter)
+		}
+		if meta["User"] != 0 {
+			t.Error("User meta not as expected!")
+		}
+
+		time.Sleep(20)
+		counter++
+	}
+
+	// run the testcase
+	start := time.Now()
+	fake.Run(tc1, 20, 0, false)
+	if time.Now().Sub(start) != 400 {
+		t.Error("Testcase execution time not as expected!")
+	}
+	if counter != 20 {
+		t.Error("Testcase iteration counter not as expected!")
+	}
+
+	// TODO run multiple users!
+}
+
+
+func TestSchedule(t *testing.T) {
+	// Schedule is basically a wrapper around Run
+	// the only interesting part is GetTestcaseConfig
+	// and this is tested in config_test.go
+}
+
+
+func TestExec(t *testing.T) {
+	// Exec integrates the various parts of gogrinder
+	// there is a dedicated testsuite to test this
 }
