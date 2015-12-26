@@ -20,6 +20,8 @@ func TestUpdate(t *testing.T) {
 		if v.max != 8*time.Millisecond {
 			t.Errorf("Statistics update max %d not as expected 8ms!\n", v.max)
 		}
+	} else {
+		t.Errorf("Update failed to insert a value for 'sth'!")
 	}
 
 	// 2nd, 3rd measurement
@@ -35,6 +37,23 @@ func TestUpdate(t *testing.T) {
 		if v.max != 10*time.Millisecond {
 			t.Errorf("Statistics update max %d not as expected 10ms!\n", v.max)
 		}
+	} else {
+		t.Errorf("Update failed to insert values for 'sth'!")
+	}
+}
+
+func TestReset(t *testing.T) {
+	fake := NewTest()
+	// first measurement
+	fake.update("sth", 8*time.Millisecond)
+	if _, ok := fake.stats["sth"]; ok {
+		fake.reset()
+		// now the measurement should be gone
+		if _, ok := fake.stats["sth"]; ok {
+			t.Error("Reset failed to clear the statistics!\n")
+		}
+	} else {
+		t.Errorf("Update failed to insert values for 'sth'!")
 	}
 }
 

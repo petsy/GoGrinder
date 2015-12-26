@@ -98,6 +98,7 @@ func (test *Test) Exec() {
 	if scenario, ok := test.testscenarios[sel]; ok {
 		fn := reflect.ValueOf(scenario)
 		fnType := fn.Type()
+		test.reset() // remove stats from previous run
 		// some magic so we can call scenarios OR single testcases
 		if fnType.Kind() == reflect.Func && fnType.NumOut() == 0 {
 			if fnType.NumIn() == 0 {

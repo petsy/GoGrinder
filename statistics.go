@@ -35,6 +35,11 @@ func (test *Test) update(testcase string, mm time.Duration) {
 	}
 }
 
+// reset the statistics (measurements from previous run are deleted)
+func (test *Test) reset() {
+	test.stats = make(stats)
+}
+
 // convert time.Duration to ms in float64
 func d2f(d time.Duration) float64 {
 	return float64(d) / float64(time.Millisecond)
