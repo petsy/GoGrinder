@@ -3,19 +3,17 @@ package gogrinder
 import (
 	"fmt"
 	time "github.com/finklabs/ttime"
+	"io"
 	"math/rand"
 	"os"
 	"reflect"
 	"sync"
-	"io"
 )
-
 
 // modify these during testing
 var stdout io.Writer = os.Stdout
 var stderr io.Writer = os.Stderr
 var exit func(code int) = os.Exit
-
 
 type Test struct {
 	loadmodel     map[string]interface{}

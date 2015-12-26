@@ -165,13 +165,11 @@ func TestRunSequential(t *testing.T) {
 	// TODO run multiple users!
 }
 
-
 func TestSchedule(t *testing.T) {
 	// Schedule is basically a wrapper around Run
 	// the only interesting part is GetTestcaseConfig
 	// and this is tested in config_test.go
 }
-
 
 func TestExec(t *testing.T) {
 	// Exec integrates the various parts of gogrinder

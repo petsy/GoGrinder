@@ -40,6 +40,5 @@ https://github.com/finklabs/ttime
 http://stackoverflow.com/questions/34462355/how-to-deal-with-the-fmt-golang-library-package-for-cli-testing/
 
 ### Dealing with os.Exit
-https://code.google.com/p/go/issues/detail?id=8202
-
+http://stackoverflow.com/questions/34462355/how-to-deal-with-the-fmt-golang-library-package-for-cli-testing/
 

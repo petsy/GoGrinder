@@ -3,6 +3,7 @@ package gogrinder
 import (
 	"fmt"
 	time "github.com/finklabs/ttime"
+	"sort"
 )
 
 type stats_value struct {
@@ -34,9 +35,25 @@ func (test *Test) update(testcase string, mm time.Duration) {
 	}
 }
 
+
+// convert time.Duration to ms in float64
+func d2f(d time.Duration) float64 {
+	return float64(d) / float64(time.Millisecond)
+}
+
+
 // format the statistics to stdout
 func (test *Test) Report() {
-	for k, v := range test.stats {
-		fmt.Fprintln(stdout, k, ",", v.avg, ",", v.min, ",", v.max, ",", v.count)
+	s := test.stats
+	// sort the results by testcase
+    keys := make([]string, 0, len(s))
+    for tc := range s {
+        keys = append(keys, tc)
+    }
+    sort.Strings(keys)
+
+	for _, k := range keys {
+		fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", k, d2f(s[k].avg), 
+			d2f(s[k].min), d2f(s[k].max), s[k].count)
 	}
 }
