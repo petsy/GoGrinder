@@ -165,13 +165,55 @@ func TestRunSequential(t *testing.T) {
 	// TODO run multiple users!
 }
 
-func TestSchedule(t *testing.T) {
-	// Schedule is basically a wrapper around Run
-	// the only interesting part is GetTestcaseConfig
-	// and this is tested in config_test.go
+func TestScheduleErrorUnknownTestcase(t *testing.T) {
+	fake := NewTest()
+	err := fake.Schedule("unknown_testcase", func(map[string]interface{}) {})
+
+	error := err.Error()
+	if error != "config for testcase unknown_testcase not found" {
+		t.Errorf("Error msg for unknown testcase not as expected: %s", error)
+	}
 }
 
-func TestExec(t *testing.T) {
-	// Exec integrates the various parts of gogrinder
-	// there is a dedicated testsuite to test this
+func TestExecErrorUnknownScenario(t *testing.T) {
+	fake := NewTest()
+	fake.loadmodel["Scenario"] = "scenario1"
+	fake.loadmodel["ThinkTimeFactor"] = 2.0
+	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	err := fake.Exec()
+
+	error := err.Error()
+	if error != "scenario scenario1 does not exist" {
+		t.Errorf("Error msg for missing scenario not as expected: %s", error)
+	}
+}
+
+func TestExecErrorFunctionWithReturnValue(t *testing.T) {
+	fake := NewTest()
+	fake.loadmodel["Scenario"] = "01_testcase"
+	fake.loadmodel["ThinkTimeFactor"] = 2.0
+	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.Testscenario("01_testcase", func() int64 { return 42 })
+
+	err := fake.Exec()
+
+	error := err.Error()
+	if error != "expected a function without return value to implement 01_testcase" {
+		t.Errorf("Error msg for function with return value not as expected: %s", error)
+	}
+}
+
+func TestExecErrorFunctionWithTwoParams(t *testing.T) {
+	fake := NewTest()
+	fake.loadmodel["Scenario"] = "01_testcase"
+	fake.loadmodel["ThinkTimeFactor"] = 2.0
+	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.Testscenario("01_testcase", func(a, b int64) {})
+
+	err := fake.Exec()
+
+	error := err.Error()
+	if error != "expected a function with zero or one parameter to implement 01_testcase" {
+		t.Errorf("Error msg for function two or more params not as expected: %s", error)
+	}
 }

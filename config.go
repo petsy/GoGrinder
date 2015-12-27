@@ -37,45 +37,40 @@ var LoadmodelSchema string = `{
 }`
 
 // reader for the loadmodel.json file
-func (test *Test) ReadLoadmodel() {
+func (test *Test) ReadLoadmodel() error {
 	var filename string
 	if len(os.Args) == 2 {
 		filename = os.Args[1]
 	} else {
-		fmt.Fprintf(stderr, "Error: argument for loadmodel required!\n")
-		exit(1)
+		return fmt.Errorf("argument for loadmodel required")
 	}
 	buf, err := ioutil.ReadFile(filename)
-	document := string(buf)
 	if err != nil {
-		fmt.Fprintf(stderr, "Error: %s\n", err)
-		exit(1)
+		return err
 	}
 
-	test.ReadLoadmodelSchema(document, LoadmodelSchema)
+	return test.ReadLoadmodelSchema(string(buf), LoadmodelSchema)
 }
 
 // read loadmodel from document - you can provide your own schema
-func (test *Test) ReadLoadmodelSchema(document string, schema string) {
-	//var documentLoader gojsonschema.JSONLoader
+func (test *Test) ReadLoadmodelSchema(document string, schema string) error {
 	documentLoader := gojsonschema.NewStringLoader(document)
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		fmt.Fprintf(stderr, "Error: %s\n", err)
-		exit(1)
+		return err
 	}
 
 	if !result.Valid() {
-		fmt.Fprintf(stderr, "Error: The loadmodel is not valid:\n")
+		msg := "the loadmodel is not valid:"
 		for _, desc := range result.Errors() {
-			fmt.Fprintf(stderr, "- %s\n", desc)
+			msg += fmt.Sprintf("\n- %s", desc)
 		}
-		exit(1)
+		return fmt.Errorf(msg)
 	}
 
-	json.Unmarshal([]byte(document), &test.loadmodel)
+	return json.Unmarshal([]byte(document), &test.loadmodel)
 }
 
 func (test *Test) GetScenarioConfig() (string, float64, float64) {
@@ -86,7 +81,7 @@ func (test *Test) GetScenarioConfig() (string, float64, float64) {
 }
 
 // return iterations, pacing
-func (test *Test) GetTestcaseConfig(testcase string) (int64, int64) {
+func (test *Test) GetTestcaseConfig(testcase string) (int64, int64, error) {
 	if conf, ok := test.loadmodel["Loadmodel"]; ok {
 		if len(conf.([]interface{})) > 0 {
 			for _, tc := range conf.([]interface{}) {
@@ -94,13 +89,11 @@ func (test *Test) GetTestcaseConfig(testcase string) (int64, int64) {
 				if entry["Testcase"] == testcase {
 					iterations := int64(entry["Iterations"].(float64))
 					pacing := int64(entry["Pacing"].(float64))
-					return iterations, pacing
+					return iterations, pacing, nil
 				}
 			}
 		}
 	}
 	// configuration not found!
-	fmt.Fprintf(stderr, "Error: configuration for %s not found\n", testcase)
-	exit(1)
-	return 0, 0
+	return 0, 0, fmt.Errorf("config for testcase %s not found", testcase)
 }

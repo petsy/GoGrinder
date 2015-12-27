@@ -27,7 +27,9 @@ $ go build
 
 
 ## make the code testable
-Once the API of GoGrinder was drafted I started writing tests. Testing in golang takes a little bit more attention. Workaounds for bad design like mocking and monkey-patching are not readly available as they are in other dynamic languages.
+Once the API of GoGrinder was drafted I started writing tests. Testing in golang takes a little bit more attention than usual. Workaounds for bad design like mocking and monkey-patching are not readly available in Go as they are in other dynamic languages.
+
+Due to my professional emphasis on testing I put a lot of attention on testing. Focus on testing fueled my learning process of the language itself.
 
 ### Using Interfaces
 http://nathanleclaire.com/blog/2015/10/10/interfaces-and-composition-for-effective-unit-testing-in-golang/

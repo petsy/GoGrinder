@@ -1,7 +1,8 @@
 package gogrinder
 
 import (
-	"bytes"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -64,7 +65,7 @@ func TestGetTestcaseConfig(t *testing.T) {
 	l[0] = tc1
 	fake.loadmodel["Loadmodel"] = l
 
-	iterations, pacing := fake.GetTestcaseConfig("testcase1")
+	iterations, pacing, _ := fake.GetTestcaseConfig("testcase1")
 	if iterations != int64(expIterations) {
 		t.Errorf("Iterations %s not as expected!", iterations)
 	}
@@ -74,34 +75,16 @@ func TestGetTestcaseConfig(t *testing.T) {
 }
 
 func TestGetTestcaseConfigMissingLoadmodel(t *testing.T) {
-	bak := stderr
-	stderr = new(bytes.Buffer)
-	defer func() { stderr = bak }()
-	code := 0
-	osexit := exit
-	exit = func(c int) { code = c }
-	defer func() { exit = osexit }()
-
 	fake := NewTest()
 
-	fake.GetTestcaseConfig("testcase1")
-	if stderr.(*bytes.Buffer).String() != "Error: configuration for testcase1 not found\n" {
-		t.Error("Error handling for missing testcase configuration not as expected!")
-	}
-	if code != 1 {
-		t.Error("Exit code for missing testcase configuration not 1!")
+	_, _, err := fake.GetTestcaseConfig("testcase1")
+	error := err.Error()
+	if error != "config for testcase testcase1 not found" {
+		t.Error("Error handling for missing testcase config not as expected: %s!", error)
 	}
 }
 
 func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
-	bak := stderr
-	stderr = new(bytes.Buffer)
-	defer func() { stderr = bak }()
-	code := 0
-	osexit := exit
-	exit = func(c int) { code = c }
-	defer func() { exit = osexit }()
-
 	tc1 := make(map[string]interface{})
 	tc1["Testcase"] = "testcase1"
 	tc1["Users"] = 1
@@ -113,12 +96,10 @@ func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 	l[0] = tc1
 	fake.loadmodel["Loadmodel"] = l
 
-	fake.GetTestcaseConfig("testcase2")
-	if stderr.(*bytes.Buffer).String() != "Error: configuration for testcase2 not found\n" {
-		t.Error("Error handling for missing testcase configuration not as expected!")
-	}
-	if code != 1 {
-		t.Error("Exit code for missing testcase configuration not 1!")
+	_, _, err := fake.GetTestcaseConfig("testcase2")
+	error := err.Error()
+	if error != "config for testcase testcase2 not found" {
+		t.Error("Error handling for missing testcase configuration not as expected: %s!", error)
 	}
 }
 
@@ -134,33 +115,59 @@ func TestReadLoadmodelSchema(t *testing.T) {
 }
 
 func TestReadLoadmodelSchemaInvalid(t *testing.T) {
-	bak := stderr
-	stderr = new(bytes.Buffer)
-	defer func() { stderr = bak }()
-	code := 0
-	osexit := exit
-	exit = func(c int) { code = c }
-	defer func() { exit = osexit }()
-
 	fake := NewTest()
 	invalid := `{"this": "is NOT a loadmodel"}`
 
-	fake.ReadLoadmodelSchema(invalid, LoadmodelSchema)
+	err := fake.ReadLoadmodelSchema(invalid, LoadmodelSchema)
 
-	error := stderr.(*bytes.Buffer).String()
-	expected := "Error: The loadmodel is not valid:\n" +
+	expected := "the loadmodel is not valid:\n" +
 		"- Scenario: Scenario is required\n" +
 		"- ThinkTimeFactor: ThinkTimeFactor is required\n" +
 		"- ThinkTimeVariance: ThinkTimeVariance is required\n" +
-		"- this: Additional property this is not allowed\n"
+		"- this: Additional property this is not allowed"
+	error := err.Error()
 	if error != expected {
 		t.Errorf("Error msg not as expected: %s", error)
-	}
-	if code != 1 {
-		t.Error("Exit code for invalid loadmodel not 1!")
 	}
 }
 
 func TestReadLoadmodel(t *testing.T) {
-	// this is part of the integration test
+	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
+	//defer os.Remove(file.Name())
+	file.WriteString(loadmodel)
+	t.Log(file.Name())
+	// prepare empty argument see TestChangingArgs
+	// in https://golang.org/src/flag/flag_test.go
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+	os.Args = []string{"gogrinder", file.Name()}
+	t.Log(len(os.Args))
+	t.Log(os.Args)
+
+	fake := NewTest()
+	fake.ReadLoadmodel()
+	scenario := fake.loadmodel["Scenario"]
+	if scenario != "scenario1" {
+		t.Errorf("Scenario %s not 'scenario1' as expected!", scenario)
+	}
+
+	count := len(fake.loadmodel["Loadmodel"].([]interface{}))
+	if count != 3 {
+		t.Errorf("Expected to find 3 testcase entries in the loadmodel but found %d!", count)
+	}
+}
+
+func TestReadLoadmodelErrorMissingArg(t *testing.T) {
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+	os.Args = []string{}
+	t.Log(len(os.Args))
+
+	fake := NewTest()
+	err := fake.ReadLoadmodel()
+
+	error := err.Error()
+	if error != "argument for loadmodel required" {
+		t.Errorf("Error msg for missing loadmodel argument not as expected: %s", error)
+	}
 }

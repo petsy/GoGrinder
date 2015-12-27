@@ -13,7 +13,6 @@ import (
 // modify these during testing
 var stdout io.Writer = os.Stdout
 var stderr io.Writer = os.Stderr
-var exit func(code int) = os.Exit
 
 type Test struct {
 	loadmodel     map[string]interface{}
@@ -60,9 +59,13 @@ func (test *Test) Teststep(name string, step func()) func() {
 }
 
 // schedule a testcase according to its loadmodel config
-func (test *Test) Schedule(name string, testcase func(map[string]interface{})) {
-	iterations, pacing := test.GetTestcaseConfig(name)
+func (test *Test) Schedule(name string, testcase func(map[string]interface{})) error {
+	iterations, pacing, err := test.GetTestcaseConfig(name)
+	if err != nil {
+		return err
+	}
 	test.Run(testcase, iterations, pacing, true)
+	return nil
 }
 
 // run a testcase
@@ -80,7 +83,7 @@ func (test *Test) Run(testcase func(map[string]interface{}),
 			paceMaker(time.Duration(pacing)*time.Millisecond - time.Now().Sub(start))
 		}
 	}
-	// TODO: this is wrong. !multiple! users must run in parallel.
+	// TODO: this is incomplete. !multiple! users must run in parallel.
 	if parallel {
 		test.wg.Add(1)
 		go f()
@@ -92,7 +95,7 @@ func (test *Test) Run(testcase func(map[string]interface{}),
 }
 
 // execute the scenario set in the config file
-func (test *Test) Exec() {
+func (test *Test) Exec() error {
 	sel, _, _ := test.GetScenarioConfig()
 	// check that the scenario exists
 	if scenario, ok := test.testscenarios[sel]; ok {
@@ -113,17 +116,17 @@ func (test *Test) Exec() {
 				fn.Call([]reflect.Value{reflect.ValueOf(meta)})
 			}
 			if fnType.NumIn() > 1 {
-				fmt.Fprintf(stderr, "Error: Expected a function with zero or one parameter to implement %s.", sel)
+				return fmt.Errorf("expected a function with zero or one parameter to implement %s", sel)
 			}
 		} else {
-			fmt.Fprintf(stderr, "Error: Expected a function without return value to implement %s.", sel)
+			return fmt.Errorf("expected a function without return value to implement %s", sel)
 		}
 		test.wg.Wait() // wait till end
 		test.Report()
 	} else {
-		fmt.Fprintf(stderr, "Error: scenario %s does not exist.\n", sel)
-		exit(1)
+		return fmt.Errorf("scenario %s does not exist", sel)
 	}
+	return nil
 }
 
 // this takes ThinkTimeFactor and ThinkTimeVariance into account
