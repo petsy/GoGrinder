@@ -133,7 +133,7 @@ func TestReadLoadmodelSchemaInvalid(t *testing.T) {
 
 func TestReadLoadmodel(t *testing.T) {
 	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
-	//defer os.Remove(file.Name())
+	defer os.Remove(file.Name())
 	file.WriteString(loadmodel)
 	t.Log(file.Name())
 	// prepare empty argument see TestChangingArgs

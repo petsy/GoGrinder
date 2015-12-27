@@ -42,5 +42,4 @@ https://github.com/finklabs/ttime
 http://stackoverflow.com/questions/34462355/how-to-deal-with-the-fmt-golang-library-package-for-cli-testing/
 
 ### Dealing with os.Exit
-http://stackoverflow.com/questions/34462355/how-to-deal-with-the-fmt-golang-library-package-for-cli-testing/
-
+library code should never os.Exit(1). Instead return from functions using error. Output "error.Error()"" and call "os.Exit(1)" from the calling main function! Funny thing is that this dramatically simplifies the testing of the library code, too.
