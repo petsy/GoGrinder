@@ -141,8 +141,6 @@ func TestReadLoadmodel(t *testing.T) {
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 	os.Args = []string{"gogrinder", file.Name()}
-	t.Log(len(os.Args))
-	t.Log(os.Args)
 
 	fake := NewTest()
 	fake.ReadLoadmodel()
@@ -161,7 +159,7 @@ func TestReadLoadmodelErrorMissingArg(t *testing.T) {
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 	os.Args = []string{}
-	t.Log(len(os.Args))
+	//t.Log(len(os.Args))
 
 	fake := NewTest()
 	err := fake.ReadLoadmodel()

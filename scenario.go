@@ -12,7 +12,7 @@ import (
 
 // modify these during testing
 var stdout io.Writer = os.Stdout
-var stderr io.Writer = os.Stderr
+//var stderr io.Writer = os.Stderr
 
 type Test struct {
 	loadmodel     map[string]interface{}
@@ -20,16 +20,19 @@ type Test struct {
 	teststeps     map[string]func()
 	stats         stats
 	wg            sync.WaitGroup
+	measurements  chan measurement
 }
 
 // Constructor takes care of initializing
 func NewTest() *Test {
-	return &Test{
+	t := Test{
 		loadmodel:     make(map[string]interface{}),
 		testscenarios: make(map[string]interface{}),
 		teststeps:     make(map[string]func()),
 		stats:         make(stats),
+		measurements:  make(chan measurement),
 	}
+	return &t
 }
 
 // internaly used pacemaker in nanoseconds
@@ -88,7 +91,7 @@ func (test *Test) Run(testcase func(map[string]interface{}),
 		test.wg.Add(1)
 		go f()
 	} else {
-		test.wg.Wait() // wait for running goroutines to finish
+		test.wg.Wait() // sequential processing: wait for running goroutines to finish
 		test.wg.Add(1)
 		f()
 	}
@@ -99,9 +102,11 @@ func (test *Test) Exec() error {
 	sel, _, _ := test.GetScenarioConfig()
 	// check that the scenario exists
 	if scenario, ok := test.testscenarios[sel]; ok {
+		test.reset() // clear stats from previous run
+		done := test.collect()  // start the collector
+
 		fn := reflect.ValueOf(scenario)
 		fnType := fn.Type()
-		test.reset() // remove stats from previous run
 		// some magic so we can call scenarios OR single testcases
 		if fnType.Kind() == reflect.Func && fnType.NumOut() == 0 {
 			if fnType.NumIn() == 0 {
@@ -121,7 +126,11 @@ func (test *Test) Exec() error {
 		} else {
 			return fmt.Errorf("expected a function without return value to implement %s", sel)
 		}
+		// wait for testcases to finish
+		// note: keep this in the foreground - do not put any of this into a goroutine!
 		test.wg.Wait() // wait till end
+		close(test.measurements)  // need to close the channel so that collect can exit, too
+		<-done  // wait for collector to finish
 		test.Report()
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)

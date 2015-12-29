@@ -6,10 +6,13 @@ import (
 	"testing"
 )
 
-func TestUpdate(t *testing.T) {
+func TestUpdateOneMeasurement(t *testing.T) {
 	fake := NewTest()
 	// first measurement
+	done := fake.collect()  // this needs a collector to unblock update
 	fake.update("sth", 8*time.Millisecond)
+	close(fake.measurements)
+	<-done
 	if v, ok := fake.stats["sth"]; ok {
 		if v.avg != 8*time.Millisecond {
 			t.Errorf("Statistics update avg %d not as expected 8ms!\n", v.avg)
@@ -23,10 +26,16 @@ func TestUpdate(t *testing.T) {
 	} else {
 		t.Errorf("Update failed to insert a value for 'sth'!")
 	}
+}
 
-	// 2nd, 3rd measurement
+func TestUpdateMultipleMeasurements(t *testing.T) {
+	fake := NewTest()
+	done := fake.collect()  // this needs a collector to unblock update
+	fake.update("sth", 8*time.Millisecond)
 	fake.update("sth", 10*time.Millisecond)
 	fake.update("sth", 2*time.Millisecond)
+	close(fake.measurements)
+	<-done
 	if v, ok := fake.stats["sth"]; ok {
 		if v.avg != 6666666*time.Nanosecond {
 			t.Errorf("Statistics update avg %d not as expected 6.66ms!\n", v.avg)
@@ -44,8 +53,11 @@ func TestUpdate(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	fake := NewTest()
+	done := fake.collect()  // this needs a collector to unblock update
 	// first measurement
 	fake.update("sth", 8*time.Millisecond)
+	close(fake.measurements)
+	<-done
 	if _, ok := fake.stats["sth"]; ok {
 		fake.reset()
 		// now the measurement should be gone
@@ -63,7 +75,7 @@ func TestReport(t *testing.T) {
 	defer func() { stdout = bak }()
 
 	fake := NewTest()
-	// first measurement
+	done := fake.collect()  // this needs a collector to unblock update
 	insert := func(name string) {
 		fake.update(name, 8*time.Millisecond)
 		fake.update(name, 10*time.Millisecond)
@@ -73,6 +85,8 @@ func TestReport(t *testing.T) {
 	insert("tc1")
 	insert("tc3")
 
+	close(fake.measurements)
+	<-done
 	fake.Report() // run the report
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("tc1, 6.666666, 2.000000, 10.000000, 3\n" +
