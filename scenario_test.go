@@ -121,7 +121,7 @@ func TestTeststep(t *testing.T) {
 	}
 
 	// run the teststep (note: a different angle would be to mock out update)
-	done := fake.collect()  // this needs a collector to unblock update
+	done := fake.collect() // this needs a collector to unblock update
 	its()
 	fake.wg.Wait()
 	close(fake.measurements)

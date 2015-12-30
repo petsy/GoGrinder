@@ -12,6 +12,7 @@ import (
 
 // modify these during testing
 var stdout io.Writer = os.Stdout
+
 //var stderr io.Writer = os.Stderr
 
 type Test struct {
@@ -102,8 +103,8 @@ func (test *Test) Exec() error {
 	sel, _, _ := test.GetScenarioConfig()
 	// check that the scenario exists
 	if scenario, ok := test.testscenarios[sel]; ok {
-		test.reset() // clear stats from previous run
-		done := test.collect()  // start the collector
+		test.reset()           // clear stats from previous run
+		done := test.collect() // start the collector
 
 		fn := reflect.ValueOf(scenario)
 		fnType := fn.Type()
@@ -128,9 +129,9 @@ func (test *Test) Exec() error {
 		}
 		// wait for testcases to finish
 		// note: keep this in the foreground - do not put any of this into a goroutine!
-		test.wg.Wait() // wait till end
-		close(test.measurements)  // need to close the channel so that collect can exit, too
-		<-done  // wait for collector to finish
+		test.wg.Wait()           // wait till end
+		close(test.measurements) // need to close the channel so that collect can exit, too
+		<-done                   // wait for collector to finish
 		test.Report()
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)

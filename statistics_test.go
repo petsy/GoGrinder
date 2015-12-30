@@ -9,7 +9,7 @@ import (
 func TestUpdateOneMeasurement(t *testing.T) {
 	fake := NewTest()
 	// first measurement
-	done := fake.collect()  // this needs a collector to unblock update
+	done := fake.collect() // this needs a collector to unblock update
 	fake.update("sth", 8*time.Millisecond)
 	close(fake.measurements)
 	<-done
@@ -30,7 +30,7 @@ func TestUpdateOneMeasurement(t *testing.T) {
 
 func TestUpdateMultipleMeasurements(t *testing.T) {
 	fake := NewTest()
-	done := fake.collect()  // this needs a collector to unblock update
+	done := fake.collect() // this needs a collector to unblock update
 	fake.update("sth", 8*time.Millisecond)
 	fake.update("sth", 10*time.Millisecond)
 	fake.update("sth", 2*time.Millisecond)
@@ -53,7 +53,7 @@ func TestUpdateMultipleMeasurements(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	fake := NewTest()
-	done := fake.collect()  // this needs a collector to unblock update
+	done := fake.collect() // this needs a collector to unblock update
 	// first measurement
 	fake.update("sth", 8*time.Millisecond)
 	close(fake.measurements)
@@ -75,7 +75,7 @@ func TestReport(t *testing.T) {
 	defer func() { stdout = bak }()
 
 	fake := NewTest()
-	done := fake.collect()  // this needs a collector to unblock update
+	done := fake.collect() // this needs a collector to unblock update
 	insert := func(name string) {
 		fake.update(name, 8*time.Millisecond)
 		fake.update(name, 10*time.Millisecond)

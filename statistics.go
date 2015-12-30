@@ -8,7 +8,7 @@ import (
 
 type measurement struct {
 	testcase string
-	value time.Duration
+	value    time.Duration
 }
 
 type stats_value struct {
@@ -40,7 +40,6 @@ type stats map[string]stats_value
 //	}
 //}
 
-
 // update and collect work closely together
 func (test *Test) update(testcase string, mm time.Duration) {
 	test.measurements <- measurement{testcase, mm}
@@ -51,10 +50,11 @@ func (test *Test) collect() <-chan bool {
 	done := make(chan bool)
 	go func(test *Test) {
 		for mm := range test.measurements {
+			//fmt.Println(mm)
 			val, exists := test.stats[mm.testcase]
 			if exists {
-				val.avg = (time.Duration(val.count) * val.avg +
-				mm.value) / time.Duration(val.count + 1)
+				val.avg = (time.Duration(val.count)*val.avg +
+					mm.value) / time.Duration(val.count+1)
 				if mm.value > val.max {
 					val.max = mm.value
 				}
@@ -68,7 +68,7 @@ func (test *Test) collect() <-chan bool {
 				test.stats[mm.testcase] = stats_value{mm.value, mm.value, mm.value, 1}
 			}
 		}
-		done<- true
+		done <- true
 	}(test)
 	return done
 }
