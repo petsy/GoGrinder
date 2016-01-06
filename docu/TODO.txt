@@ -1,0 +1,45 @@
+backlog
+=======
+
+frontend
+* show table with results
+* get results from restful ws
+* make table sortable
+* start / stop test
+* edit loadmodel
+* authenticate frontend
+* query data increments
+
+command line
+* start / stop
+* -silent
+* -no-frontend
+
+scenario
+* multiple users
+* variable pacing
+* script configuration
+
+sample
+* pet clinic (write dockerfile)
+* run jmeter test
+* recreate jmeter test in gogrinder
+
+
+Version 0.01
+============
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
