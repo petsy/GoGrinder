@@ -2,12 +2,14 @@ package gogrinder
 
 import (
 	"fmt"
-	time "github.com/finklabs/ttime"
 	"io"
 	"math/rand"
 	"os"
 	"reflect"
 	"sync"
+
+	"github.com/finklabs/graceful"
+	time "github.com/finklabs/ttime"
 )
 
 // modify these during testing
@@ -19,9 +21,11 @@ type Test struct {
 	loadmodel     map[string]interface{}
 	testscenarios map[string]interface{}
 	teststeps     map[string]func()
+	lock          sync.RWMutex
 	stats         stats
 	wg            sync.WaitGroup
 	measurements  chan measurement
+	server        graceful.Server
 }
 
 // Constructor takes care of initializing

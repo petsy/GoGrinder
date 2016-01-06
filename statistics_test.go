@@ -14,14 +14,14 @@ func TestUpdateOneMeasurement(t *testing.T) {
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
-		if v.avg != 8*time.Millisecond {
-			t.Errorf("Statistics update avg %d not as expected 8ms!\n", v.avg)
+		if v.Avg != 8*time.Millisecond {
+			t.Errorf("Statistics update avg %d not as expected 8ms!\n", v.Avg)
 		}
-		if v.min != 8*time.Millisecond {
-			t.Errorf("Statistics update min %d not as expected 8ms!\n", v.min)
+		if v.Min != 8*time.Millisecond {
+			t.Errorf("Statistics update min %d not as expected 8ms!\n", v.Min)
 		}
-		if v.max != 8*time.Millisecond {
-			t.Errorf("Statistics update max %d not as expected 8ms!\n", v.max)
+		if v.Max != 8*time.Millisecond {
+			t.Errorf("Statistics update max %d not as expected 8ms!\n", v.Max)
 		}
 	} else {
 		t.Errorf("Update failed to insert a value for 'sth'!")
@@ -37,14 +37,14 @@ func TestUpdateMultipleMeasurements(t *testing.T) {
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
-		if v.avg != 6666666*time.Nanosecond {
-			t.Errorf("Statistics update avg %d not as expected 6.66ms!\n", v.avg)
+		if v.Avg != 6666666*time.Nanosecond {
+			t.Errorf("Statistics update avg %d not as expected 6.66ms!\n", v.Avg)
 		}
-		if v.min != 2*time.Millisecond {
-			t.Errorf("Statistics update min %d not as expected 2ms!\n", v.min)
+		if v.Min != 2*time.Millisecond {
+			t.Errorf("Statistics update min %d not as expected 2ms!\n", v.Min)
 		}
-		if v.max != 10*time.Millisecond {
-			t.Errorf("Statistics update max %d not as expected 10ms!\n", v.max)
+		if v.Max != 10*time.Millisecond {
+			t.Errorf("Statistics update max %d not as expected 10ms!\n", v.Max)
 		}
 	} else {
 		t.Errorf("Update failed to insert values for 'sth'!")

@@ -3,9 +3,10 @@ package gogrinder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xeipuuv/gojsonschema"
 	"io/ioutil"
 	"os"
+
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // Default schema to validate loadmodel.json files

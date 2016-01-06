@@ -1,9 +1,10 @@
 package gogrinder
 
 import (
-	time "github.com/finklabs/ttime"
 	"reflect"
 	"testing"
+
+	time "github.com/finklabs/ttime"
 )
 
 func TestThinktimeNoVariance(t *testing.T) {
@@ -129,8 +130,8 @@ func TestTeststep(t *testing.T) {
 
 	if v, ok := fake.stats["sth"]; ok {
 
-		if v.avg != 20.0 {
-			t.Fatalf("Teststep 'sth' measurement %f not 20ns!\n", v.avg)
+		if v.Avg != 20.0 {
+			t.Fatalf("Teststep 'sth' measurement %f not 20ns!\n", v.Avg)
 		}
 	} else {
 		t.Fatal("Teststep 'sth' missing in stats!")

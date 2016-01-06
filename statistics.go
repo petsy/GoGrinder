@@ -12,10 +12,10 @@ type measurement struct {
 }
 
 type stats_value struct {
-	avg   time.Duration
-	min   time.Duration
-	max   time.Duration
-	count int64
+	Avg   time.Duration `json:"avg"`
+	Min   time.Duration `json:"min"`
+	Max   time.Duration `json:"max"`
+	Count int64         `json:"count"`
 }
 
 type stats map[string]stats_value
@@ -53,19 +53,23 @@ func (test *Test) collect() <-chan bool {
 			//fmt.Println(mm)
 			val, exists := test.stats[mm.testcase]
 			if exists {
-				val.avg = (time.Duration(val.count)*val.avg +
-					mm.value) / time.Duration(val.count+1)
-				if mm.value > val.max {
-					val.max = mm.value
+				val.Avg = (time.Duration(val.Count)*val.Avg +
+					mm.value) / time.Duration(val.Count+1)
+				if mm.value > val.Max {
+					val.Max = mm.value
 				}
-				if mm.value < val.min {
-					val.min = mm.value
+				if mm.value < val.Min {
+					val.Min = mm.value
 				}
-				val.count++
+				val.Count++
+				test.lock.Lock()
 				test.stats[mm.testcase] = val
+				test.lock.Unlock()
 			} else {
 				// create a new statistic for t
+				test.lock.Lock()
 				test.stats[mm.testcase] = stats_value{mm.value, mm.value, mm.value, 1}
+				test.lock.Unlock()
 			}
 		}
 		done <- true
@@ -75,7 +79,9 @@ func (test *Test) collect() <-chan bool {
 
 // reset the statistics (measurements from previous run are deleted)
 func (test *Test) reset() {
+	test.lock.Lock()
 	test.stats = make(stats)
+	test.lock.Unlock()
 	test.measurements = make(chan measurement)
 }
 
@@ -84,9 +90,20 @@ func d2f(d time.Duration) float64 {
 	return float64(d) / float64(time.Millisecond)
 }
 
+// read the stats
+func (test *Test) Stats() stats {
+	copy := make(stats)
+	test.lock.RLock()
+	defer test.lock.RUnlock()
+	for k, v := range test.stats {
+		copy[k] = v
+	}
+	return copy
+}
+
 // format the statistics to stdout
 func (test *Test) Report() {
-	s := test.stats
+	s := test.Stats()
 	// sort the results by testcase
 	keys := make([]string, 0, len(s))
 	for tc := range s {
@@ -95,7 +112,7 @@ func (test *Test) Report() {
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", k, d2f(s[k].avg),
-			d2f(s[k].min), d2f(s[k].max), s[k].count)
+		fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", k, d2f(s[k].Avg),
+			d2f(s[k].Min), d2f(s[k].Max), s[k].Count)
 	}
 }
