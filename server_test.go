@@ -91,38 +91,69 @@ func TestGetStatistics(t *testing.T) {
 	// test with 3 measurements
 	var fake = NewTest()
 	done := fake.collect() // this needs a collector to unblock update
-	fake.update("sth", 8*time.Millisecond)
-	fake.update("sth", 10*time.Millisecond)
-	fake.update("sth", 2*time.Millisecond)
+	now := time.Now()
+	fake.update("sth", 8*time.Millisecond, now)
+	fake.update("sth", 10*time.Millisecond, now)
+	fake.update("sth", 2*time.Millisecond, now)
 	close(fake.measurements)
 	<-done
 
 	// invoke REST service
-	response, err := fake.getStatistics(nil, nil)
+	request, _ := http.NewRequest("GET", "/statistics", nil)
+	response, err := fake.getStatistics(nil, request)
 
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
 	}
-	if response.(stats)["sth"] != (stats_value{6666666, 2000000, 10000000, 3}) {
+	if response.(stats)["sth"] != (stats_value{6666666, 2000000, 10000000, 3, now}) {
 		t.Fatalf("Response not as expected: %v", response.(stats)["sth"])
 	}
 }
 
-//func TestHandlerStatisticsWithQuery(t *testing.T) {
-//	// use since query with ISO8601 datetime
-//	request, _ := http.NewRequest("GET", "/statistics?since=2015-12-31T22:00:00.000Z", nil)
-//	//response := httptest.NewRecorder()
-//
-//	var fake = NewTest()
-//	response, err := fake.getStatistics(nil, request)
-//
-//	if err != nil {
-//		t.Fatalf("Error while processing: %s", err)
-//	}
-//
-//	//body := response.Body
-//	b := book{"Ender's Game", "Orson Scott Card", 1}
-//	if response.(book) != b {
-//		t.Fatalf("Response not as expected: %v", response)
-//	}
-//}
+func TestHandlerStatisticsWithQuery(t *testing.T) {
+	// test with 3 measurements (two stats)
+	var fake = NewTest()
+	done := fake.collect() // this needs a collector to unblock update
+	t1 := time.Now().UTC()
+	fake.update("sth", 8*time.Millisecond, t1)
+	time.Sleep(5 * time.Millisecond)
+	t2 := time.Now().UTC()
+	fake.update("else", 10*time.Millisecond, t2)
+	fake.update("else", 2*time.Millisecond, t2)
+	close(fake.measurements)
+	<-done
+
+	// invoke REST service for stats update
+	iso8601 := "2006-01-02T15:04:05.999Z"
+	ts := t2.Format(iso8601)
+	request, _ := http.NewRequest("GET", "/statistics?since=" + ts, nil)
+	response, err := fake.getStatistics(nil, request)
+
+	if err != nil {
+		t.Fatalf("Error while processing: %s", err)
+	}
+	if len(response.(stats)) != 1 {
+		t.Fatalf("Response should contain exactly 1 row.")
+	}
+	if response.(stats)["else"] != (stats_value{6000000, 2000000, 10000000, 2, t2}) {
+		t.Log(t2)
+		t.Fatalf("Response not as expected: %v", response.(stats)["else"])
+	}
+
+	// get all rows
+	request, _ = http.NewRequest("GET", "/statistics", nil)
+	response, err = fake.getStatistics(nil, request)
+
+	if err != nil {
+		t.Fatalf("Error while processing: %s", err)
+	}
+	if len(response.(stats)) != 2 {
+		t.Fatalf("Response should contain exactly 2 rows.")
+	}
+	if response.(stats)["sth"] != (stats_value{8000000, 8000000, 8000000, 1, t1}) {
+		t.Fatalf("Response not as expected: %v", response.(stats)["sth"])
+	}
+	if response.(stats)["else"] != (stats_value{6000000, 2000000, 10000000, 2, t2}) {
+		t.Fatalf("Response not as expected: %v", response.(stats)["else"])
+	}
+}

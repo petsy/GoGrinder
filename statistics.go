@@ -2,13 +2,16 @@ package gogrinder
 
 import (
 	"fmt"
-	time "github.com/finklabs/ttime"
 	"sort"
+
+	time "github.com/finklabs/ttime"
 )
+
 
 type measurement struct {
 	testcase string
 	value    time.Duration
+	last     time.Time
 }
 
 type stats_value struct {
@@ -16,33 +19,14 @@ type stats_value struct {
 	Min   time.Duration `json:"min"`
 	Max   time.Duration `json:"max"`
 	Count int64         `json:"count"`
+	Last  time.Time     `json:"last"`
 }
 
 type stats map[string]stats_value
 
-// update the statistics with a new measurement
-//func (test *Test) update(testcase string, mm time.Duration) {
-//	val, exists := test.stats[testcase]
-//	if exists {
-//		val.avg = (time.Duration(val.count)*val.avg +
-//			mm) / time.Duration(val.count+1)
-//		if mm > val.max {
-//			val.max = mm
-//		}
-//		if mm < val.min {
-//			val.min = mm
-//		}
-//		val.count++
-//		test.stats[testcase] = val
-//	} else {
-//		// create a new statistic for t
-//		test.stats[testcase] = stats_value{mm, mm, mm, 1}
-//	}
-//}
-
 // update and collect work closely together
-func (test *Test) update(testcase string, mm time.Duration) {
-	test.measurements <- measurement{testcase, mm}
+func (test *Test) update(testcase string, mm time.Duration, last time.Time) {
+	test.measurements <- measurement{testcase, mm, last}
 }
 
 // collect all measurements. it blocks until channel is closed
@@ -61,6 +45,7 @@ func (test *Test) collect() <-chan bool {
 				if mm.value < val.Min {
 					val.Min = mm.value
 				}
+				val.Last = mm.last
 				val.Count++
 				test.lock.Lock()
 				test.stats[mm.testcase] = val
@@ -68,7 +53,7 @@ func (test *Test) collect() <-chan bool {
 			} else {
 				// create a new statistic for t
 				test.lock.Lock()
-				test.stats[mm.testcase] = stats_value{mm.value, mm.value, mm.value, 1}
+				test.stats[mm.testcase] = stats_value{mm.value, mm.value, mm.value, 1, mm.last}
 				test.lock.Unlock()
 			}
 		}
@@ -97,6 +82,17 @@ func (test *Test) Stats() stats {
 	defer test.lock.RUnlock()
 	for k, v := range test.stats {
 		copy[k] = v
+	}
+	return copy
+}
+
+// give mt the stats that have been updated since <since>
+func (test *Test) StatsUpdate(since time.Time) stats {
+	copy := make(stats)
+	test.lock.RLock()
+	defer test.lock.RUnlock()
+	for k, v := range test.stats {
+		if (v.Last.After(since)) { copy[k] = v }
 	}
 	return copy
 }

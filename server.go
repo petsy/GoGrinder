@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/GeertJohan/go.rice"
 	"github.com/finklabs/graceful"
 	"github.com/gorilla/mux"
+	time "github.com/finklabs/ttime"
 )
 
 // error response compliant with http.Error
@@ -55,14 +55,19 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // actual REST handlers
 func (test *Test) getStatistics(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError) {
-	//	if since, ok := r.URL.Query()["since"]; ok {
-	//		t, err := time.Parse(time.RFC3339Nano, since[0])
-	//		if err != nil {
-	//			return nil, &handlerError{err, "since should be ISO8601", http.StatusBadRequest}
-	//		}
-	//	}
-	s := test.Stats()
-	return s, nil
+	if since, ok := r.URL.Query()["since"]; ok {
+		//RFC3339Nano := "2006-01-02T15:04:05.999999999Z07:00"
+		iso8601 := "2006-01-02T15:04:05.999Z"
+		t, err := time.Parse(iso8601, since[0])
+		if err != nil {
+			return nil, &handlerError{err, "since should be ISO8601", http.StatusBadRequest}
+		}
+		s := test.StatsUpdate(t)
+		return s, nil
+	} else {
+		s := test.Stats()
+		return s, nil
+	}
 }
 
 // simple get op

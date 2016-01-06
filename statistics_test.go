@@ -2,15 +2,16 @@ package gogrinder
 
 import (
 	"bytes"
-	time "github.com/finklabs/ttime"
 	"testing"
+
+	time "github.com/finklabs/ttime"
 )
 
 func TestUpdateOneMeasurement(t *testing.T) {
 	fake := NewTest()
 	// first measurement
 	done := fake.collect() // this needs a collector to unblock update
-	fake.update("sth", 8*time.Millisecond)
+	fake.update("sth", 8*time.Millisecond, time.Now())
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -31,9 +32,9 @@ func TestUpdateOneMeasurement(t *testing.T) {
 func TestUpdateMultipleMeasurements(t *testing.T) {
 	fake := NewTest()
 	done := fake.collect() // this needs a collector to unblock update
-	fake.update("sth", 8*time.Millisecond)
-	fake.update("sth", 10*time.Millisecond)
-	fake.update("sth", 2*time.Millisecond)
+	fake.update("sth", 8*time.Millisecond, time.Now())
+	fake.update("sth", 10*time.Millisecond, time.Now())
+	fake.update("sth", 2*time.Millisecond, time.Now())
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -55,7 +56,7 @@ func TestReset(t *testing.T) {
 	fake := NewTest()
 	done := fake.collect() // this needs a collector to unblock update
 	// first measurement
-	fake.update("sth", 8*time.Millisecond)
+	fake.update("sth", 8*time.Millisecond, time.Now())
 	close(fake.measurements)
 	<-done
 	if _, ok := fake.stats["sth"]; ok {
@@ -77,9 +78,9 @@ func TestReport(t *testing.T) {
 	fake := NewTest()
 	done := fake.collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.update(name, 8*time.Millisecond)
-		fake.update(name, 10*time.Millisecond)
-		fake.update(name, 2*time.Millisecond)
+		fake.update(name, 8*time.Millisecond, time.Now())
+		fake.update(name, 10*time.Millisecond, time.Now())
+		fake.update(name, 2*time.Millisecond, time.Now())
 	}
 	insert("tc2")
 	insert("tc1")

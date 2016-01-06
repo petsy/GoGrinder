@@ -60,7 +60,7 @@ func (test *Test) Teststep(name string, step func()) func() {
 	its := func() {
 		start := time.Now()
 		step()
-		test.update(name, time.Now().Sub(start))
+		test.update(name, time.Now().Sub(start), start)
 	}
 	test.teststeps[name] = its
 	return its
