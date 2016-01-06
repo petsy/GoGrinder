@@ -8,9 +8,9 @@ install:
  - go get github.com/GeertJohan/go.rice
  # we do not need the rice tool!
  - go get github.com/xeipuuv/gojsonschema
- #- go get -v github.com/finklabs/GoGrinder
  - go get github.com/finklabs/ttime
+ - go get github.com/finklabs/graceful
+ - go get github.com/gorilla/mux
 
 script:
- #- go test -v ./...
  - gocov test | gocov report
