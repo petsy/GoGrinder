@@ -8,8 +8,8 @@ import (
 
 	"github.com/GeertJohan/go.rice"
 	"github.com/finklabs/graceful"
-	"github.com/gorilla/mux"
 	time "github.com/finklabs/ttime"
+	"github.com/gorilla/mux"
 )
 
 // error response compliant with http.Error
@@ -20,13 +20,13 @@ type handlerError struct {
 }
 
 // a custom handler with common error and response formatting
-type handler func(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError)
+type handler func(r *http.Request) (interface{}, *handlerError)
 
 // attach the standard ServeHTTP method to our handler so the http library can call it
 func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// TODO: make the logger plugable
 	// call the service function
-	response, err := fn(w, r)
+	response, err := fn(r)
 
 	// check for errors
 	if err != nil {
@@ -54,28 +54,19 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // actual REST handlers
-func (test *Test) getStatistics(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError) {
-	if since, ok := r.URL.Query()["since"]; ok {
-		//RFC3339Nano := "2006-01-02T15:04:05.999999999Z07:00"
-		iso8601 := "2006-01-02T15:04:05.999Z"
-		t, err := time.Parse(iso8601, since[0])
-		if err != nil {
-			return nil, &handlerError{err, "since should be ISO8601", http.StatusBadRequest}
-		}
-		s := test.StatsUpdate(t)
-		return s, nil
-	} else {
-		s := test.Stats()
-		return s, nil
-	}
+func (test *Test) getStatistics(r *http.Request) (interface{}, *handlerError) {
+	since := ""
+	since = r.URL.Query().Get("since")
+	s := test.Results(since)
+	return s, nil
 }
 
 // simple get op
-//func getLoadmodel(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError) {
+//func getLoadmodel(r *http.Request) (interface{}, *handlerError) {
 //}
 
 // stop the server
-func (test *Test) StopWebserver(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError) {
+func (test *Test) StopWebserver(r *http.Request) (interface{}, *handlerError) {
 	// e.g. curl -X "DELETE" http://localhost:3000/stop
 	test.server.Stop(5 * time.Second)
 	return make(map[string]string), nil

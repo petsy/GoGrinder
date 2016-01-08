@@ -28,3 +28,5 @@ samples/petsy_2014/
 samples/petsy_2014_bak/
 samples/petsy_2014_exp/
 samples/finklabs-site/
+node_modules
+bower_components

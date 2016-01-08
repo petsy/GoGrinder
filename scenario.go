@@ -17,6 +17,8 @@ var stdout io.Writer = os.Stdout
 
 //var stderr io.Writer = os.Stderr
 
+var ISO8601 = "2006-01-02T15:04:05.999Z"
+
 type Test struct {
 	loadmodel     map[string]interface{}
 	testscenarios map[string]interface{}

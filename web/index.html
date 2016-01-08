@@ -1,8 +1,7 @@
 <!DOCTYPE html >
-<html lang="en"
-      ng-app="gogrinder" >
+<html lang="en" ng-app="gogrinder" >
 <head >
-	<title >Contacts</title >
+	<title >GoGrinder Performance Test</title >
 	<link href="./libs/bootstrap/dist/css/bootstrap.min.css"
 	      rel="stylesheet" >
 	<link href="./css/slate.min.css"
@@ -19,14 +18,32 @@
 	      rel="stylesheet" >
 </head >
 
-<body >
+<body ng-controller="MainController" >
 <nav class="navbar navbar-inverse navbar-fixed-top" >
-	<div class="container" >
+	<div class="container">
 		<div class="navbar-header" >
 			<a class="navbar-brand"
-			   href="/" >Contacts
+			   href="/" >GoGrinder
 			</a >
 		</div >
+
+		<div class="collapse navbar-collapse" >
+			<div class="btn-group nav navbar-nav navbar-right" >
+				<a class="btn btn-default">
+					<i class="fa fa-file-text-o"></i>
+				</a>
+				<a class="btn btn-default" ng-hide="test.running" ng-click="start()">
+					<i class="fa fa-play"></i>
+				</a>
+				<a class="btn btn-default" ng-show="test.running" ng-click="stop()">
+					<i class="fa fa-stop"></i>
+				</a>
+				<a class="btn btn-default">
+					<i class="fa fa-eject"></i>
+				</a>
+			</div>
+		</div >
+
 	</div >
 </nav >
 
@@ -35,94 +52,85 @@
 	<toaster-container ></toaster-container >
 
 	<div class="row" >
-		<div class="col-md-8"
-		     ng-controller="PersonListController" >
+		<div class="col-md-8">
 			<div class="row" >
 				<div class="col-md-12" >
-					<!--<form class="form-inline well well-sm" >
-						<span class="fa fa-search" ></span >
-
-						<div class="form-group" >
-							<input type="text"
-							       class="form-control"
-							       id="name"
-							       ng-model="search"
-							       placeholder="Search name..."
-									/>
-						</div >
-
-						<span class="fa fa-sort" ></span >
-
-						<div class="form-group" >
-							<select class="form-control"
-							        ng-model="order" >
-								<option value="name" >Name (ASC)</option >
-								<option value="-name" >Name (DEC)</option >
-								<option value="email" >Email (ASC)</option >
-								<option value="-email" >Email (DEC)</option >
-							</select >
-						</div >
-
-						<button class="btn btn-primary pull-right"
-						        ng-click="showCreateModal()" >Create
-						</button >
-
-					</form >-->
-
 					<table class="table table-bordered"
 					       infinite-scroll="loadMore()"
 					       infinite-scroll-immediate-check="false"
 					       infinite-scroll-distance="1" >
 
 						<tr >
-							<th class="col-1">#</th >
+							<th class="col-1">
+								<div class="sortables" >
+									<span ng-click="order = 'testcase'"
+										  class="fa fa-sort-asc" ></span >
+									<span ng-click="order = '-testcase'"
+										  class="fa fa-sort-desc" ></span >
+								</div >
+								Testcase
+							</th >
 							<th class="col-2">
 								<div class="sortables" >
-									<span ng-click="order = 'name'"
-									      class="fa fa-sort-asc" ></span >
-									<span ng-click="order = '-name'"
-									      class="fa fa-sort-desc" ></span >
+									<span ng-click="order = 'min'"
+										  class="fa fa-sort-asc" ></span >
+									<span ng-click="order = '-max'"
+										  class="fa fa-sort-desc" ></span >
 								</div >
-								Name
+								Min
 							</th >
 							<th class="col-3">
 								<div class="sortables" >
-									<span ng-click="order = 'email'"
-									      class="fa fa-sort-asc" ></span >
-									<span ng-click="order = '-email'"
-									      class="fa fa-sort-desc" ></span >
+									<span ng-click="order = 'max'"
+										  class="fa fa-sort-asc" ></span >
+									<span ng-click="order = '-max'"
+										  class="fa fa-sort-desc" ></span >
 								</div >
-								Email
+								Max
 							</th >
-							<th class="col-4">Phone</th >
+							<th class="col-4">
+								<div class="sortables" >
+									<span ng-click="order = 'avg'"
+										  class="fa fa-sort-asc" ></span >
+									<span ng-click="order = '-avg'"
+										  class="fa fa-sort-desc" ></span >
+								</div >
+								Avg
+							</th >
+							<th class="col-5">
+								<div class="sortables" >
+									<span ng-click="order = 'count'"
+										  class="fa fa-sort-asc" ></span >
+									<span ng-click="order = '-count'"
+										  class="fa fa-sort-desc" ></span >
+								</div >
+								Count
+							</th >
 						</tr >
 
-						<tr ng-repeat="person in contacts.persons"
+						<tr ng-repeat="testcase in test.results"
 						    ng-style="{
-							 'background-color': person.email == contacts.selectedPerson.email ? 'lightgray' : ''
+							 'background-color': testcase.name == test.selectedRow.name ? 'lightgray' : ''
 						}"
-						    ng-click="contacts.selectedPerson = person" >
-							<td >
-								<img ng-src="{{person.photo | defaultImage:'./img/avatar.png' }}"
-								     class="img-circle profile-photo"
-								     alt="" />
-							</td >
-							<td >{{ person.name }}</td >
-							<td >{{ person.email }}</td >
-							<td >{{ person.phonenumber }}</td >
+						    ng-click="test.selectedRow = testcase" >
+							<td >{{ testcase.name }}</td >
+							<td >{{ testcase.min }}</td >
+							<td >{{ testcase.max }}</td >
+							<td >{{ testcase.avg }}</td >
+							<td >{{ testcase.count }}</td >
 						</tr >
 
 
 					</table >
 
-					<div ng-show="contacts.persons.length == 0 && !contacts.isLoading" >
+					<div ng-show="test.results.length == 0 && !tests.isLoading" >
 						<div class="alert alert-info" >
 							<p class="text-center" >No results found for search term '{{ search }}'</p >
 						</div >
 					</div >
 
 					<div class="spinner"
-					     ng-show="contacts.isLoading" >
+					     ng-show="tests.isLoading" >
 						<span us-spinner="{radius:8, width:5, length: 3, lines:9}" ></span >
 
 						<p >Loading...</p >
@@ -132,30 +140,6 @@
 			</div >
 
 		</div >
-		<!--<div class="col-md-4"
-		     ng-controller="PersonDetailController" >
-
-			<div class="panel panel-default" >
-				<div class="panel-heading" >Details
-
-					<button class="btn btn-danger btn-sm pull-right"
-					        ladda="contacts.isDeleting"
-					        ng-click="remove()" >Delete
-					</button >
-					<div class="clearfix" ></div >
-
-				</div >
-				<div class="panel-body" >
-					<form class="form-horizontal"
-					      ng-submit="save()"
-					      novalidate >
-
-						<ng-include src="'templates/form.html'" ></ng-include >
-
-					</form >
-				</div >
-			</div >
-		</div >-->
 	</div >
 </div >
 

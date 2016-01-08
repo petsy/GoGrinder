@@ -14,13 +14,15 @@ body {
     margin-top: 20px; }
 
 .table .col-1 {
-  width: 10%; }
+  width: 20%; }
 .table .col-2 {
-  width: 30%; }
+  width: 20%; }
 .table .col-3 {
-  width: 30%; }
+  width: 20%; }
 .table .col-4 {
-  width: 30%; }
+  width: 20%; }
+.table .col-5 {
+  width: 20%; }
 .table tr td {
   vertical-align: middle; }
   .table tr td .profile-photo {

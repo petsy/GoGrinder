@@ -43,3 +43,7 @@ http://stackoverflow.com/questions/34462355/how-to-deal-with-the-fmt-golang-libr
 
 ### Dealing with os.Exit
 library code should never os.Exit(1). Instead return from functions using error. Output "error.Error()"" and call "os.Exit(1)" from the calling main function! Funny thing is that this dramatically simplifies the testing of the library code, too.
+
+
+## testing ui code
+http://bendetat.com/karma-and-mocha-for-angular-testing.html

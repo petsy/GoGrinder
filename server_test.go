@@ -15,7 +15,7 @@ func TestHandlerServeHTTP(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/something", nil)
 	response := httptest.NewRecorder()
 
-	myhandler := handler(func(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError) {
+	myhandler := handler(func(r *http.Request) (interface{}, *handlerError) {
 		return "moinmoin", nil
 	})
 
@@ -39,7 +39,7 @@ func TestHandlerServeHTTPWrapError(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/something", nil)
 	response := httptest.NewRecorder()
 
-	myhandler := handler(func(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError) {
+	myhandler := handler(func(r *http.Request) (interface{}, *handlerError) {
 		return nil, &handlerError{fmt.Errorf("sorry"), "error 500", http.StatusInternalServerError}
 	})
 
@@ -55,7 +55,7 @@ func TestHandlerServeHTTPEmptyResponse(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/something", nil)
 	response := httptest.NewRecorder()
 
-	myhandler := handler(func(w http.ResponseWriter, r *http.Request) (interface{}, *handlerError) {
+	myhandler := handler(func(r *http.Request) (interface{}, *handlerError) {
 		return nil, nil
 	})
 
@@ -91,7 +91,7 @@ func TestGetStatistics(t *testing.T) {
 	// test with 3 measurements
 	var fake = NewTest()
 	done := fake.collect() // this needs a collector to unblock update
-	now := time.Now()
+	now := time.Now().UTC()
 	fake.update("sth", 8*time.Millisecond, now)
 	fake.update("sth", 10*time.Millisecond, now)
 	fake.update("sth", 2*time.Millisecond, now)
@@ -100,13 +100,13 @@ func TestGetStatistics(t *testing.T) {
 
 	// invoke REST service
 	request, _ := http.NewRequest("GET", "/statistics", nil)
-	response, err := fake.getStatistics(nil, request)
+	response, err := fake.getStatistics(request)
 
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
 	}
-	if response.(stats)["sth"] != (stats_value{6666666, 2000000, 10000000, 3, now}) {
-		t.Fatalf("Response not as expected: %v", response.(stats)["sth"])
+	if response.([]result)[0] != (result{"sth", 6666666, 2000000, 10000000, 3, now.Format(ISO8601)}) {
+		t.Fatalf("Response not as expected: %v", response.([]result)[0])
 	}
 }
 
@@ -117,43 +117,58 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	t1 := time.Now().UTC()
 	fake.update("sth", 8*time.Millisecond, t1)
 	time.Sleep(5 * time.Millisecond)
-	t2 := time.Now().UTC()
-	fake.update("else", 10*time.Millisecond, t2)
+	t2 := t1.Add(2 * time.Millisecond)
+	fake.update("else", 10*time.Millisecond, t1)
 	fake.update("else", 2*time.Millisecond, t2)
+	t3 := t2.Add(2 * time.Millisecond)
 	close(fake.measurements)
 	<-done
 
 	// invoke REST service for stats update
-	iso8601 := "2006-01-02T15:04:05.999Z"
-	ts := t2.Format(iso8601)
-	request, _ := http.NewRequest("GET", "/statistics?since=" + ts, nil)
-	response, err := fake.getStatistics(nil, request)
+	//iso8601 := "2006-01-02T15:04:05.999Z"
+	ts2 := t2.Format(ISO8601)
+	request, _ := http.NewRequest("GET", "/statistics?since="+ts2, nil)
+	response, err := fake.getStatistics(request)
 
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
 	}
-	if len(response.(stats)) != 1 {
+	if len(response.([]result)) != 1 {
 		t.Fatalf("Response should contain exactly 1 row.")
 	}
-	if response.(stats)["else"] != (stats_value{6000000, 2000000, 10000000, 2, t2}) {
-		t.Log(t2)
-		t.Fatalf("Response not as expected: %v", response.(stats)["else"])
+	if response.([]result)[0] != (result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+		t.Fatalf("Response not as expected: %v", response.([]result)[0])
+	}
+
+	// update but no new data
+	ts3 := t3.Format(ISO8601)
+	request, _ = http.NewRequest("GET", "/statistics?since="+ts3, nil)
+	response, err = fake.getStatistics(request)
+
+	if len(response.([]result)) != 0 {
+		t.Fatalf("Response should contain 0 rows.")
 	}
 
 	// get all rows
 	request, _ = http.NewRequest("GET", "/statistics", nil)
-	response, err = fake.getStatistics(nil, request)
+	response, err = fake.getStatistics(request)
 
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
 	}
-	if len(response.(stats)) != 2 {
+	if len(response.([]result)) != 2 {
 		t.Fatalf("Response should contain exactly 2 rows.")
 	}
-	if response.(stats)["sth"] != (stats_value{8000000, 8000000, 8000000, 1, t1}) {
-		t.Fatalf("Response not as expected: %v", response.(stats)["sth"])
+	// "else" is [0]
+	if response.([]result)[0] != (result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+		t.Log(t2.Format(ISO8601))
+		t.Log("Response 0: %v", response.([]result)[0])
+		t.Log("Response 1: %v", response.([]result)[1])
+		t.Fatalf("Response not as expected: %v", response.([]result)[0])
 	}
-	if response.(stats)["else"] != (stats_value{6000000, 2000000, 10000000, 2, t2}) {
-		t.Fatalf("Response not as expected: %v", response.(stats)["else"])
+	// "sth" is [1]
+	if response.([]result)[1] != (result{"sth", 8000000, 8000000, 8000000, 1, t1.Format(ISO8601)}) {
+		t.Log(t1)
+		t.Fatalf("Response not as expected: %v", response.([]result)[1])
 	}
 }

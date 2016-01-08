@@ -1,0 +1,19 @@
+{
+  "name": "gogrinder-ui",
+  "namelower": "gogrinder-ui",
+  "version": "0.0.1",
+  "description": "gogrinder-ui",
+  "license": "MIT",
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/finklabs/GoGrinder.git"
+  },
+  "devDependencies": {
+    "karma": "^0.13.19",
+    "karma-chai": "^0.1.0",
+    "karma-mocha": "^0.2.1",
+    "karma-phantomjs-launcher": "^0.2.3"
+  },
+  "scripts": {}
+}

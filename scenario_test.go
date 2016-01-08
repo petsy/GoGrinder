@@ -130,8 +130,8 @@ func TestTeststep(t *testing.T) {
 
 	if v, ok := fake.stats["sth"]; ok {
 
-		if v.Avg != 20.0 {
-			t.Fatalf("Teststep 'sth' measurement %f not 20ns!\n", v.Avg)
+		if v.avg != 20.0 {
+			t.Fatalf("Teststep 'sth' measurement %f not 20ns!\n", v.avg)
 		}
 	} else {
 		t.Fatal("Teststep 'sth' missing in stats!")

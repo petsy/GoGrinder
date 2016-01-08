@@ -7,7 +7,6 @@ import (
 	time "github.com/finklabs/ttime"
 )
 
-
 type measurement struct {
 	testcase string
 	value    time.Duration
@@ -15,12 +14,30 @@ type measurement struct {
 }
 
 type stats_value struct {
-	Avg   time.Duration `json:"avg"`
-	Min   time.Duration `json:"min"`
-	Max   time.Duration `json:"max"`
-	Count int64         `json:"count"`
-	Last  time.Time     `json:"last"`
+	avg   time.Duration
+	min   time.Duration
+	max   time.Duration
+	count int64
+	last  time.Time
 }
+
+type result struct {
+	Testcase string        `json:"testcase"`
+	Avg      time.Duration `json:"avg"`
+	Min      time.Duration `json:"min"`
+	Max      time.Duration `json:"max"`
+	Count    int64         `json:"count"`
+	Last     string        `json:"last"`
+}
+
+// simple approach to sorting
+// ByTestcase implements sort.Interface for []result based on
+// the Testcase field.
+type ByTestcase []result
+
+func (a ByTestcase) Len() int           { return len(a) }
+func (a ByTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
 
 type stats map[string]stats_value
 
@@ -37,16 +54,16 @@ func (test *Test) collect() <-chan bool {
 			//fmt.Println(mm)
 			val, exists := test.stats[mm.testcase]
 			if exists {
-				val.Avg = (time.Duration(val.Count)*val.Avg +
-					mm.value) / time.Duration(val.Count+1)
-				if mm.value > val.Max {
-					val.Max = mm.value
+				val.avg = (time.Duration(val.count)*val.avg +
+					mm.value) / time.Duration(val.count+1)
+				if mm.value > val.max {
+					val.max = mm.value
 				}
-				if mm.value < val.Min {
-					val.Min = mm.value
+				if mm.value < val.min {
+					val.min = mm.value
 				}
-				val.Last = mm.last
-				val.Count++
+				val.last = mm.last
+				val.count++
 				test.lock.Lock()
 				test.stats[mm.testcase] = val
 				test.lock.Unlock()
@@ -75,40 +92,29 @@ func d2f(d time.Duration) float64 {
 	return float64(d) / float64(time.Millisecond)
 }
 
-// read the stats
-func (test *Test) Stats() stats {
-	copy := make(stats)
+// give mt the stats that have been updated since <since> in ISO8601
+// if since can not be parsed it returns all stats!
+func (test *Test) Results(since string) []result {
 	test.lock.RLock()
+	copy := []result{}
 	defer test.lock.RUnlock()
-	for k, v := range test.stats {
-		copy[k] = v
-	}
-	return copy
-}
 
-// give mt the stats that have been updated since <since>
-func (test *Test) StatsUpdate(since time.Time) stats {
-	copy := make(stats)
-	test.lock.RLock()
-	defer test.lock.RUnlock()
+	s, err := time.Parse(ISO8601, since)
+	all := (err != nil)
 	for k, v := range test.stats {
-		if (v.Last.After(since)) { copy[k] = v }
+		if all || (v.last.After(s)) {
+			copy = append(copy, result{k, v.avg, v.min, v.max, v.count, v.last.UTC().Format(ISO8601)})
+		}
 	}
+	sort.Sort(ByTestcase(copy))
 	return copy
 }
 
 // format the statistics to stdout
 func (test *Test) Report() {
-	s := test.Stats()
-	// sort the results by testcase
-	keys := make([]string, 0, len(s))
-	for tc := range s {
-		keys = append(keys, tc)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", k, d2f(s[k].Avg),
-			d2f(s[k].Min), d2f(s[k].Max), s[k].Count)
+	res := test.Results("") // get all results
+	for _, s := range res {
+		fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", s.Testcase, d2f(s.Avg),
+			d2f(s.Min), d2f(s.Max), s.Count)
 	}
 }
