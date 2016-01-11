@@ -2,13 +2,10 @@ backlog
 =======
 
 frontend
-* show table with results
-* get results from restful ws
-* make table sortable
 * start / stop test
 * edit loadmodel
 * authenticate frontend
-* query data increments
+* save results as csv file
 
 command line
 * start / stop
@@ -19,6 +16,7 @@ scenario
 * multiple users
 * variable pacing
 * script configuration
+* send data to Prometheus (eg. specialized reporter plugin)
 
 sample
 * pet clinic (write dockerfile)
@@ -28,4 +26,8 @@ sample
 
 Version 0.01
 ============
+* show table with results
+* get results from restful ws
+* make table sortable
+* query data increments
 

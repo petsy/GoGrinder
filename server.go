@@ -47,8 +47,18 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// send the response and log
+	// assemble header
 	w.Header().Set("Content-Type", "application/json")
+	// not sure if we still need the CORS issue fix
+//	if origin := r.Header.Get("Origin"); origin != "" {
+//		fmt.Println(origin)
+//		w.Header().Set("Access-Control-Allow-Origin", origin)
+//		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+//		w.Header().Set("Access-Control-Allow-Headers",
+//			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+//	}
+
+	// send the response and log
 	w.Write(bytes)
 	log.Printf("%s %s %s %d", r.RemoteAddr, r.Method, r.URL, 200)
 }
@@ -57,8 +67,23 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (test *Test) getStatistics(r *http.Request) (interface{}, *handlerError) {
 	since := ""
 	since = r.URL.Query().Get("since")
-	s := test.Results(since)
-	return s, nil
+	res := make(map[string]interface{})
+	res["results"] = test.Results(since)
+	res["running"] = test.running
+	return res, nil
+}
+
+// TODO: start stop of server processes needs testing!
+func (test *Test) startTest(r *http.Request) (interface{}, *handlerError) {
+	if (!test.running) {
+		test.Exec()
+	}
+	return make(map[string]string), nil
+}
+
+func (test *Test) stopTest(r *http.Request) (interface{}, *handlerError) {
+	// TODO
+	return make(map[string]string), nil
 }
 
 // simple get op
@@ -72,18 +97,26 @@ func (test *Test) StopWebserver(r *http.Request) (interface{}, *handlerError) {
 	return make(map[string]string), nil
 }
 
+// TODO: we need some kind of integration test to make sure routes work as expected
 func (test *Test) Webserver() {
 	router := mux.NewRouter()
 
 	// frontend
-	router.Handle("/app", http.FileServer(rice.MustFindBox("web").HTTPBox()))
+	box := rice.MustFindBox("web")
+	_ = box
+	// prod mode:
+	//appFileServer := http.FileServer(box.HTTPBox())
+	// dev mode:
+	appFileServer := http.FileServer(http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
+	// app route:
+	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
 
 	// REST routes
 	router.Handle("/statistics", handler(test.getStatistics)).Methods("GET")
 	//router.Handle("/loadmodel", handler(getLoadmodel)).Methods("GET")
 	//router.Handle("/loadmodel", handler(updateLoadmodel)).Methods("PUT")
-	//router.Handle("/test", handler(startTest)).Methods("POST")
-	//router.Handle("/test", handler(stopTest)).Methods("DELETE")
+	router.Handle("/test", handler(test.startTest)).Methods("POST")
+	router.Handle("/test", handler(test.stopTest)).Methods("DELETE")
 	router.Handle("/stop", handler(test.StopWebserver)).Methods("DELETE")
 
 	test.server = graceful.Server{

@@ -28,6 +28,7 @@ type Test struct {
 	wg            sync.WaitGroup
 	measurements  chan measurement
 	server        graceful.Server
+	running       bool
 }
 
 // Constructor takes care of initializing
@@ -111,6 +112,7 @@ func (test *Test) Exec() error {
 	if scenario, ok := test.testscenarios[sel]; ok {
 		test.reset()           // clear stats from previous run
 		done := test.collect() // start the collector
+		test.running = true
 
 		fn := reflect.ValueOf(scenario)
 		fnType := fn.Type()
@@ -138,6 +140,7 @@ func (test *Test) Exec() error {
 		test.wg.Wait()           // wait till end
 		close(test.measurements) // need to close the channel so that collect can exit, too
 		<-done                   // wait for collector to finish
+		test.running = false
 		test.Report()
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)
