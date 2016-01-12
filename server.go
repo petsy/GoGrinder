@@ -69,20 +69,22 @@ func (test *Test) getStatistics(r *http.Request) (interface{}, *handlerError) {
 	since = r.URL.Query().Get("since")
 	res := make(map[string]interface{})
 	res["results"] = test.Results(since)
-	res["running"] = test.running
+	res["running"] = test.status != stopped  // could be stopping or running
 	return res, nil
 }
 
 // TODO: start stop of server processes needs testing!
 func (test *Test) startTest(r *http.Request) (interface{}, *handlerError) {
-	if (!test.running) {
+	if (test.status == stopped) {
 		test.Exec()
 	}
 	return make(map[string]string), nil
 }
 
 func (test *Test) stopTest(r *http.Request) (interface{}, *handlerError) {
-	// TODO
+	if (test.status != stopped) {
+		test.status = stopping
+	}
 	return make(map[string]string), nil
 }
 
@@ -91,7 +93,7 @@ func (test *Test) stopTest(r *http.Request) (interface{}, *handlerError) {
 //}
 
 // stop the server
-func (test *Test) StopWebserver(r *http.Request) (interface{}, *handlerError) {
+func (test *Test) stopWebserver(r *http.Request) (interface{}, *handlerError) {
 	// e.g. curl -X "DELETE" http://localhost:3000/stop
 	test.server.Stop(5 * time.Second)
 	return make(map[string]string), nil
@@ -117,7 +119,7 @@ func (test *Test) Webserver() {
 	//router.Handle("/loadmodel", handler(updateLoadmodel)).Methods("PUT")
 	router.Handle("/test", handler(test.startTest)).Methods("POST")
 	router.Handle("/test", handler(test.stopTest)).Methods("DELETE")
-	router.Handle("/stop", handler(test.StopWebserver)).Methods("DELETE")
+	router.Handle("/stop", handler(test.stopWebserver)).Methods("DELETE")
 
 	test.server = graceful.Server{
 		Timeout: 5 * time.Second,

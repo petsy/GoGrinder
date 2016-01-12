@@ -24,16 +24,6 @@ app.controller('MainController', function ($scope, $filter, TestService) {
     $scope.reverse = false;
     $scope.test = TestService;
 
-
-    $scope.start = function () {
-        console.log("start test");
-        $scope.test.start()
-    };
-    $scope.stop = function () {
-        console.log("stop test");
-        $scope.test.stop()
-    };
-
     //$scope.showCreateModal = function () {
     //	$scope.contacts.selectedLoadmodel = {};
     //	$scope.createModal = $modal({
@@ -122,6 +112,15 @@ app.service('TestService', function($http, $timeout) {
             $http.delete('http://localhost:3000/test')
                 .success(function(data, status, headers, config) {
                     console.log('test stoped');
+                })
+                .error(function(data, status, headers, config) {
+                    // log error
+                });
+        },
+        'exit': function() {
+            $http.delete('http://localhost:3000/stop')
+                .success(function(data, status, headers, config) {
+                    console.log('webserver stoped');
                 })
                 .error(function(data, status, headers, config) {
                     // log error

@@ -7,12 +7,14 @@ import (
 	time "github.com/finklabs/ttime"
 )
 
+// internal datastructure used on the test.measurements channel
 type measurement struct {
 	testcase string
 	value    time.Duration
 	last     time.Time
 }
 
+// internal datastructure to collect and aggregate measurements
 type stats_value struct {
 	avg   time.Duration
 	min   time.Duration
@@ -20,7 +22,9 @@ type stats_value struct {
 	count int64
 	last  time.Time
 }
+type stats map[string]stats_value
 
+// this is what is what you get from Results()
 type result struct {
 	Testcase string        `json:"testcase"`
 	Avg      time.Duration `json:"avg"`
@@ -34,19 +38,16 @@ type result struct {
 // ByTestcase implements sort.Interface for []result based on
 // the Testcase field.
 type ByTestcase []result
-
 func (a ByTestcase) Len() int           { return len(a) }
 func (a ByTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
-
-type stats map[string]stats_value
 
 // update and collect work closely together
 func (test *Test) update(testcase string, mm time.Duration, last time.Time) {
 	test.measurements <- measurement{testcase, mm, last}
 }
 
-// collect all measurements. it blocks until channel is closed
+// collect all measurements. it blocks until test.measurements channel is closed
 func (test *Test) collect() <-chan bool {
 	done := make(chan bool)
 	go func(test *Test) {
@@ -87,7 +88,7 @@ func (test *Test) reset() {
 	test.measurements = make(chan measurement)
 }
 
-// convert time.Duration to ms in float64
+// helper to convert time.Duration to ms in float64
 func d2f(d time.Duration) float64 {
 	return float64(d) / float64(time.Millisecond)
 }

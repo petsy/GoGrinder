@@ -26,7 +26,5 @@ $ gocov test | gocov report
 $ go build
 
 
-
-
 ## testing ui code
 http://bendetat.com/karma-and-mocha-for-angular-testing.html

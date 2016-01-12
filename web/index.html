@@ -32,13 +32,13 @@
                 <a class="btn btn-default"  ng-click="loadmodel()">
                     <i class="fa fa-file-text-o"></i>
                 </a>
-                <a class="btn btn-default" ng-hide="test.running" ng-click="start()">
+                <a class="btn btn-default" ng-hide="test.running" ng-click="test.start()">
                     <i class="fa fa-play"></i>
                 </a>
-                <a class="btn btn-default" ng-show="test.running" ng-click="stop()">
+                <a class="btn btn-default" ng-show="test.running" ng-click="test.stop()">
                     <i class="fa fa-stop"></i>
                 </a>
-                <a class="btn btn-default" ng-click="exit()">
+                <a class="btn btn-default" ng-click="test.exit()">
                     <i class="fa fa-eject"></i>
                 </a>
             </div>
