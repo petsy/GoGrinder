@@ -1,38 +1,68 @@
 var app = angular.module('gogrinder', [
-    'ngResource',
-    'infinite-scroll',
-    'angularSpinner',
-    'jcs-autoValidate',
-    'angular-ladda',
+    //'ngResource',
+    //'infinite-scroll',
+    //'angularSpinner',
+    //'jcs-autoValidate',
+    //'angular-ladda',
     'mgcrea.ngStrap',
-    'toaster',
-    'ngAnimate'
+    //'toaster',
+    //'ngAnimate'
 ]);
 
 
-app.config(function ($httpProvider, $resourceProvider, laddaProvider) {
+app.config(function ($httpProvider) {
+    //laddaProvider
     $httpProvider.defaults.headers.common['Authorization'] = 'Token 20002cd74d5ce124ae219e739e18956614aab490';
-    $resourceProvider.defaults.stripTrailingSlashes = false;
-    laddaProvider.setOption({
-        style: 'expand-right'
-    });
+    //$resourceProvider.defaults.stripTrailingSlashes = false;
+    //laddaProvider.setOption({
+    //    style: 'expand-right'
+    //});
 });
 
 // service to start, stop, provide test results
-app.controller('MainController', function ($scope, $filter, TestService) {
+app.controller('MainController', function ($scope, $filter, $modal, TestService, ConfigService) {
     $scope.order = "testcase";
     $scope.reverse = false;
     $scope.test = TestService;
+    $scope.config = ConfigService;
 
-    //$scope.showCreateModal = function () {
-    //	$scope.contacts.selectedLoadmodel = {};
-    //	$scope.createModal = $modal({
-    //		scope: $scope,
-    //		template: 'templates/modal.create.tpl.html',
-    //		show: true
-    //	})
-    //};
+    $scope.showModal = function () {
+        $scope.editModal = $modal({
+            scope: $scope,
+            template: 'templates/modal.html',
+            show: true
+        })
+    };
+    $scope.save = function () {
+        $scope.editModal.hide();
+        $scope.config.saveFile()
+    };
 
+});
+
+
+// service to start, stop, provide test results
+app.service('ConfigService', function($http, $timeout) {
+    var self = {
+        'loadmodel': "",
+        'readFile': function () {
+            self.loadmodel = '[{"testcase": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},{"testcase": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},{"testcase": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}]';
+
+            //$http.get('http://localhost:3000/loadmodel')
+            //    .success(function(data, status, headers, config) {
+            //        self.loadmodel = data
+            //    })
+            //    .error(function(data, status, headers, config) {
+            //        // log error
+            //    });
+        },
+        'saveFile': function () {
+            console.log('save file');
+        },
+    };
+
+    self.readFile();
+    return self;
 });
 
 

@@ -1,0 +1,30 @@
+<div id="editModal"
+     class="modal"
+     role="dialog" >
+	<div class="modal-dialog" >
+		<div class="modal-content" >
+			<div class="modal-header" >
+				<button type="button"
+				        class="close"
+				        ng-click="editModal.hide()" >&times;</button >
+				<h4 class="modal-title" >Loadmodel</h4 >
+			</div >
+			<div class="modal-body" >
+				<form ng-submit="save()"
+				      novalidate >
+					<div class="form-group" >
+						<textarea class="form-control" rows="12" id="loadmodel" ng-model="config.loadmodel"></textarea>
+					</div >
+					<div class="buttons" >
+						<button class="btn btn-primary btn-block"
+								ladda="contacts.isSaving"
+								type="submit" >Save
+						</button >
+					</div >
+
+				</form >
+			</div >
+		</div >
+
+	</div >
+</div >

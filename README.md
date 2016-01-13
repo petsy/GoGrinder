@@ -27,4 +27,15 @@ $ go build
 
 
 ## testing ui code
+http://www.bradoncode.com/blog/2015/05/19/karma-angularjs-testing/
 http://bendetat.com/karma-and-mocha-for-angular-testing.html
+=> we are using mocha, chai, sinon
+
+running the tests:
+$ npm test
+
+## adding dependencies using bower
+$ bower install --save angular 
+$ bower install --save angular-ladda
+...
+$ bower install --save-dev angular-mocks
