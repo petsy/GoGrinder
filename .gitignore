@@ -13,7 +13,6 @@ htmlcov
 six-*.egg/
 *.orig
 .idea/
-*rice-box.*
 
 bak
 output
@@ -23,6 +22,7 @@ venv
 venv3
 chameleon_cache
 cache
+coverage
 samples/petsy_2015/
 samples/petsy_2014/
 samples/petsy_2014_bak/

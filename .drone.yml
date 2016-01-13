@@ -1,0 +1,23 @@
+build:
+  image: golang
+  commands:
+    # remove files that we do not want to see in the test report
+    - rm *.rice-box.*
+
+    # install gogrinder dependencies
+    - go get ./...
+
+    # install test dependencies
+    - go get golang.org/x/tools/cmd/cover
+    - go get -v github.com/axw/gocov
+    - go install github.com/axw/gocov/gocov
+
+    # install nodejs requirements
+    - npm -d install
+    - ./node_modules/bower/bin/bower install
+
+    # run the tests on the go code
+    - gocov test | gocov report
+
+    # run the tests on the Angularjs frontend
+    - npm test

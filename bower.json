@@ -17,7 +17,6 @@
   ],
   "dependencies": {
     "angular": "~1.4.8",
-    "angular-ladda": "~0.3.1",
     "bootstrap": "~3.3.6",
     "bootstrap-additions": "~0.3.1",
     "font-awesome": "~4.5.0",
