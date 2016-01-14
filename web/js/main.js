@@ -20,16 +20,28 @@ app.config(function ($httpProvider) {
 });
 
 // service to start, stop, provide test results
-app.controller('MainController', function ($scope, $filter, $modal, TestService, ConfigService) {
+app.controller('MainController', function ($scope, $filter, $modal, $http, TestService, ConfigService) {
     $scope.order = "testcase";
     $scope.reverse = false;
     $scope.test = TestService;
     $scope.config = ConfigService;
+    $scope.revision = "";
 
-    $scope.showModal = function () {
+    $scope.editConfig = function() {
         $scope.editModal = $modal({
             scope: $scope,
-            template: 'templates/modal.html',
+            template: 'templates/config.html',
+            show: true
+        })
+    };
+    $scope.showAbout = function() {
+        $http.get('revision.txt')
+            .success(function (data) {
+                $scope.revision = data;
+            });
+        $scope.aboutModal = $modal({
+            scope: $scope,
+            template: 'templates/about.html',
             show: true
         })
     };

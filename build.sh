@@ -16,6 +16,13 @@ cp --parents angular-strap/dist/angular-strap.tpl.min.js $libs
 cd ..
 
 
+# add the revision hash
+# note: by definition the revision is always one commit behind so it should be done in a sep. commit step
+# this could be done using .gitattributes and a script (this requires a build after checkout, too):
+# http://stackoverflow.com/questions/16765461/git-add-revision-number-to-file-on-commit
+git rev-parse --short HEAD > web/revision.txt
+
+
 # embedd the frontend
 rice embed-syso
 

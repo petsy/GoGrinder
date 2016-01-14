@@ -13,6 +13,7 @@ htmlcov
 six-*.egg/
 *.orig
 .idea/
+web/revision.txt
 
 bak
 output

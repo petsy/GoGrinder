@@ -29,7 +29,7 @@
 
         <div class="collapse navbar-collapse">
             <div class="btn-group nav navbar-nav navbar-right">
-                <a class="btn btn-default"  ng-click="showModal()">
+                <a class="btn btn-default"  ng-click="editConfig()">
                     <i class="fa fa-file-text-o"></i>
                 </a>
                 <a class="btn btn-default" ng-hide="test.running" ng-click="test.start()">
@@ -40,6 +40,9 @@
                 </a>
                 <a class="btn btn-default" ng-click="test.exit()">
                     <i class="fa fa-eject"></i>
+                </a>
+                <a class="btn btn-default"  ng-click="showAbout()">
+                    <i class="fa fa-info-circle"></i>
                 </a>
             </div>
         </div>

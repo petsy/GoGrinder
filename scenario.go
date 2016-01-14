@@ -1,6 +1,5 @@
 // Package gogrinder provides functionality for implementing and executing load & performance tests.
 //
-// TODO: writeup purpose of gogrinder
 package gogrinder
 
 import (

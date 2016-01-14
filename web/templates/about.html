@@ -1,0 +1,36 @@
+<div id="aboutModal"
+     class="modal"
+     role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button"
+                        class="close"
+                        ng-click="aboutModal.hide()">&times;</button>
+                <h4 class="modal-title">About GoGrinder</h4>
+            </div>
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <h2>GoGrinder Load & Performance Test</h2>
+
+                    <p>GoGrinder: <a href="http://gogrinder.io">Home</a></p>
+
+                    <p>GoGrinder: <a href="https://godoc.org/github.com/finklabs/GoGrinder">Documentation</a></p>
+
+                    <p>GoGrinder: <a href="https://github.com/finklabs/GoGrinder">Github repo</a></p>
+                    <br/>
+
+                    <p>&copy; 2015, 2016 Fink Labs GmbH</p>
+
+                    <p>Revision: {{ revision }}</p>
+                </div>
+                <div class="buttons">
+                    <button class="btn btn-primary btn-block"
+                            ng-click="aboutModal.hide()">Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

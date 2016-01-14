@@ -105,11 +105,11 @@ func (test *Test) Webserver() {
 
 	// frontend
 	box := rice.MustFindBox("web")
-	_ = box
+	//_ = box
 	// prod mode:
-	//appFileServer := http.FileServer(box.HTTPBox())
+	appFileServer := http.FileServer(box.HTTPBox())
 	// dev mode:
-	appFileServer := http.FileServer(http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
+	// appFileServer := http.FileServer(http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
 	// app route:
 	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
 
