@@ -3,9 +3,27 @@ package gogrinder
 import (
 	"fmt"
 	"sort"
+	"sync"
 
 	time "github.com/finklabs/ttime"
 )
+
+
+// interface Statistics
+type Statistics interface {
+	Update(testcase string, mm time.Duration, last time.Time)
+	Collect() <-chan bool
+	Reset()
+	Results(since string) []result
+	Report()
+}
+
+// struct TestStatistics
+type TestStatistics struct {
+	lock          sync.RWMutex            // lock that is used on stats
+	stats         stats                   // collect and aggregate results
+	measurements  chan measurement        // channel used to collect measurements from teststeps
+}
 
 // internal datastructure used on the test.measurements channel
 type measurement struct {
@@ -42,15 +60,16 @@ func (a ByTestcase) Len() int           { return len(a) }
 func (a ByTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
 
+
 // update and collect work closely together
-func (test *Test) update(testcase string, mm time.Duration, last time.Time) {
+func (test *TestStatistics) update(testcase string, mm time.Duration, last time.Time) {
 	test.measurements <- measurement{testcase, mm, last}
 }
 
 // collect all measurements. it blocks until test.measurements channel is closed
-func (test *Test) collect() <-chan bool {
+func (test *TestStatistics) collect() <-chan bool {
 	done := make(chan bool)
-	go func(test *Test) {
+	go func(test *TestStatistics) {
 		for mm := range test.measurements {
 			//fmt.Println(mm)
 			val, exists := test.stats[mm.testcase]
@@ -81,7 +100,7 @@ func (test *Test) collect() <-chan bool {
 }
 
 // reset the statistics (measurements from previous run are deleted)
-func (test *Test) reset() {
+func (test *TestStatistics) reset() {
 	test.lock.Lock()
 	test.stats = make(stats)
 	test.lock.Unlock()
@@ -95,7 +114,7 @@ func d2f(d time.Duration) float64 {
 
 // give mt the stats that have been updated since <since> in ISO8601
 // if since can not be parsed it returns all stats!
-func (test *Test) Results(since string) []result {
+func (test *TestStatistics) Results(since string) []result {
 	test.lock.RLock()
 	copy := []result{}
 	defer test.lock.RUnlock()
@@ -112,7 +131,7 @@ func (test *Test) Results(since string) []result {
 }
 
 // format the statistics to stdout
-func (test *Test) Report() {
+func (test *TestStatistics) Report() {
 	res := test.Results("") // get all results
 	for _, s := range res {
 		fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", s.Testcase, d2f(s.Avg),

@@ -12,6 +12,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
+
+type Server interface {
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	Webserver()
+}
+
+// TestServer datastructure
+type TestServer struct {
+	test      *TestScenario
+	server    graceful.Server         // stoppable http server
+}
+
+
+
 // error response compliant with http.Error
 type handlerError struct {
 	Error   error
@@ -64,26 +78,26 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // actual REST handlers
-func (test *Test) getStatistics(r *http.Request) (interface{}, *handlerError) {
+func (srv *TestServer) getStatistics(r *http.Request) (interface{}, *handlerError) {
 	since := ""
 	since = r.URL.Query().Get("since")
 	res := make(map[string]interface{})
-	res["results"] = test.Results(since)
-	res["running"] = test.status != stopped  // could be stopping or running
+	res["results"] = srv.test.Results(since)
+	res["running"] = srv.test.status != stopped  // could be stopping or running
 	return res, nil
 }
 
 // TODO: start stop of server processes needs testing!
-func (test *Test) startTest(r *http.Request) (interface{}, *handlerError) {
-	if (test.status == stopped) {
-		test.Exec()
+func (srv *TestServer) startTest(r *http.Request) (interface{}, *handlerError) {
+	if (srv.test.status == stopped) {
+		srv.test.Exec()
 	}
 	return make(map[string]string), nil
 }
 
-func (test *Test) stopTest(r *http.Request) (interface{}, *handlerError) {
-	if (test.status != stopped) {
-		test.status = stopping
+func (srv *TestServer) stopTest(r *http.Request) (interface{}, *handlerError) {
+	if (srv.test.status != stopped) {
+		srv.test.status = stopping
 	}
 	return make(map[string]string), nil
 }
@@ -93,14 +107,15 @@ func (test *Test) stopTest(r *http.Request) (interface{}, *handlerError) {
 //}
 
 // stop the server
-func (test *Test) stopWebserver(r *http.Request) (interface{}, *handlerError) {
+func (srv *TestServer) stopWebserver(r *http.Request) (interface{}, *handlerError) {
 	// e.g. curl -X "DELETE" http://localhost:3000/stop
-	test.server.Stop(5 * time.Second)
+	srv.server.Stop(5 * time.Second)
 	return make(map[string]string), nil
 }
 
 // TODO: we need some kind of integration test to make sure routes work as expected
-func (test *Test) Webserver() {
+func (srv *TestServer) Webserver(test *TestScenario) {
+	srv.test = test
 	router := mux.NewRouter()
 
 	// frontend
@@ -114,14 +129,14 @@ func (test *Test) Webserver() {
 	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
 
 	// REST routes
-	router.Handle("/statistics", handler(test.getStatistics)).Methods("GET")
+	router.Handle("/statistics", handler(srv.getStatistics)).Methods("GET")
 	//router.Handle("/loadmodel", handler(getLoadmodel)).Methods("GET")
 	//router.Handle("/loadmodel", handler(updateLoadmodel)).Methods("PUT")
-	router.Handle("/test", handler(test.startTest)).Methods("POST")
-	router.Handle("/test", handler(test.stopTest)).Methods("DELETE")
-	router.Handle("/stop", handler(test.stopWebserver)).Methods("DELETE")
+	router.Handle("/test", handler(srv.startTest)).Methods("POST")
+	router.Handle("/test", handler(srv.stopTest)).Methods("DELETE")
+	router.Handle("/stop", handler(srv.stopWebserver)).Methods("DELETE")
 
-	test.server = graceful.Server{
+	srv.server = graceful.Server{
 		Timeout: 5 * time.Second,
 
 		Server: &http.Server{
@@ -131,5 +146,5 @@ func (test *Test) Webserver() {
 	}
 
 	// start the stoppable server (this uses graceful, a stoppable server)
-	test.server.ListenAndServe()
+	srv.server.ListenAndServe()
 }

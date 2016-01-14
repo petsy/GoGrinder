@@ -141,7 +141,7 @@ func TestDebug(t *testing.T) {
 	}
 }
 
-func TestScenario(t *testing.T) {
+func TestAScenario(t *testing.T) {
 	// TODO this test is flaky - the current approach to faketime (ttime) has concurrency issues
 	// one out of three fails
 	// it does not look like this is a problem with GoGrinder itself

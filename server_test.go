@@ -100,7 +100,9 @@ func TestGetStatistics(t *testing.T) {
 
 	// invoke REST service
 	request, _ := http.NewRequest("GET", "/statistics", nil)
-	response, err := fake.getStatistics(request)
+	srv := TestServer{}
+	srv.test = fake
+	response, err := srv.getStatistics(request)
 
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
@@ -128,7 +130,9 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	//iso8601 := "2006-01-02T15:04:05.999Z"
 	ts2 := t2.Format(ISO8601)
 	request, _ := http.NewRequest("GET", "/statistics?since="+ts2, nil)
-	response, err := fake.getStatistics(request)
+	srv := TestServer{}
+	srv.test = fake
+	response, err := srv.getStatistics(request)
 
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
@@ -144,7 +148,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	// update but no new data
 	ts3 := t3.Format(ISO8601)
 	request, _ = http.NewRequest("GET", "/statistics?since="+ts3, nil)
-	response, err = fake.getStatistics(request)
+	response, err = srv.getStatistics(request)
 
 	if len(response.(map[string]interface{})["results"].([]result)) != 0 {
 		t.Fatalf("Response should contain 0 rows.")
@@ -152,7 +156,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 
 	// get all rows
 	request, _ = http.NewRequest("GET", "/statistics", nil)
-	response, err = fake.getStatistics(request)
+	response, err = srv.getStatistics(request)
 
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)

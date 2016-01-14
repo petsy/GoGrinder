@@ -9,6 +9,20 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+
+// interface Scenario
+type Config interface {
+	ReadLoadmodel() error
+	ReadLoadmodelSchema(document string, schema string) error
+	GetScenarioConfig() (string, float64, float64)
+	GetTestcaseConfig(testcase string) (int64, int64, error)
+}
+
+// struct TestScenario
+type TestConfig struct {
+	loadmodel     map[string]interface{}  // datastructure to hold the json loadmodel loaded from file
+}
+
 // Default schema to validate loadmodel.json files
 var LoadmodelSchema string = `{
     "$schema": "http://json-schema.org/draft-04/schema#",
@@ -38,7 +52,7 @@ var LoadmodelSchema string = `{
 }`
 
 // reader for the loadmodel.json file
-func (test *Test) ReadLoadmodel() error {
+func (test *TestConfig) ReadLoadmodel() error {
 	var filename string
 	if len(os.Args) == 2 {
 		filename = os.Args[1]
@@ -54,7 +68,7 @@ func (test *Test) ReadLoadmodel() error {
 }
 
 // read loadmodel from document - you can provide your own schema
-func (test *Test) ReadLoadmodelSchema(document string, schema string) error {
+func (test *TestConfig) ReadLoadmodelSchema(document string, schema string) error {
 	documentLoader := gojsonschema.NewStringLoader(document)
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 
@@ -74,7 +88,7 @@ func (test *Test) ReadLoadmodelSchema(document string, schema string) error {
 	return json.Unmarshal([]byte(document), &test.loadmodel)
 }
 
-func (test *Test) GetScenarioConfig() (string, float64, float64) {
+func (test *TestConfig) GetScenarioConfig() (string, float64, float64) {
 	scenario := test.loadmodel["Scenario"].(string)
 	ttf := test.loadmodel["ThinkTimeFactor"].(float64)
 	ttv := test.loadmodel["ThinkTimeVariance"].(float64)
@@ -82,7 +96,7 @@ func (test *Test) GetScenarioConfig() (string, float64, float64) {
 }
 
 // return iterations, pacing
-func (test *Test) GetTestcaseConfig(testcase string) (int64, int64, error) {
+func (test *TestConfig) GetTestcaseConfig(testcase string) (int64, int64, error) {
 	if conf, ok := test.loadmodel["Loadmodel"]; ok {
 		if len(conf.([]interface{})) > 0 {
 			for _, tc := range conf.([]interface{}) {
