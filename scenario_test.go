@@ -10,6 +10,7 @@ import (
 func TestThinktimeNoVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
+	fake.status = running
 	fake.loadmodel["Scenario"] = "scenario1"
 	fake.loadmodel["ThinkTimeFactor"] = 1.0
 	fake.loadmodel["ThinkTimeVariance"] = 0.0
@@ -28,6 +29,7 @@ func TestThinktimeNoVariance(t *testing.T) {
 func TestThinktimeVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
+	fake.status = running
 	fake.loadmodel["Scenario"] = "scenario1"
 	fake.loadmodel["ThinkTimeFactor"] = 2.0
 	fake.loadmodel["ThinkTimeVariance"] = 0.1
@@ -67,8 +69,10 @@ func TestPaceMaker(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
 
+	var fake = NewTest()
+	fake.status = running
 	start := time.Now()
-	paceMaker(10)
+	fake.paceMaker(10)
 	if time.Now().Sub(start) != 10 {
 		t.Fatal("Function paceMaker sleep out of range!")
 	}
@@ -78,8 +82,10 @@ func TestPaceMakerNegativeValue(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
 
+	var fake = NewTest()
+	fake.status = running
 	start := time.Now()
-	paceMaker(-10)
+	fake.paceMaker(-10)
 	if time.Now().Sub(start) != 0 {
 		t.Fatal("Function paceMaker sleep out of range!")
 	}

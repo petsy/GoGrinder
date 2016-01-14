@@ -6,6 +6,7 @@ frontend
 * edit loadmodel
 * authenticate frontend
 * save results as csv file
+* add build number to frontend
 
 command line
 * start / stop
@@ -30,4 +31,3 @@ Version 0.01
 * get results from restful ws
 * make table sortable
 * query data increments
-

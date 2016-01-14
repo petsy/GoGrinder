@@ -61,11 +61,21 @@ func NewTest() *Test {
 }
 
 // internally used pacemaker in nanoseconds
-func paceMaker(pace time.Duration) {
+// this is not an internal function so it can be tested separately!
+func (test *Test) paceMaker(pace time.Duration) {
+	const small = 2 * time.Second
 	if pace < 0 {
 		return
 	}
-	time.Sleep(pace)
+	// split up in small intervals so we can stop out of this
+	for ;pace>small;pace=pace-small {
+		if test.status != running { break }
+		time.Sleep(small)
+	}
+	// remaining sleep time
+	if test.status == running {
+		time.Sleep(pace)
+	}
 }
 
 // add a testscenario to testscenarios registry
@@ -111,7 +121,7 @@ func (test *Test) Run(testcase func(map[string]interface{}),
 			if test.status == stopping { break }
 			testcase(meta)
 			if test.status == stopping { break }
-			paceMaker(time.Duration(pacing)*time.Millisecond - time.Now().Sub(start))
+			test.paceMaker(time.Duration(pacing)*time.Millisecond - time.Now().Sub(start))
 		}
 	}
 	// TODO: this is incomplete. !multiple! users must run in parallel!
@@ -171,8 +181,10 @@ func (test *Test) Exec() error {
 // this takes ThinkTimeFactor and ThinkTimeVariance into account
 // thinktime is given in number of milliseconds. So for example 3000 equates to 3 seconds.
 func (test *Test) Thinktime(tt int64) {
-	_, ttf, ttv := test.GetScenarioConfig()
-	r := (rand.Float64() * 2.0) - 1.0 // r in [-1.0 - 1.0)
-	v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Millisecond)
-	time.Sleep(time.Duration(v))
+	if test.status == running {
+		_, ttf, ttv := test.GetScenarioConfig()
+		r := (rand.Float64() * 2.0) - 1.0 // r in [-1.0 - 1.0)
+		v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Millisecond)
+		time.Sleep(time.Duration(v))
+	}
 }
