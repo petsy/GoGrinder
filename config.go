@@ -10,7 +10,6 @@ import (
 )
 
 
-// interface Scenario
 type Config interface {
 	ReadLoadmodel() error
 	ReadLoadmodelSchema(document string, schema string) error
@@ -18,12 +17,11 @@ type Config interface {
 	GetTestcaseConfig(testcase string) (int64, int64, error)
 }
 
-// struct TestScenario
 type TestConfig struct {
 	loadmodel     map[string]interface{}  // datastructure to hold the json loadmodel loaded from file
 }
 
-// Default schema to validate loadmodel.json files
+// Default schema to validate loadmodel.json files.
 var LoadmodelSchema string = `{
     "$schema": "http://json-schema.org/draft-04/schema#",
     "description": "schema for GoGrinder loadmodel.",
@@ -51,7 +49,7 @@ var LoadmodelSchema string = `{
     "additionalProperties": false
 }`
 
-// reader for the loadmodel.json file
+// Reader for the loadmodel.json file. Use the GoGrinder schema for loadmodel validation.
 func (test *TestConfig) ReadLoadmodel() error {
 	var filename string
 	if len(os.Args) == 2 {
@@ -67,7 +65,7 @@ func (test *TestConfig) ReadLoadmodel() error {
 	return test.ReadLoadmodelSchema(string(buf), LoadmodelSchema)
 }
 
-// read loadmodel from document - you can provide your own schema
+// Read loadmodel from document - you can provide your own schema to validate the loadmodel.
 func (test *TestConfig) ReadLoadmodelSchema(document string, schema string) error {
 	documentLoader := gojsonschema.NewStringLoader(document)
 	schemaLoader := gojsonschema.NewStringLoader(schema)
@@ -88,6 +86,7 @@ func (test *TestConfig) ReadLoadmodelSchema(document string, schema string) erro
 	return json.Unmarshal([]byte(document), &test.loadmodel)
 }
 
+// Return ThinkTimeFactor, ThinkTimeVariance from the loadmodel configuration.
 func (test *TestConfig) GetScenarioConfig() (string, float64, float64) {
 	scenario := test.loadmodel["Scenario"].(string)
 	ttf := test.loadmodel["ThinkTimeFactor"].(float64)
@@ -95,7 +94,7 @@ func (test *TestConfig) GetScenarioConfig() (string, float64, float64) {
 	return scenario, ttf, ttv
 }
 
-// return iterations, pacing
+// Return iterations, pacing from the loadmodel configuration.
 func (test *TestConfig) GetTestcaseConfig(testcase string) (int64, int64, error) {
 	if conf, ok := test.loadmodel["Loadmodel"]; ok {
 		if len(conf.([]interface{})) > 0 {

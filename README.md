@@ -14,25 +14,31 @@ https://github.com/finklabs/GoGrinder-samples/tree/master/simple
 The reminder of the document contains information is intended for developers who work on the backend and frontend of GoGrinder.
 
 ### Run the go package docu (for offline use)
-  $ godoc -http=:6060 &
+
+    $ godoc -http=:6060 &
 
 
 ### Embedd the single page app
-  $ rice embed-syso
+
+    $ rice embed-syso
 
 
 ### Run the tests with coverage report
-  $ gocov test | gocov report
+
+    $ gocov test | gocov report
 
 
 ### build the package
-  $ ./build.sh
+
+    $ ./build.sh
 
 build the package:
-  $ go build
+
+    $ go build
 
 install into pkg folder:
-  $ go install
+
+    $ go install
 
 
 ## frontend development
@@ -42,10 +48,10 @@ http://localhost:3000/app/index.html
 
 ### adding frontend dependencies using bower
 
-  $ bower install --save angular 
-  $ bower install --save angular-ladda
-  ...
-  $ bower install --save-dev angular-mocks
+    $ bower install --save angular 
+    $ bower install --save angular-ladda
+    ...
+    $ bower install --save-dev angular-mocks
 
 
 ### testing ui code
@@ -57,7 +63,7 @@ http://localhost:3000/app/index.html
 
 running the tests unsing karma:
 
-  $ npm test
+    $ npm test
 
 
 ## Where are we now
@@ -68,22 +74,22 @@ II) Golang was the right technology choice for this project
 
 Statistics from 14th January 2016:
 
-  $ cloc --exclude-dir=bower_components,node_modules,web/libs .
+    $ cloc --exclude-dir=bower_components,node_modules,web/libs .
         27 text files.
         27 unique files.                              
      11835 files ignored.
-  
-  http://cloc.sourceforge.net v 1.60  T=0.59 s (33.6 files/s, 3643.5 lines/s)
-  -------------------------------------------------------------------------------
-  Language                     files          blank        comment           code
-  -------------------------------------------------------------------------------
-  Go                              10            193            176           1079
-  Javascript                       3             67             62            262
-  HTML                             2             18             19            153
-  CSS                              2              5             10             56
-  YAML                             2              8              8             27
-  Bourne Shell                     1              6              3             15
-  -------------------------------------------------------------------------------
-  SUM:                            20            297            278           1592
-  -------------------------------------------------------------------------------
+    
+    http://cloc.sourceforge.net v 1.60  T=0.59 s (33.6 files/s, 3643.5 lines/s)
+    -------------------------------------------------------------------------------
+    Language                     files          blank        comment           code
+    -------------------------------------------------------------------------------
+    Go                              10            193            176           1079
+    Javascript                       3             67             62            262
+    HTML                             2             18             19            153
+    CSS                              2              5             10             56
+    YAML                             2              8              8             27
+    Bourne Shell                     1              6              3             15
+    -------------------------------------------------------------------------------
+    SUM:                            20            297            278           1592
+    -------------------------------------------------------------------------------
 

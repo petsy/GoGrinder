@@ -10,8 +10,8 @@ import (
 func TestUpdateOneMeasurement(t *testing.T) {
 	fake := NewTest()
 	// first measurement
-	done := fake.collect() // this needs a collector to unblock update
-	fake.update("sth", 8*time.Millisecond, time.Now())
+	done := fake.Collect() // this needs a collector to unblock update
+	fake.Update("sth", 8*time.Millisecond, time.Now())
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -31,10 +31,10 @@ func TestUpdateOneMeasurement(t *testing.T) {
 
 func TestUpdateMultipleMeasurements(t *testing.T) {
 	fake := NewTest()
-	done := fake.collect() // this needs a collector to unblock update
-	fake.update("sth", 8*time.Millisecond, time.Now())
-	fake.update("sth", 10*time.Millisecond, time.Now())
-	fake.update("sth", 2*time.Millisecond, time.Now())
+	done := fake.Collect() // this needs a collector to unblock update
+	fake.Update("sth", 8*time.Millisecond, time.Now())
+	fake.Update("sth", 10*time.Millisecond, time.Now())
+	fake.Update("sth", 2*time.Millisecond, time.Now())
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -54,13 +54,13 @@ func TestUpdateMultipleMeasurements(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	fake := NewTest()
-	done := fake.collect() // this needs a collector to unblock update
+	done := fake.Collect() // this needs a collector to unblock update
 	// first measurement
-	fake.update("sth", 8*time.Millisecond, time.Now())
+	fake.Update("sth", 8*time.Millisecond, time.Now())
 	close(fake.measurements)
 	<-done
 	if _, ok := fake.stats["sth"]; ok {
-		fake.reset()
+		fake.Reset()
 		// now the measurement should be gone
 		if _, ok := fake.stats["sth"]; ok {
 			t.Error("Reset failed to clear the statistics!\n")
@@ -76,11 +76,11 @@ func TestReport(t *testing.T) {
 	defer func() { stdout = bak }()
 
 	fake := NewTest()
-	done := fake.collect() // this needs a collector to unblock update
+	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.update(name, 8*time.Millisecond, time.Now())
-		fake.update(name, 10*time.Millisecond, time.Now())
-		fake.update(name, 2*time.Millisecond, time.Now())
+		fake.Update(name, 8*time.Millisecond, time.Now())
+		fake.Update(name, 10*time.Millisecond, time.Now())
+		fake.Update(name, 2*time.Millisecond, time.Now())
 	}
 	insert("tc2")
 	insert("tc1")

@@ -90,11 +90,11 @@ func TestHandlerServeHTTPEmptyResponse(t *testing.T) {
 func TestGetStatistics(t *testing.T) {
 	// test with 3 measurements
 	var fake = NewTest()
-	done := fake.collect() // this needs a collector to unblock update
+	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.update("sth", 8*time.Millisecond, now)
-	fake.update("sth", 10*time.Millisecond, now)
-	fake.update("sth", 2*time.Millisecond, now)
+	fake.Update("sth", 8*time.Millisecond, now)
+	fake.Update("sth", 10*time.Millisecond, now)
+	fake.Update("sth", 2*time.Millisecond, now)
 	close(fake.measurements)
 	<-done
 
@@ -107,21 +107,21 @@ func TestGetStatistics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
 	}
-	if response.(map[string]interface{})["results"].([]result)[0] != (result{"sth", 6666666, 2000000, 10000000, 3, now.Format(ISO8601)}) {
-		t.Fatalf("Response nsot as expected: %v", response.([]result)[0])
+	if response.(map[string]interface{})["results"].([]Result)[0] != (Result{"sth", 6666666, 2000000, 10000000, 3, now.Format(ISO8601)}) {
+		t.Fatalf("Response nsot as expected: %v", response.([]Result)[0])
 	}
 }
 
 func TestHandlerStatisticsWithQuery(t *testing.T) {
 	// test with 3 measurements (two stats)
 	var fake = NewTest()
-	done := fake.collect() // this needs a collector to unblock update
+	done := fake.Collect() // this needs a collector to unblock update
 	t1 := time.Now().UTC()
-	fake.update("sth", 8*time.Millisecond, t1)
+	fake.Update("sth", 8*time.Millisecond, t1)
 	time.Sleep(5 * time.Millisecond)
 	t2 := t1.Add(2 * time.Millisecond)
-	fake.update("else", 10*time.Millisecond, t1)
-	fake.update("else", 2*time.Millisecond, t2)
+	fake.Update("else", 10*time.Millisecond, t1)
+	fake.Update("else", 2*time.Millisecond, t2)
 	t3 := t2.Add(2 * time.Millisecond)
 	close(fake.measurements)
 	<-done
@@ -137,12 +137,12 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
 	}
-	if len(response.(map[string]interface{})["results"].([]result)) != 1 {
+	if len(response.(map[string]interface{})["results"].([]Result)) != 1 {
 		t.Fatalf("Response should contain exactly 1 row.")
 	}
-	if response.(map[string]interface{})["results"].([]result)[0] !=
-			(result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
-		t.Fatalf("Response not as expected: %v", response.([]result)[0])
+	if response.(map[string]interface{})["results"].([]Result)[0] !=
+			(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+		t.Fatalf("Response not as expected: %v", response.([]Result)[0])
 	}
 
 	// update but no new data
@@ -150,7 +150,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	request, _ = http.NewRequest("GET", "/statistics?since="+ts3, nil)
 	response, err = srv.getStatistics(request)
 
-	if len(response.(map[string]interface{})["results"].([]result)) != 0 {
+	if len(response.(map[string]interface{})["results"].([]Result)) != 0 {
 		t.Fatalf("Response should contain 0 rows.")
 	}
 
@@ -161,21 +161,21 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while processing: %s", err)
 	}
-	if len(response.(map[string]interface{})["results"].([]result)) != 2 {
+	if len(response.(map[string]interface{})["results"].([]Result)) != 2 {
 		t.Fatalf("Response should contain exactly 2 rows.")
 	}
 	// "else" is [0]
-	if response.(map[string]interface{})["results"].([]result)[0] !=
-			(result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+	if response.(map[string]interface{})["results"].([]Result)[0] !=
+			(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
 		t.Log(t2.Format(ISO8601))
-		t.Log("Response 0: %v", response.(map[string]interface{})["results"].([]result)[0])
-		t.Log("Response 1: %v", response.(map[string]interface{})["results"].([]result)[1])
-		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]result)[0])
+		t.Log("Response 0: %v", response.(map[string]interface{})["results"].([]Result)[0])
+		t.Log("Response 1: %v", response.(map[string]interface{})["results"].([]Result)[1])
+		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[0])
 	}
 	// "sth" is [1]
-	if response.(map[string]interface{})["results"].([]result)[1] !=
-			(result{"sth", 8000000, 8000000, 8000000, 1, t1.Format(ISO8601)}) {
+	if response.(map[string]interface{})["results"].([]Result)[1] !=
+			(Result{"sth", 8000000, 8000000, 8000000, 1, t1.Format(ISO8601)}) {
 		t.Log(t1)
-		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]result)[1])
+		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[1])
 	}
 }

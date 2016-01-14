@@ -9,30 +9,28 @@ import (
 )
 
 
-// interface Statistics
 type Statistics interface {
 	Update(testcase string, mm time.Duration, last time.Time)
 	Collect() <-chan bool
 	Reset()
-	Results(since string) []result
+	Results(since string) []Result
 	Report()
 }
 
-// struct TestStatistics
 type TestStatistics struct {
 	lock          sync.RWMutex            // lock that is used on stats
 	stats         stats                   // collect and aggregate results
 	measurements  chan measurement        // channel used to collect measurements from teststeps
 }
 
-// internal datastructure used on the test.measurements channel
+// Internal datastructure used on the test.measurements channel.
 type measurement struct {
 	testcase string
 	value    time.Duration
 	last     time.Time
 }
 
-// internal datastructure to collect and aggregate measurements
+// Internal datastructure to collect and aggregate measurements.
 type stats_value struct {
 	avg   time.Duration
 	min   time.Duration
@@ -42,8 +40,9 @@ type stats_value struct {
 }
 type stats map[string]stats_value
 
-// this is what is what you get from Results()
-type result struct {
+// []Results is what is what you get from test.Results().
+// Not sure if it is necessary to export this???
+type Result struct {
 	Testcase string        `json:"testcase"`
 	Avg      time.Duration `json:"avg"`
 	Min      time.Duration `json:"min"`
@@ -52,22 +51,21 @@ type result struct {
 	Last     string        `json:"last"`
 }
 
-// simple approach to sorting
-// ByTestcase implements sort.Interface for []result based on
-// the Testcase field.
-type ByTestcase []result
-func (a ByTestcase) Len() int           { return len(a) }
-func (a ByTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
+// Simple approach to sorting of the results.
+// byTestcase implements sort.Interface for []Results based on the Testcase field.
+type byTestcase []Result
+func (a byTestcase) Len() int           { return len(a) }
+func (a byTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
 
 
-// update and collect work closely together
-func (test *TestStatistics) update(testcase string, mm time.Duration, last time.Time) {
+// Update and Collect work closely together via the measurements channel.
+func (test *TestStatistics) Update(testcase string, mm time.Duration, last time.Time) {
 	test.measurements <- measurement{testcase, mm, last}
 }
 
-// collect all measurements. it blocks until test.measurements channel is closed
-func (test *TestStatistics) collect() <-chan bool {
+// Collect all measurements. It blocks until measurements channel is closed.
+func (test *TestStatistics) Collect() <-chan bool {
 	done := make(chan bool)
 	go func(test *TestStatistics) {
 		for mm := range test.measurements {
@@ -99,38 +97,38 @@ func (test *TestStatistics) collect() <-chan bool {
 	return done
 }
 
-// reset the statistics (measurements from previous run are deleted)
-func (test *TestStatistics) reset() {
+// Reset the statistics (measurements from previous run are deleted).
+func (test *TestStatistics) Reset() {
 	test.lock.Lock()
 	test.stats = make(stats)
 	test.lock.Unlock()
 	test.measurements = make(chan measurement)
 }
 
-// helper to convert time.Duration to ms in float64
+// Helper to convert time.Duration to ms in float64.
 func d2f(d time.Duration) float64 {
 	return float64(d) / float64(time.Millisecond)
 }
 
-// give mt the stats that have been updated since <since> in ISO8601
-// if since can not be parsed it returns all stats!
-func (test *TestStatistics) Results(since string) []result {
+// Give me the stats that have been updated since <since> in ISO8601.
+// In case since can not be parsed it returns all available results!
+func (test *TestStatistics) Results(since string) []Result {
 	test.lock.RLock()
-	copy := []result{}
+	copy := []Result{}
 	defer test.lock.RUnlock()
 
 	s, err := time.Parse(ISO8601, since)
 	all := (err != nil)
 	for k, v := range test.stats {
 		if all || (v.last.After(s)) {
-			copy = append(copy, result{k, v.avg, v.min, v.max, v.count, v.last.UTC().Format(ISO8601)})
+			copy = append(copy, Result{k, v.avg, v.min, v.max, v.count, v.last.UTC().Format(ISO8601)})
 		}
 	}
-	sort.Sort(ByTestcase(copy))
+	sort.Sort(byTestcase(copy))
 	return copy
 }
 
-// format the statistics to stdout
+// Format the statistics to stdout.
 func (test *TestStatistics) Report() {
 	res := test.Results("") // get all results
 	for _, s := range res {
