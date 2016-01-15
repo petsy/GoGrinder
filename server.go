@@ -12,15 +12,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-
 type Server interface {
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 	Webserver()
 }
 
 type TestServer struct {
-	test      *TestScenario
-	server    graceful.Server         // stoppable http server
+	test   *TestScenario
+	server graceful.Server // stoppable http server
 }
 
 // Error response compliant with http.Error.
@@ -74,20 +73,20 @@ func (srv *TestServer) getStatistics(r *http.Request) (interface{}, *handlerErro
 	since = r.URL.Query().Get("since")
 	res := make(map[string]interface{})
 	res["results"] = srv.test.Results(since)
-	res["running"] = srv.test.status != stopped  // could be stopping or running
+	res["running"] = srv.test.status != stopped // could be stopping or running
 	return res, nil
 }
 
 // TODO: start stop of server processes needs testing!
 func (srv *TestServer) startTest(r *http.Request) (interface{}, *handlerError) {
-	if (srv.test.status == stopped) {
+	if srv.test.status == stopped {
 		srv.test.Exec()
 	}
 	return make(map[string]string), nil
 }
 
 func (srv *TestServer) stopTest(r *http.Request) (interface{}, *handlerError) {
-	if (srv.test.status != stopped) {
+	if srv.test.status != stopped {
 		srv.test.status = stopping
 	}
 	return make(map[string]string), nil
@@ -106,7 +105,8 @@ func (srv *TestServer) stopWebserver(r *http.Request) (interface{}, *handlerErro
 
 // TODO: we need some kind of integration test to make sure routes work as expected
 // Start the Webserver for the GoGrinder frontend. It takes a testscenario as an argument.
-func (srv *TestServer) Webserver(test *TestScenario) {
+func Webserver(port int, test *TestScenario) (TestServer, error) {
+	srv := TestServer{}
 	srv.test = test
 	router := mux.NewRouter()
 
@@ -130,11 +130,12 @@ func (srv *TestServer) Webserver(test *TestScenario) {
 		Timeout: 5 * time.Second,
 
 		Server: &http.Server{
-			Addr:    ":3000",
+			Addr:    fmt.Sprintf(":%d", port),
 			Handler: router,
 		},
 	}
 
 	// start the stoppable server (this uses graceful, a stoppable server)
-	srv.server.ListenAndServe()
+	err := srv.server.ListenAndServe()
+	return srv, err
 }

@@ -136,14 +136,9 @@ func TestReadLoadmodel(t *testing.T) {
 	defer os.Remove(file.Name())
 	file.WriteString(loadmodel)
 	t.Log(file.Name())
-	// prepare empty argument see TestChangingArgs
-	// in https://golang.org/src/flag/flag_test.go
-	oldArgs := os.Args
-	defer func() { os.Args = oldArgs }()
-	os.Args = []string{"gogrinder", file.Name()}
 
 	fake := NewTest()
-	fake.ReadLoadmodel()
+	fake.ReadLoadmodel(file.Name())
 	scenario := fake.loadmodel["Scenario"]
 	if scenario != "scenario1" {
 		t.Errorf("Scenario %s not 'scenario1' as expected!", scenario)
@@ -152,20 +147,5 @@ func TestReadLoadmodel(t *testing.T) {
 	count := len(fake.loadmodel["Loadmodel"].([]interface{}))
 	if count != 3 {
 		t.Errorf("Expected to find 3 testcase entries in the loadmodel but found %d!", count)
-	}
-}
-
-func TestReadLoadmodelErrorMissingArg(t *testing.T) {
-	oldArgs := os.Args
-	defer func() { os.Args = oldArgs }()
-	os.Args = []string{}
-	//t.Log(len(os.Args))
-
-	fake := NewTest()
-	err := fake.ReadLoadmodel()
-
-	error := err.Error()
-	if error != "argument for loadmodel required" {
-		t.Errorf("Error msg for missing loadmodel argument not as expected: %s", error)
 	}
 }

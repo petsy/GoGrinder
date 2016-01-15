@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/xeipuuv/gojsonschema"
 )
-
 
 type Config interface {
 	ReadLoadmodel() error
@@ -18,7 +16,7 @@ type Config interface {
 }
 
 type TestConfig struct {
-	loadmodel     map[string]interface{}  // datastructure to hold the json loadmodel loaded from file
+	loadmodel map[string]interface{} // datastructure to hold the json loadmodel loaded from file
 }
 
 // Default schema to validate loadmodel.json files.
@@ -50,13 +48,7 @@ var LoadmodelSchema string = `{
 }`
 
 // Reader for the loadmodel.json file. Use the GoGrinder schema for loadmodel validation.
-func (test *TestConfig) ReadLoadmodel() error {
-	var filename string
-	if len(os.Args) == 2 {
-		filename = os.Args[1]
-	} else {
-		return fmt.Errorf("argument for loadmodel required")
-	}
+func (test *TestConfig) ReadLoadmodel(filename string) error {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err

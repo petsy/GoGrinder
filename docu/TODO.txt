@@ -5,14 +5,9 @@ frontend
 * edit loadmodel
 * authenticate frontend
 * save results as csv file
-* add revision to frontend
 
-command line
-* (default is to start/stop test via UI and have cli report)
-* --run
-* --no-report
-* --no-frontend
-* test cli!
+backend
+* handler needs some polishing (silence, maybe decorators for logging?)
 
 scenario
 * multiple users
@@ -36,3 +31,8 @@ Version 0.01
 * make table sortable
 * query data increments
 * start / stop test
+* (default is to start/stop test via UI and have cli report)
+* -no-exec
+* -no-report
+* -no-frontend
+* add revision to frontend

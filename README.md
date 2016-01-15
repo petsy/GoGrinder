@@ -1,16 +1,16 @@
 # GoGrinder
 
 [![Build Status](https://drone.io/github.com/finklabs/GoGrinder/status.png)](https://drone.io/github.com/finklabs/GoGrinder/latest)
+[![GoDoc](https://godoc.org/github.com/finklabs/GoGrinder?status.svg)](https://godoc.org/github.com/finklabs/GoGrinder)
 [![License](http://img.shields.io/badge/license-MIT-yellowgreen.svg)](MIT_LICENSE)
 
 Efficient load-generator that integrates in Prometheus for reporting and analysis.
 
 ## GoGrinder usage
-The GoGrinder is not used directly. You can use GoGrinder as a library to write your load and performance tests. The following sample shows you how:
-https://github.com/finklabs/GoGrinder-samples/tree/master/simple
+The GoGrinder is not used directly. You can use GoGrinder as a library to write your load and performance tests. The following sample shows you how: [simple GoGrinder sample]/https://github.com/finklabs/GoGrinder-samples/tree/master/simple)
 
 
-## backend development
+## Backend development
 The reminder of the document contains information is intended for developers who work on the backend and frontend of GoGrinder.
 
 ### Run the go package docu (for offline use)
@@ -41,7 +41,7 @@ install into pkg folder:
     $ go install
 
 
-## frontend development
+## Frontend development
 The frontend is packaged with the executable. To access the frontend start your test and point your browser to:
 http://localhost:3000/app/index.html
 
@@ -67,10 +67,10 @@ running the tests unsing karma:
 
 
 ## Where are we now
-For this kind of application I believe it is essential to have a core of highest quality. A smaller code base makes this easier to achieve. The Golang concurrency features allow me to keep the code concise and maintainable.  I ran line counting which came up with 1100 lines of Go code for the core functionality. To me this means two things:
+For this kind of application I believe it is essential to have a core of highest quality. A smaller code base makes this easier to achieve. The Golang concurrency features allow me to keep the code concise and maintainable.  I ran line-counting which came up with 1100 lines of Go code for the core functionality. To me this means two things:
  
-I)  The goal of a reliable core is in reach and will be achieved soon
-II) Golang was the right technology choice for this project
+1. The goal of a reliable core is in reach and will be achieved soon
+2. Golang was the right technology choice for this project
 
 Statistics from 14th January 2016:
 
@@ -92,4 +92,3 @@ Statistics from 14th January 2016:
     -------------------------------------------------------------------------------
     SUM:                            20            297            278           1592
     -------------------------------------------------------------------------------
-

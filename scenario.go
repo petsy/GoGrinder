@@ -31,16 +31,17 @@ type Scenario interface {
 // TestScenario datastructure that brings all the GoGrinder functionality together.
 // TestScenario supports multiple interfaces (TestConfig, TestStatistics).
 type TestScenario struct {
-	TestConfig  // needs to be anonymous to promote access to struct field and methods
+	TestConfig // needs to be anonymous to promote access to struct field and methods
 	TestStatistics
-	testscenarios map[string]interface{}  // testscenarios registry for testscenarios
-	teststeps     map[string]func()       // registry for teststeps
-	wg            sync.WaitGroup          // waitgroup for teststeps
-	status        status                  // status (stopped, running, stopping) (used in Report())
+	testscenarios map[string]interface{} // testscenarios registry for testscenarios
+	teststeps     map[string]func()      // registry for teststeps
+	wg            sync.WaitGroup         // waitgroup for teststeps
+	status        status                 // status (stopped, running, stopping) (used in Report())
 }
 
 // Constants of internal test status.
 type status int
+
 const (
 	stopped = iota
 	running
@@ -53,13 +54,14 @@ func NewTest() *TestScenario {
 		testscenarios: make(map[string]interface{}),
 		teststeps:     make(map[string]func()),
 
-		TestConfig:	TestConfig{
-			loadmodel:     make(map[string]interface{}),
+		TestConfig: TestConfig{
+			loadmodel: make(map[string]interface{}),
 		},
 
 		TestStatistics: TestStatistics{
 			stats:         make(stats),
 			measurements:  make(chan measurement),
+			reportFeature: true,
 		},
 	}
 	return &t
@@ -73,8 +75,10 @@ func (test *TestScenario) paceMaker(pace time.Duration) {
 		return
 	}
 	// split up in small intervals so we can stop out of this
-	for ;pace>small;pace=pace-small {
-		if test.status != running { break }
+	for ; pace > small; pace = pace - small {
+		if test.status != running {
+			break
+		}
 		time.Sleep(small)
 	}
 	// remaining sleep time
@@ -122,9 +126,13 @@ func (test *TestScenario) Run(testcase func(map[string]interface{}),
 			start := time.Now()
 			meta["Iteration"] = i
 			meta["User"] = 0
-			if test.status == stopping { break }
+			if test.status == stopping {
+				break
+			}
 			testcase(meta)
-			if test.status == stopping { break }
+			if test.status == stopping {
+				break
+			}
 			test.paceMaker(time.Duration(pacing)*time.Millisecond - time.Now().Sub(start))
 		}
 	}

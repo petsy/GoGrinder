@@ -8,7 +8,6 @@ import (
 	time "github.com/finklabs/ttime"
 )
 
-
 type Statistics interface {
 	Update(testcase string, mm time.Duration, last time.Time)
 	Collect() <-chan bool
@@ -18,9 +17,10 @@ type Statistics interface {
 }
 
 type TestStatistics struct {
-	lock          sync.RWMutex            // lock that is used on stats
-	stats         stats                   // collect and aggregate results
-	measurements  chan measurement        // channel used to collect measurements from teststeps
+	lock          sync.RWMutex     // lock that is used on stats
+	stats         stats            // collect and aggregate results
+	measurements  chan measurement // channel used to collect measurements from teststeps
+	reportFeature bool             // specify to print a console report
 }
 
 // Internal datastructure used on the test.measurements channel.
@@ -54,10 +54,10 @@ type Result struct {
 // Simple approach to sorting of the results.
 // byTestcase implements sort.Interface for []Results based on the Testcase field.
 type byTestcase []Result
+
 func (a byTestcase) Len() int           { return len(a) }
 func (a byTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
-
 
 // Update and Collect work closely together via the measurements channel.
 func (test *TestStatistics) Update(testcase string, mm time.Duration, last time.Time) {
@@ -130,9 +130,16 @@ func (test *TestStatistics) Results(since string) []Result {
 
 // Format the statistics to stdout.
 func (test *TestStatistics) Report() {
-	res := test.Results("") // get all results
-	for _, s := range res {
-		fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", s.Testcase, d2f(s.Avg),
-			d2f(s.Min), d2f(s.Max), s.Count)
+	if test.reportFeature {
+		res := test.Results("") // get all results
+		for _, s := range res {
+			fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", s.Testcase, d2f(s.Avg),
+				d2f(s.Min), d2f(s.Max), s.Count)
+		}
 	}
+}
+
+// Feature Toggle
+func (test *TestStatistics) ReportFeature(set bool) {
+	test.reportFeature = set
 }

@@ -141,7 +141,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 		t.Fatalf("Response should contain exactly 1 row.")
 	}
 	if response.(map[string]interface{})["results"].([]Result)[0] !=
-			(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+		(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
 		t.Fatalf("Response not as expected: %v", response.([]Result)[0])
 	}
 
@@ -166,7 +166,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	}
 	// "else" is [0]
 	if response.(map[string]interface{})["results"].([]Result)[0] !=
-			(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+		(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
 		t.Log(t2.Format(ISO8601))
 		t.Log("Response 0: %v", response.(map[string]interface{})["results"].([]Result)[0])
 		t.Log("Response 1: %v", response.(map[string]interface{})["results"].([]Result)[1])
@@ -174,7 +174,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	}
 	// "sth" is [1]
 	if response.(map[string]interface{})["results"].([]Result)[1] !=
-			(Result{"sth", 8000000, 8000000, 8000000, 1, t1.Format(ISO8601)}) {
+		(Result{"sth", 8000000, 8000000, 8000000, 1, t1.Format(ISO8601)}) {
 		t.Log(t1)
 		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[1])
 	}
