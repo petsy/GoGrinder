@@ -20,31 +20,39 @@ func myStep(duration time.Duration) func() {
 }
 
 // instrument teststeps
-var ts1 = gg.Teststep("01_01_teststep", myStep(100))
-var ts2 = gg.Teststep("02_01_teststep", myStep(200))
-var ts3 = gg.Teststep("03_01_teststep", myStep(300))
+var ts1 = gg.Teststep("01_01_teststep", myStep(50))
+var ts2 = gg.Teststep("02_01_teststep", myStep(100))
+var ts3 = gg.Teststep("03_01_teststep", myStep(150))
 var thinktime = gg.Thinktime
 
 // define testcases using teststeps
 func tc1(meta map[string]interface{}) {
 	ts1()
-	thinktime(50)
+	thinktime(0.050)
 }
 func tc2(meta map[string]interface{}) {
 	ts2()
-	thinktime(50)
+	thinktime(0.100)
 }
 func tc3(meta map[string]interface{}) {
 	ts3()
-	thinktime(50)
+	thinktime(0.150)
 }
 
-func baseline() {
+func baseline1() {
 	// use the testcases with an explicit configuration
-	// baseline scenario has no concurrency so everything runs sequentially
-	gg.Run(tc1, 500, 0, false)
-	gg.Run(tc2, 500, 0, false)
-	gg.Run(tc3, 500, 0, false)
+	// this baseline scenario has no concurrency so everything runs sequentially
+	gg.DoIterations(tc1, 500, 0, false)
+	gg.DoIterations(tc2, 500, 0, false)
+	gg.DoIterations(tc3, 500, 0, false)
+}
+
+func baseline2() {
+	// use the testcases with an explicit configuration
+	// this "mimics" the first gogrinder scenarios
+	gg.DoIterations(tc1, 18, 0.1, true)
+	gg.DoIterations(tc2, 9, 0.1, true)
+	gg.DoIterations(tc3, 6, 0.1, true)
 }
 
 func scenario1() {
@@ -56,15 +64,14 @@ func scenario1() {
 
 // integration testcases for three modes:
 // Run, Schedule and Debug testcase
-
-func TestBaseline(t *testing.T) {
+func TestBaseline1(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
 	bak := stdout
 	stdout = new(bytes.Buffer)
 	defer func() { stdout = bak }()
 
-	// we do not need a full loadmodel for this
+	// we do not need a full loadmodel to run the baseline scenario
 	loadmodel := `{
 	  "Scenario": "baseline",
 	  "ThinkTimeFactor": 2.0,
@@ -73,7 +80,7 @@ func TestBaseline(t *testing.T) {
 	//  no Loadmodel required! ,"Loadmodel": []
 
 	// init
-	gg.Testscenario("baseline", baseline)
+	gg.Testscenario("baseline", baseline1)
 
 	// main part
 	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
@@ -92,94 +99,30 @@ func TestBaseline(t *testing.T) {
 
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
-	if report != ("01_01_teststep, 100.000000, 100.000000, 100.000000, 500\n" +
-		"02_01_teststep, 200.000000, 200.000000, 200.000000, 500\n" +
-		"03_01_teststep, 300.000000, 300.000000, 300.000000, 500\n") {
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 500\n" +
+		"02_01_teststep, 100.000000, 100.000000, 100.000000, 500\n" +
+		"03_01_teststep, 150.000000, 150.000000, 150.000000, 500\n") {
 		t.Fatalf("Report output of baseline scenario not as expected: %s", report)
 	}
 }
 
-func TestDebug(t *testing.T) {
-	// just run a single testcase once
+func TestBaseline2(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
 	bak := stdout
 	stdout = new(bytes.Buffer)
 	defer func() { stdout = bak }()
 
-	// we do not need a full loadmodel for this
+	// we do not need a full loadmodel to run the baseline scenario
 	loadmodel := `{
-	  "Scenario": "01_testcase",
+	  "Scenario": "baseline",
 	  "ThinkTimeFactor": 2.0,
-	  "ThinkTimeVariance": 0.0
+	  "ThinkTimeVariance": 0.1
 	}`
 	//  no Loadmodel required! ,"Loadmodel": []
 
 	// init
-	gg.Testscenario("baseline", baseline)
-	gg.Testscenario("01_testcase", tc1)
-
-	// main part
-	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
-	//gogrinder.Webserver()  // not necessary for the integration test
-
-	start := time.Now()
-
-	gg.Exec() // exec the scenario that has been selected in the config file
-	execution := time.Now().Sub(start)
-
-	// verify total run time of the baseline senario
-	// 15 * 50 * 2 + 500 + 1000 + 1500 = 4500
-	if execution != 200*time.Millisecond {
-		t.Errorf("Error: execution time of debug test not as expected: %f ms.\n", d2f(execution))
-	}
-
-	// verify Report!
-	report := stdout.(*bytes.Buffer).String()
-	if report != "01_01_teststep, 100.000000, 100.000000, 100.000000, 1\n" {
-		t.Fatalf("Report output of debug test not as expected: %s", report)
-	}
-}
-
-func TestAScenario(t *testing.T) {
-	// TODO this test is flaky - the current approach to faketime (ttime) has concurrency issues
-	// one out of three fails
-	// it does not look like this is a problem with GoGrinder itself
-	// TODO add multiple users!
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
-	bak := stdout
-	stdout = new(bytes.Buffer)
-	defer func() { stdout = bak }()
-
-	loadmodel := `{
-	  "Scenario": "scenario1",
-	  "ThinkTimeFactor": 2.00,
-	  "ThinkTimeVariance": 0.1,
-	  "Loadmodel": [
-	    {
-	      "Testcase": "01_testcase",
-	      "Users": 1,
-	      "Iterations": 18,
-	      "Pacing": 100
-	    },
-	    {
-	      "Testcase": "02_testcase",
-	      "Users": 1,
-	      "Iterations": 9,
-	      "Pacing": 100
-	    },
-	    {
-	      "Testcase": "03_testcase",
-	      "Users": 1,
-	      "Iterations": 6,
-	      "Pacing": 100
-	    }
-	  ]
-	}`
-
-	// init
-	gg.Testscenario("scenario1", scenario1)
+	gg.Testscenario("baseline", baseline2)
 
 	// main part
 	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
@@ -199,9 +142,117 @@ func TestAScenario(t *testing.T) {
 
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
-	if report != ("01_01_teststep, 100.000000, 100.000000, 100.000000, 18\n" +
-		"02_01_teststep, 200.000000, 200.000000, 200.000000, 9\n" +
-		"03_01_teststep, 300.000000, 300.000000, 300.000000, 6\n") {
-		t.Fatalf("Report output of baseline scenario not as expected: %s", report)
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 18\n" +
+		"02_01_teststep, 100.000000, 100.000000, 100.000000, 9\n" +
+		"03_01_teststep, 150.000000, 150.000000, 150.000000, 6\n") {
+		t.Fatalf("Report output of baseline2 scenario not as expected: %s", report)
 	}
 }
+
+func TestDebug(t *testing.T) {
+	// just run a single testcase once
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	// we do not need a full loadmodel for this
+	loadmodel := `{
+	  "Scenario": "01_testcase",
+	  "ThinkTimeFactor": 2.0,
+	  "ThinkTimeVariance": 0.0
+	}`
+
+	// init
+	gg.Testscenario("baseline", baseline1)
+	gg.Testscenario("01_testcase", tc1)
+
+	// main part
+	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
+	//gogrinder.Webserver()  // not necessary for the integration test
+
+	start := time.Now()
+
+	gg.Exec() // exec the scenario that has been selected in the config file
+	execution := time.Now().Sub(start)
+
+	// verify total run time of the baseline senario
+	// 15 * 50 * 2 + 500 + 1000 + 1500 = 4500
+	if execution != 150*time.Millisecond {
+		t.Errorf("Error: execution time of debug test not as expected: %f ms.\n", d2f(execution))
+	}
+
+	// verify Report!
+	report := stdout.(*bytes.Buffer).String()
+	if report != "01_01_teststep, 50.000000, 50.000000, 50.000000, 1\n" {
+		t.Fatalf("Report output of debug test not as expected: %s", report)
+	}
+}
+
+/*
+// TODO this test is flaky - the current approach to faketime (ttime) has concurrency issues
+// The concurrent executions mess up the fake clock. There is no evidence that there is a problem with GoGrinder itself.
+// In real time the test runs fine (see https://github.com/finklabs/GoGrinder-samples/tree/master/simple)
+// The most promising approach to fixing this problem: https://github.com/golang/go/issues/13788
+func TestAScenario(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	loadmodel := `{
+	  "Scenario": "scenario1",
+	  "ThinkTimeFactor": 2.00,
+	  "ThinkTimeVariance": 0.1,
+	  "Loadmodel": [
+	    {
+		  "Testcase": "01_testcase",
+		  "Users": 1,
+		  "Runfor": 1.980,
+		  "Pacing": 0.110
+		},
+		{
+		  "Testcase": "02_testcase",
+		  "Users": 2,
+		  "Runfor": 1.980,
+		  "Pacing": 0.220
+		},
+		{
+		  "Testcase": "03_testcase",
+		  "Users": 3,
+		  "Runfor": 1.980,
+		  "Pacing": 0.330
+	    }
+	  ]
+	}`
+
+	// init
+	gg.Testscenario("scenario1", scenario1)
+
+	// main part
+	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
+	//gogrinder.Webserver()  // not necessary for the integration test
+
+	start := time.Now()
+
+	gg.Exec() // exec the scenario that has been selected in the config file
+	execution := time.Now().Sub(start)
+
+	// verify total run time of the baseline senario
+	// 18 * (100+100) + 90 = 3690
+	//if execution <= 369000*time.Millisecond {
+	if execution <= 2000*time.Millisecond {
+		t.Errorf("Error: execution time of scenario1 not as expected: %v\n", execution)
+	}
+
+	// verify Report!
+	report := stdout.(*bytes.Buffer).String()
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 18\n" +
+		"02_01_teststep, 100.000000, 100.000000, 100.000000, 18\n" +
+		"03_01_teststep, 150.000000, 150.000000, 150.000000, 18\n") {
+		t.Fatalf("Report output of scenario1 not as expected: %s", report)
+	}
+}
+*/

@@ -66,6 +66,14 @@ running the tests unsing karma:
     $ npm test
 
 
+## Releasing 
+Not yet sure what the prevailing strategies for maintaining versions in Golang are. Golang itself has no notation of a package version. I guess this has its origins in the Google development model. As far as I know everyone in Google is on trunk. This approach probably makes a lot of sense within Google - at least I see many of benefits. Obviously for the rest of the world there is no way to avoid dealing with the "dependency hell".
+ 
+One approach that made a lot of sense to me is http://labix.org/gopkg.in. gopkg helps you to maintain multiple versions in one repository:
+
+    gopkg.in/user/pkg.v3 → github.com/user/pkg   (branch or tag v3)
+
+
 ## Where are we now
 For this kind of application I believe it is essential to have a core of highest quality. A smaller code base makes this easier to achieve. The Golang concurrency features allow me to keep the code concise and maintainable.  I ran line-counting which came up with 1100 lines of Go code for the core functionality. To me this means two things:
  

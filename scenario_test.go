@@ -19,10 +19,10 @@ func TestThinktimeNoVariance(t *testing.T) {
 	defer time.Unfreeze()
 
 	start := time.Now()
-	fake.Thinktime(20)
+	fake.Thinktime(0.020)
 	sleep := time.Now().Sub(start)
 	if sleep != 20*time.Millisecond {
-		t.Error("Expected to sleep for 20ms but something went wrong!")
+		t.Errorf("Expected to sleep for 20ms but something went wrong: %v", sleep)
 	}
 }
 
@@ -40,7 +40,7 @@ func TestThinktimeVariance(t *testing.T) {
 
 	for i := 0; i < 1000; i++ {
 		start := time.Now()
-		fake.Thinktime(10)
+		fake.Thinktime(0.010)
 		sleep := float64(time.Now().Sub(start)) / float64(time.Millisecond)
 		if sleep < min {
 			min = sleep
@@ -149,7 +149,7 @@ func TestRunSequential(t *testing.T) {
 	defer time.Unfreeze()
 
 	fake := NewTest()
-	var counter int64 = 0
+	var counter int = 0
 	// assemble testcase
 	tc1 := func(meta map[string]interface{}) {
 		// check meta
@@ -166,7 +166,7 @@ func TestRunSequential(t *testing.T) {
 
 	// run the testcase
 	start := time.Now()
-	fake.Run(tc1, 20, 0, false)
+	fake.DoIterations(tc1, 20, 0, false)
 	if time.Now().Sub(start) != 400 {
 		t.Error("Testcase execution time not as expected!")
 	}

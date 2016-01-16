@@ -62,5 +62,10 @@ func GetCLI() (string, bool, bool, bool, int, error) {
 		}
 	}
 
+	// check for invalid combination of options
+	if noExec && noFrontend {
+		err = fmt.Errorf("Invalid combination of -no-exec and -no-frontend.")
+	}
+
 	return filename, noExec, noReport, noFrontend, port, err
 }

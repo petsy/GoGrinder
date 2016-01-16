@@ -23,7 +23,8 @@ type Scenario interface {
 	Testscenario(name string, scenario interface{})
 	Teststep(name string, step func()) func()
 	Schedule(name string, testcase func(map[string]interface{})) error
-	Run(testcase func(map[string]interface{}), iterations int64, pacing int64, parallel bool)
+	DoIterations(testcase func(map[string]interface{}), iterations int, pacing float64, parallel bool)
+	Run(testcase func(map[string]interface{}), delay float64, runfor float64, rampup float64, users int, pacing float64)
 	Exec() error
 	Thinktime(tt int64)
 }
@@ -53,6 +54,7 @@ func NewTest() *TestScenario {
 	t := TestScenario{
 		testscenarios: make(map[string]interface{}),
 		teststeps:     make(map[string]func()),
+		status:        stopped,
 
 		TestConfig: TestConfig{
 			loadmodel: make(map[string]interface{}),
@@ -107,22 +109,21 @@ func (test *TestScenario) Teststep(name string, step func()) func() {
 
 // Schedule a testcase according to its config in the loadmodel.json config file.
 func (test *TestScenario) Schedule(name string, testcase func(map[string]interface{})) error {
-	iterations, pacing, err := test.GetTestcaseConfig(name)
+	delay, runfor, rampup, users, pacing, err := test.GetTestcaseConfig(name)
 	if err != nil {
 		return err
 	}
-	test.Run(testcase, iterations, pacing, true)
+	test.Run(testcase, delay, runfor, rampup, users, pacing)
 	return nil
 }
 
-// Run a testcase.
-func (test *TestScenario) Run(testcase func(map[string]interface{}),
-	iterations int64, pacing int64, parallel bool) {
+func (test *TestScenario) DoIterations(testcase func(map[string]interface{}),
+	iterations int, pacing float64, parallel bool) {
 	meta := make(map[string]interface{})
 	f := func() {
 		defer test.wg.Done()
 
-		for i := int64(0); i < iterations; i++ {
+		for i := 0; i < iterations; i++ {
 			start := time.Now()
 			meta["Iteration"] = i
 			meta["User"] = 0
@@ -133,10 +134,9 @@ func (test *TestScenario) Run(testcase func(map[string]interface{}),
 			if test.status == stopping {
 				break
 			}
-			test.paceMaker(time.Duration(pacing)*time.Millisecond - time.Now().Sub(start))
+			test.paceMaker(time.Duration(pacing*float64(time.Second)) - time.Now().Sub(start))
 		}
 	}
-	// TODO: this is incomplete. !multiple! users must run in parallel!
 	if parallel {
 		test.wg.Add(1)
 		go f()
@@ -145,6 +145,43 @@ func (test *TestScenario) Run(testcase func(map[string]interface{}),
 		test.wg.Add(1)
 		f()
 	}
+}
+
+// Run a testcase. Settings are specified in Seconds!
+func (test *TestScenario) Run(testcase func(map[string]interface{}), delay float64, runfor float64, rampup float64,
+	users int, pacing float64) {
+	test.wg.Add(1) // the "Scheduler" itself is a goroutine!
+	go func() {
+		// ramp up the users
+		defer test.wg.Done()
+		time.Sleep(time.Duration(delay * float64(time.Second)))
+		userStart := time.Now()
+
+		test.wg.Add(int(users))
+		for i := 0; i < users; i++ {
+			// start user
+			go func() {
+				defer test.wg.Done()
+				time.Sleep(time.Duration(rampup * float64(time.Second)))
+
+				for j := 0; time.Now().Sub(userStart) < time.Duration((runfor)*float64(time.Second)); j++ {
+					// next iteration
+					start := time.Now()
+					meta := make(map[string]interface{})
+					meta["User"] = i
+					meta["Iteration"] = j
+					if test.status == stopping {
+						break
+					}
+					testcase(meta)
+					if test.status == stopping {
+						break
+					}
+					test.paceMaker(time.Duration(pacing*float64(time.Second)) - time.Now().Sub(start))
+				}
+			}()
+		}
+	}()
 }
 
 // Execute the scenario set in the loadmodel.json file.
@@ -182,8 +219,8 @@ func (test *TestScenario) Exec() error {
 		test.wg.Wait()           // wait till end
 		close(test.measurements) // need to close the channel so that collect can exit, too
 		<-done                   // wait for collector to finish
-		test.status = stopped
 		test.Report()
+		test.status = stopped
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)
 	}
@@ -191,12 +228,50 @@ func (test *TestScenario) Exec() error {
 }
 
 // Thinktime takes ThinkTimeFactor and ThinkTimeVariance into account.
-// tt is given in number of milliseconds. So for example 3000 equates to 3 seconds.
-func (test *TestScenario) Thinktime(tt int64) {
+// tt is given in Seconds. So for example 3.0 equates to 3 seconds; 0.3 to 300ms.
+func (test *TestScenario) Thinktime(tt float64) {
 	if test.status == running {
 		_, ttf, ttv := test.GetScenarioConfig()
 		r := (rand.Float64() * 2.0) - 1.0 // r in [-1.0 - 1.0)
-		v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Millisecond)
+		v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Second)
 		time.Sleep(time.Duration(v))
+	}
+}
+
+// This is the "standard" behaviour. If you need a special configuration maybe you can start with this code.
+func (test *TestScenario) GoGrinder() {
+	filename, noExec, noReport, noFrontend, port, err := GetCLI()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	test.ReportFeature(!noReport)
+	test.ReadLoadmodel(filename)
+
+	exec := func() {
+		err := test.Exec() // exec the scenario that has been selected in the config file
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	frontend := func() {
+		_, err := Webserver(port, test)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	// handle the different run modes
+	if noExec {
+		frontend()
+	}
+	if noFrontend {
+		exec()
+	}
+	if !noExec && !noFrontend {
+		// this is the "normal" case - webserver is blocking
+		go exec()
+		frontend()
 	}
 }

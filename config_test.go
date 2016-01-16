@@ -14,19 +14,19 @@ var loadmodel string = `{
     {
       "Testcase": "01_testcase",
       "Users": 1,
-      "Iterations": 18,
+      "Runfor": 1.980,
       "Pacing": 120
     },
     {
       "Testcase": "02_testcase",
       "Users": 1,
-      "Iterations": 9,
+      "Runfor": 1.980,
       "Pacing": 220
     },
     {
       "Testcase": "03_testcase",
       "Users": 1,
-      "Iterations": 6,
+      "Runfor": 1.980,
       "Pacing": 320
     }
   ]
@@ -52,12 +52,14 @@ func TestGetScenarioConfig(t *testing.T) {
 }
 
 func TestGetTestcaseConfig(t *testing.T) {
-	expIterations, expPacing := 20.0, 30.0
+	expDelay, expRampup, expUsers, expRunfor, expPacing := 10.0, 20.0, 30.0, 40.0, 50.0
 
 	tc1 := make(map[string]interface{})
 	tc1["Testcase"] = "testcase1"
-	tc1["Users"] = 1
-	tc1["Iterations"] = expIterations
+	tc1["Delay"] = expDelay
+	tc1["Rampup"] = expRampup
+	tc1["Users"] = expUsers
+	tc1["Runfor"] = expRunfor
 	tc1["Pacing"] = expPacing
 
 	fake := NewTest()
@@ -65,19 +67,64 @@ func TestGetTestcaseConfig(t *testing.T) {
 	l[0] = tc1
 	fake.loadmodel["Loadmodel"] = l
 
-	iterations, pacing, _ := fake.GetTestcaseConfig("testcase1")
-	if iterations != int64(expIterations) {
-		t.Errorf("Iterations %s not as expected!", iterations)
+	delay, runfor, rampup, users, pacing, _ := fake.GetTestcaseConfig("testcase1")
+
+	if delay != float64(expDelay) {
+		t.Errorf("Delay %s not as expected!", delay)
 	}
-	if pacing != int64(expPacing) {
+	if rampup != float64(expRampup) {
+		t.Errorf("Rampup %s not as expected!", rampup)
+	}
+	if users != int(expUsers) {
+		t.Errorf("Users %s not as expected!", users)
+	}
+	if runfor != float64(expRunfor) {
+		t.Errorf("Runfor %s not as expected!", runfor)
+	}
+	if pacing != float64(expPacing) {
 		t.Errorf("Pacing %s not as expected!", pacing)
+	}
+}
+
+func TestGetTestcaseConfigUsingDefaults(t *testing.T) {
+	// Note: the JSON format itself has no integers (unlike JSON Schema). In JSON all values are float64.
+	expUsers, expRunfor, expPacing := 1.0, 20.0, 30.0
+
+	tc1 := make(map[string]interface{})
+	tc1["Testcase"] = "testcase1"
+	tc1["Users"] = expUsers
+	tc1["Runfor"] = expRunfor
+	tc1["Pacing"] = expPacing
+
+	fake := NewTest()
+	l := make([]interface{}, 1)
+	l[0] = tc1
+	fake.loadmodel["Loadmodel"] = l
+
+	delay, runfor, rampup, users, pacing, _ := fake.GetTestcaseConfig("testcase1")
+
+	if users != int(expUsers) {
+		t.Errorf("Users %s not as expected!", users)
+	}
+	if runfor != expRunfor {
+		t.Errorf("Runfor %s not as expected!", runfor)
+	}
+	if pacing != expPacing {
+		t.Errorf("Pacing %s not as expected!", pacing)
+	}
+	// defaults
+	if delay != 0.0 {
+		t.Errorf("Default Delay %s not as expected!", delay)
+	}
+	if rampup != 0.0 {
+		t.Errorf("Default Rampup %s not as expected!", rampup)
 	}
 }
 
 func TestGetTestcaseConfigMissingLoadmodel(t *testing.T) {
 	fake := NewTest()
 
-	_, _, err := fake.GetTestcaseConfig("testcase1")
+	_, _, _, _, _, err := fake.GetTestcaseConfig("testcase1")
 	error := err.Error()
 	if error != "config for testcase testcase1 not found" {
 		t.Error("Error handling for missing testcase config not as expected: %s!", error)
@@ -87,7 +134,8 @@ func TestGetTestcaseConfigMissingLoadmodel(t *testing.T) {
 func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 	tc1 := make(map[string]interface{})
 	tc1["Testcase"] = "testcase1"
-	tc1["Users"] = 1
+	// Note: the JSON format itself has no integers (unlike JSON Schema). In JSON all values are float64.
+	tc1["Users"] = 1.0
 	tc1["Iterations"] = 20.0
 	tc1["Pacing"] = 30.0
 
@@ -96,7 +144,7 @@ func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 	l[0] = tc1
 	fake.loadmodel["Loadmodel"] = l
 
-	_, _, err := fake.GetTestcaseConfig("testcase2")
+	_, _, _, _, _, err := fake.GetTestcaseConfig("testcase2")
 	error := err.Error()
 	if error != "config for testcase testcase2 not found" {
 		t.Error("Error handling for missing testcase configuration not as expected: %s!", error)

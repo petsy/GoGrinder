@@ -10,7 +10,6 @@ backend
 * handler needs some polishing (silence, maybe decorators for logging?)
 
 scenario
-* multiple users
 * variable pacing
 * script configuration/params
 * send data to Prometheus (eg. specialized reporter plugin)
@@ -36,3 +35,4 @@ Version 0.01
 * -no-report
 * -no-frontend
 * add revision to frontend
+* multiple users
