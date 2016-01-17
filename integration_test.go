@@ -67,6 +67,7 @@ var noConcurrencyLoadmodel string = `{
 	  "Scenario": "scenario1",
 	  "ThinkTimeFactor": 2.00,
 	  "ThinkTimeVariance": 0.0,
+	  "PacingVariance": 0.0,
 	  "Loadmodel": [
 	    {
 		  "Testcase": "01_testcase",
@@ -103,7 +104,8 @@ func TestBaseline1(t *testing.T) {
 	loadmodel := `{
 	  "Scenario": "baseline",
 	  "ThinkTimeFactor": 2.0,
-	  "ThinkTimeVariance": 0.0
+	  "ThinkTimeVariance": 0.0,
+	  "PacingVariance": 0.0
 	}`
 	//  no Loadmodel required! ,"Loadmodel": []
 
@@ -145,7 +147,8 @@ func TestBaseline2(t *testing.T) {
 	loadmodel := `{
 	  "Scenario": "baseline",
 	  "ThinkTimeFactor": 2.0,
-	  "ThinkTimeVariance": 0.1
+	  "ThinkTimeVariance": 0.1,
+	  "PacingVariance": 0.0,
 	}`
 	//  no Loadmodel required! ,"Loadmodel": []
 
@@ -189,16 +192,17 @@ func TestDebug(t *testing.T) {
 	loadmodel := `{
 	  "Scenario": "01_testcase",
 	  "ThinkTimeFactor": 2.0,
-	  "ThinkTimeVariance": 0.0
+	  "ThinkTimeVariance": 0.0,
+	  "PacingVariance": 0.0
 	}`
 
 	// init
+	gg.Reset()
 	gg.Testscenario("baseline", baseline1)
 	gg.Testscenario("01_testcase", tc1)
 
 	// main part
 	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
-	//gogrinder.Webserver()  // not necessary for the integration test
 
 	start := time.Now()
 
@@ -206,7 +210,7 @@ func TestDebug(t *testing.T) {
 	execution := time.Now().Sub(start)
 
 	// verify total run time of the baseline senario
-	// 15 * 50 * 2 + 500 + 1000 + 1500 = 4500
+	// 50+2*50 =150ms
 	if execution != 150*time.Millisecond {
 		t.Errorf("Error: execution time of debug test not as expected: %f ms.\n", d2f(execution))
 	}
@@ -230,7 +234,6 @@ func TestAScenarioAvoidingConcurrency(t *testing.T) {
 
 	// main part
 	gg.ReadLoadmodelSchema(noConcurrencyLoadmodel, LoadmodelSchema)
-	//gogrinder.Webserver()  // not necessary for the integration test
 
 	start := time.Now()
 

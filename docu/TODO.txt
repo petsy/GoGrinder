@@ -8,11 +8,16 @@ frontend
 
 backend
 * handler needs some polishing (silence, maybe decorators for logging?)
+* Results Duration formating (at least define what it is ns?)
+type Duration int64
+A Duration represents the elapsed time between two instants as an int64 nanosecond count. The representation limits the largest representable duration to approximately 290 years.
+* check return type of Webserver. probably should be *TestServer!
 
 scenario
 * variable pacing
 * script configuration/params
 * send data to Prometheus (eg. specialized reporter plugin)
+* make thinktime and pacing config optional
 
 sample
 * pet clinic (write dockerfile)
@@ -20,7 +25,6 @@ sample
 * recreate jmeter test in gogrinder
 
 tests
-* Webserver routes
 
 
 Version 0.01
@@ -36,3 +40,4 @@ Version 0.01
 * -no-frontend
 * add revision to frontend
 * multiple users
+* test Webserver routes

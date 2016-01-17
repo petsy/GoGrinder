@@ -66,6 +66,27 @@ func TestHandlerServeHTTPEmptyResponse(t *testing.T) {
 	}
 }
 
+func TestWebserverStartStop(t *testing.T) {
+	// Webserver pretty much consists of boilerplate code from the graceful server docu
+	// we assume for now that this works
+	fake := NewTest()
+	var srv TestServer
+	var err error
+	// start
+	go func() {
+		srv, err = Webserver(3000, fake)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}()
+
+	// get index.html
+	http.Get("http://localhost:3000/app/index.html")
+
+	// and stop
+	srv.server.Stop(0)
+}
+
 ////////////////////////////////
 // test service methods
 ////////////////////////////////
@@ -99,6 +120,7 @@ func TestRouteGetStatistics(t *testing.T) {
 	fake := NewTest()
 	srv := TestServer{}
 	srv.test = fake
+	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
 	fake.Update("sth", 8*time.Millisecond, now)
@@ -110,13 +132,16 @@ func TestRouteGetStatistics(t *testing.T) {
 	// invoke REST service
 	req, _ := http.NewRequest("GET", "/statistics", nil)
 	rsp := httptest.NewRecorder()
+	// I separated the Router() from the actual Webserver()
+	// In this way I can test routes without running a server
 	srv.Router().ServeHTTP(rsp, req)
 	if rsp.Code != http.StatusOK {
 		t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
 	}
 
 	body := rsp.Body.String()
-	if body != fmt.Sprintf(`{"results":[{"testcase":"sth","avg":6666666,"min":2000000,"max":10000000,"count":3,"last":"%s"}],"running":false}`, now.Format(ISO8601)) {
+	if body != fmt.Sprintf(`{"results":[{"testcase":"sth","avg":6666666,"min":2000000,`+
+		`"max":10000000,"count":3,"last":"%s"}],"running":false}`, now.Format(ISO8601)) {
 		t.Fatalf("Response not as expected: %s", body)
 	}
 }
@@ -143,9 +168,8 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	srv := TestServer{}
 	srv.test = fake
 	response, err := srv.getStatistics(request)
-
 	if err != nil {
-		t.Fatalf("Error while processing: %s", err)
+		t.Fatalf("Error while processing: %s", err.Message)
 	}
 	if len(response.(map[string]interface{})["results"].([]Result)) != 1 {
 		t.Fatalf("Response should contain exactly 1 row.")
@@ -169,7 +193,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	response, err = srv.getStatistics(request)
 
 	if err != nil {
-		t.Fatalf("Error while processing: %s", err)
+		t.Fatalf("Error while processing: %s", err.Message)
 	}
 	if len(response.(map[string]interface{})["results"].([]Result)) != 2 {
 		t.Fatalf("Response should contain exactly 2 rows.")
@@ -178,8 +202,8 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	if response.(map[string]interface{})["results"].([]Result)[0] !=
 		(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
 		t.Log(t2.Format(ISO8601))
-		t.Log("Response 0: %v", response.(map[string]interface{})["results"].([]Result)[0])
-		t.Log("Response 1: %v", response.(map[string]interface{})["results"].([]Result)[1])
+		t.Logf("Response 0: %v", response.(map[string]interface{})["results"].([]Result)[0])
+		t.Logf("Response 1: %v", response.(map[string]interface{})["results"].([]Result)[1])
 		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[0])
 	}
 	// "sth" is [1]

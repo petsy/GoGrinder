@@ -10,6 +10,7 @@ var loadmodel string = `{
   "Scenario": "scenario1",
   "ThinkTimeFactor": 0.99,
   "ThinkTimeVariance": 0.1,
+  "PacingVariance": 0.0,
   "Loadmodel": [
     {
       "Testcase": "01_testcase",
@@ -33,21 +34,46 @@ var loadmodel string = `{
 }`
 
 func TestGetScenarioConfig(t *testing.T) {
-	expScenario, expTtf, expTtv := "Scenario1", 0.5, 0.1
+	expScenario, expTtf, expTtv, expPv := "Scenario1", 0.5, 0.1, 0.2
 	fake := NewTest()
 	fake.loadmodel["Scenario"] = expScenario
 	fake.loadmodel["ThinkTimeFactor"] = expTtf
 	fake.loadmodel["ThinkTimeVariance"] = expTtv
+	fake.loadmodel["PacingVariance"] = expPv
 
-	scenario, ttf, ttv := fake.GetScenarioConfig()
+	scenario, ttf, ttv, pv := fake.GetScenarioConfig()
 	if scenario != expScenario {
 		t.Errorf("Scenario %s not as expected!", scenario)
 	}
 	if ttf != expTtf {
-		t.Errorf("ThinkTimeFactor %s not as expected!", ttf)
+		t.Errorf("ThinkTimeFactor %f not as expected!", ttf)
 	}
 	if ttv != expTtv {
-		t.Errorf("ThinkTimeVariance %s not as expected!", ttv)
+		t.Errorf("ThinkTimeVariance %f not as expected!", ttv)
+	}
+	if pv != expPv {
+		t.Errorf("PacingVariance %f not as expected!", ttv)
+	}
+}
+
+func TestGetScenarioConfigUsingDefaults(t *testing.T) {
+	expScenario, expTtf, expTtv, expPv := "Scenario1", 1.0, 0.0, 0.0
+	fake := NewTest()
+	fake.loadmodel["Scenario"] = expScenario
+
+	scenario, ttf, ttv, pv := fake.GetScenarioConfig()
+	if scenario != expScenario {
+		t.Errorf("Scenario %s not as expected!", scenario)
+	}
+	// defaults
+	if ttf != expTtf {
+		t.Errorf("Default ThinkTimeFactor %f not as expected!", ttf)
+	}
+	if ttv != expTtv {
+		t.Errorf("Default ThinkTimeVariance %f not as expected!", ttv)
+	}
+	if pv != expPv {
+		t.Errorf("Default PacingVariance %f not as expected!", ttv)
 	}
 }
 
@@ -70,19 +96,19 @@ func TestGetTestcaseConfig(t *testing.T) {
 	delay, runfor, rampup, users, pacing, _ := fake.GetTestcaseConfig("testcase1")
 
 	if delay != float64(expDelay) {
-		t.Errorf("Delay %s not as expected!", delay)
+		t.Errorf("Delay %f not as expected!", delay)
 	}
 	if rampup != float64(expRampup) {
-		t.Errorf("Rampup %s not as expected!", rampup)
+		t.Errorf("Rampup %f not as expected!", rampup)
 	}
 	if users != int(expUsers) {
-		t.Errorf("Users %s not as expected!", users)
+		t.Errorf("Users %d not as expected!", users)
 	}
 	if runfor != float64(expRunfor) {
-		t.Errorf("Runfor %s not as expected!", runfor)
+		t.Errorf("Runfor %f not as expected!", runfor)
 	}
 	if pacing != float64(expPacing) {
-		t.Errorf("Pacing %s not as expected!", pacing)
+		t.Errorf("Pacing %f not as expected!", pacing)
 	}
 }
 
@@ -104,20 +130,20 @@ func TestGetTestcaseConfigUsingDefaults(t *testing.T) {
 	delay, runfor, rampup, users, pacing, _ := fake.GetTestcaseConfig("testcase1")
 
 	if users != int(expUsers) {
-		t.Errorf("Users %s not as expected!", users)
+		t.Errorf("Users %d not as expected!", users)
 	}
 	if runfor != expRunfor {
-		t.Errorf("Runfor %s not as expected!", runfor)
+		t.Errorf("Runfor %f not as expected!", runfor)
 	}
 	if pacing != expPacing {
-		t.Errorf("Pacing %s not as expected!", pacing)
+		t.Errorf("Pacing %f not as expected!", pacing)
 	}
 	// defaults
 	if delay != 0.0 {
-		t.Errorf("Default Delay %s not as expected!", delay)
+		t.Errorf("Default Delay %f not as expected!", delay)
 	}
 	if rampup != 0.0 {
-		t.Errorf("Default Rampup %s not as expected!", rampup)
+		t.Errorf("Default Rampup %f not as expected!", rampup)
 	}
 }
 
@@ -127,7 +153,7 @@ func TestGetTestcaseConfigMissingLoadmodel(t *testing.T) {
 	_, _, _, _, _, err := fake.GetTestcaseConfig("testcase1")
 	error := err.Error()
 	if error != "config for testcase testcase1 not found" {
-		t.Error("Error handling for missing testcase config not as expected: %s!", error)
+		t.Errorf("Error handling for missing testcase config not as expected: %s!", error)
 	}
 }
 
@@ -147,7 +173,7 @@ func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 	_, _, _, _, _, err := fake.GetTestcaseConfig("testcase2")
 	error := err.Error()
 	if error != "config for testcase testcase2 not found" {
-		t.Error("Error handling for missing testcase configuration not as expected: %s!", error)
+		t.Errorf("Error handling for missing testcase configuration not as expected: %s!", error)
 	}
 }
 
@@ -170,8 +196,6 @@ func TestReadLoadmodelSchemaInvalid(t *testing.T) {
 
 	expected := "the loadmodel is not valid:\n" +
 		"- Scenario: Scenario is required\n" +
-		"- ThinkTimeFactor: ThinkTimeFactor is required\n" +
-		"- ThinkTimeVariance: ThinkTimeVariance is required\n" +
 		"- this: Additional property this is not allowed"
 	error := err.Error()
 	if error != expected {

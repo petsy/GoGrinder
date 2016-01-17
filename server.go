@@ -14,8 +14,8 @@ import (
 
 type Server interface {
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
-	Router()
-	Webserver()
+	Router() *mux.Router
+	Webserver(port int, test *TestScenario) (*TestServer, error)
 }
 
 type TestServer struct {
@@ -78,7 +78,6 @@ func (srv *TestServer) getStatistics(r *http.Request) (interface{}, *handlerErro
 	return res, nil
 }
 
-// TODO: start stop of server processes needs testing!
 func (srv *TestServer) startTest(r *http.Request) (interface{}, *handlerError) {
 	if srv.test.status == stopped {
 		srv.test.Exec()

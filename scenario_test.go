@@ -12,8 +12,6 @@ func TestThinktimeNoVariance(t *testing.T) {
 	var fake = NewTest()
 	fake.status = running
 	fake.loadmodel["Scenario"] = "scenario1"
-	fake.loadmodel["ThinkTimeFactor"] = 1.0
-	fake.loadmodel["ThinkTimeVariance"] = 0.0
 
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
@@ -57,11 +55,24 @@ func TestThinktimeVariance(t *testing.T) {
 	if max >= 22.0 {
 		t.Errorf("Maximum sleep time %f out of defined range!", max)
 	}
-	t.Logf("Minimum sleep time %f\n", min)
-	t.Logf("Maximum sleep time %f\n", max)
-	t.Logf("Average sleep time %f\n", avg)
 	if avg < 19.9 || avg > 20.1 {
 		t.Fatalf("Average sleep time %f out of defined range!", avg)
+	}
+}
+
+func TestThinktimeStops(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+	// create a fake loadmodel for testing
+	var fake = NewTest()
+	fake.status = stopping
+	fake.loadmodel["Scenario"] = "scenario1"
+
+	start := time.Now()
+	fake.Thinktime(10.0)
+	sleep := float64(time.Now().Sub(start)) / float64(time.Millisecond)
+	if sleep != 0 {
+		t.Errorf("Thinktime did not stop! It sleept: %v\n", sleep)
 	}
 }
 
@@ -70,10 +81,11 @@ func TestPaceMaker(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
+	fake.loadmodel["Scenario"] = "scenario1"
 	fake.status = running
 	start := time.Now()
-	fake.paceMaker(10)
-	if time.Now().Sub(start) != 10 {
+	fake.paceMaker(10*time.Second, 0)
+	if time.Now().Sub(start) != 10*time.Second {
 		t.Fatal("Function paceMaker sleep out of range!")
 	}
 }
@@ -83,11 +95,65 @@ func TestPaceMakerNegativeValue(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
+	fake.loadmodel["Scenario"] = "scenario1"
 	fake.status = running
 	start := time.Now()
-	fake.paceMaker(-10)
+	fake.paceMaker(-10, 0)
 	if time.Now().Sub(start) != 0 {
 		t.Fatal("Function paceMaker sleep out of range!")
+	}
+}
+
+func TestPaceMakerVariance(t *testing.T) {
+	// create a fake loadmodel for testing
+	var fake = NewTest()
+	fake.status = running
+	fake.loadmodel["Scenario"] = "scenario1"
+	fake.loadmodel["ThinkTimeFactor"] = 2.0
+	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.loadmodel["PacingVariance"] = 0.1
+
+	min, max, avg := 1000.0, 1000.0, 0.0
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	for i := 0; i < 1000; i++ {
+		start := time.Now()
+		fake.paceMaker(time.Duration(1*time.Second), time.Duration(0))
+		sleep := float64(time.Now().Sub(start)) / float64(time.Millisecond)
+		if sleep < min {
+			min = sleep
+		}
+		if max < sleep {
+			max = sleep
+		}
+		avg += sleep
+	}
+	avg = avg / 1000
+	if min < 900.0 {
+		t.Errorf("Minimum pace time %f out of defined range!\n", min)
+	}
+	if max >= 1100.0 {
+		t.Errorf("Maximum pace time %f out of defined range!", max)
+	}
+	if avg < 990.0 || avg > 1010.0 {
+		t.Fatalf("Average pace time %f out of defined range!", avg)
+	}
+}
+
+func TestPaceMakerStops(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+	// create a fake loadmodel for testing
+	var fake = NewTest()
+	fake.status = stopping
+	fake.loadmodel["Scenario"] = "scenario1"
+
+	start := time.Now()
+	fake.paceMaker(time.Duration(10*time.Second), time.Duration(0))
+	sleep := float64(time.Now().Sub(start)) / float64(time.Millisecond)
+	if sleep != 0 {
+		t.Errorf("PaceMaker did not stop! It sleept: %v\n", sleep)
 	}
 }
 
@@ -137,7 +203,7 @@ func TestTeststep(t *testing.T) {
 	if v, ok := fake.stats["sth"]; ok {
 
 		if v.avg != 20.0 {
-			t.Fatalf("Teststep 'sth' measurement %f not 20ns!\n", v.avg)
+			t.Fatalf("Teststep 'sth' measurement %v not 20ns!\n", v.avg)
 		}
 	} else {
 		t.Fatal("Teststep 'sth' missing in stats!")
@@ -149,6 +215,7 @@ func TestRunSequential(t *testing.T) {
 	defer time.Unfreeze()
 
 	fake := NewTest()
+	fake.loadmodel["Scenario"] = "scenario1"
 	var counter int = 0
 	// assemble testcase
 	tc1 := func(meta map[string]interface{}) {
@@ -173,8 +240,6 @@ func TestRunSequential(t *testing.T) {
 	if counter != 20 {
 		t.Error("Testcase iteration counter not as expected!")
 	}
-
-	// TODO run multiple users!
 }
 
 func TestScheduleErrorUnknownTestcase(t *testing.T) {

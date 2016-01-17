@@ -11,7 +11,7 @@ import (
 type Config interface {
 	ReadLoadmodel() error
 	ReadLoadmodelSchema(document string, schema string) error
-	GetScenarioConfig() (string, float64, float64)
+	GetScenarioConfig() (string, float64, float64, float64)
 	GetTestcaseConfig(testcase string) (float64, float64, float64, int, float64, error)
 }
 
@@ -25,9 +25,10 @@ var LoadmodelSchema string = `{
     "description": "schema for GoGrinder loadmodel.",
     "type":"object",
     "properties": {
-        "Scenario":        { "type":"string" },
-        "ThinkTimeFactor": { "type": "number" },
+        "Scenario":          { "type":"string" },
+        "ThinkTimeFactor":   { "type": "number" },
         "ThinkTimeVariance": { "type": "number" },
+        "PacingVariance":    { "type": "number" },
         "Loadmodel": {
             "type":"array",
             "items": {
@@ -45,7 +46,7 @@ var LoadmodelSchema string = `{
             }
         }
     },
-    "required": ["Scenario", "ThinkTimeFactor", "ThinkTimeVariance"],
+    "required": ["Scenario"],
     "additionalProperties": false
 }`
 
@@ -81,11 +82,23 @@ func (test *TestConfig) ReadLoadmodelSchema(document string, schema string) erro
 }
 
 // Return ThinkTimeFactor, ThinkTimeVariance from the loadmodel configuration.
-func (test *TestConfig) GetScenarioConfig() (string, float64, float64) {
+func (test *TestConfig) GetScenarioConfig() (string, float64, float64, float64) {
+	// defaults for optional properties
+	ttf := 1.0
+	ttv := 0.0
+	pv := 0.0
+	if f, ok := test.loadmodel["ThinkTimeFactor"].(float64); ok {
+		ttf = f
+	}
+	if v, ok := test.loadmodel["ThinkTimeVariance"].(float64); ok {
+		ttv = v
+	}
+	if p, ok := test.loadmodel["PacingVariance"].(float64); ok {
+		pv = p
+	}
+	// required properties
 	scenario := test.loadmodel["Scenario"].(string)
-	ttf := test.loadmodel["ThinkTimeFactor"].(float64)
-	ttv := test.loadmodel["ThinkTimeVariance"].(float64)
-	return scenario, ttf, ttv
+	return scenario, ttf, ttv, pv
 }
 
 // Return delay, runfor, rampup, users, pacing from the loadmodel configuration.

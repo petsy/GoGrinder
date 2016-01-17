@@ -71,13 +71,20 @@ func NewTest() *TestScenario {
 
 // paceMaker is used internally. It is not an internal function for testability.
 // Parameter <pace> is given in nanoseconds.
-func (test *TestScenario) paceMaker(pace time.Duration) {
+func (test *TestScenario) paceMaker(pacing time.Duration, elapsed time.Duration) {
+	_, _, _, pv := test.GetScenarioConfig()
 	const small = 2 * time.Second
-	if pace < 0 {
+
+	// calculate the variable pacing
+	r := (rand.Float64() * 2.0) - 1.0 // r in [-1.0 - 1.0)
+	v := float64(pacing) * ((r * pv) + 1.0)
+	p := time.Duration(v - float64(elapsed))
+	if p < 0 {
 		return
 	}
+
 	// split up in small intervals so we can stop out of this
-	for ; pace > small; pace = pace - small {
+	for ; p > small; p = p - small {
 		if test.status != running {
 			break
 		}
@@ -85,7 +92,7 @@ func (test *TestScenario) paceMaker(pace time.Duration) {
 	}
 	// remaining sleep time
 	if test.status == running {
-		time.Sleep(pace)
+		time.Sleep(p)
 	}
 }
 
@@ -134,7 +141,7 @@ func (test *TestScenario) DoIterations(testcase func(map[string]interface{}),
 			if test.status == stopping {
 				break
 			}
-			test.paceMaker(time.Duration(pacing*float64(time.Second)) - time.Now().Sub(start))
+			test.paceMaker(time.Duration(pacing*float64(time.Second)), time.Now().Sub(start))
 		}
 	}
 	if parallel {
@@ -177,7 +184,7 @@ func (test *TestScenario) Run(testcase func(map[string]interface{}), delay float
 					if test.status == stopping {
 						break
 					}
-					test.paceMaker(time.Duration(pacing*float64(time.Second)) - time.Now().Sub(start))
+					test.paceMaker(time.Duration(pacing*float64(time.Second)), time.Now().Sub(start))
 				}
 			}()
 		}
@@ -186,7 +193,7 @@ func (test *TestScenario) Run(testcase func(map[string]interface{}), delay float
 
 // Execute the scenario set in the loadmodel.json file.
 func (test *TestScenario) Exec() error {
-	sel, _, _ := test.GetScenarioConfig()
+	sel, _, _, _ := test.GetScenarioConfig()
 	// check that the scenario exists
 	if scenario, ok := test.testscenarios[sel]; ok {
 		test.Reset()           // clear stats from previous run
@@ -231,7 +238,7 @@ func (test *TestScenario) Exec() error {
 // tt is given in Seconds. So for example 3.0 equates to 3 seconds; 0.3 to 300ms.
 func (test *TestScenario) Thinktime(tt float64) {
 	if test.status == running {
-		_, ttf, ttv := test.GetScenarioConfig()
+		_, ttf, ttv, _ := test.GetScenarioConfig()
 		r := (rand.Float64() * 2.0) - 1.0 // r in [-1.0 - 1.0)
 		v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Second)
 		time.Sleep(time.Duration(v))

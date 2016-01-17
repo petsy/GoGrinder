@@ -25,13 +25,13 @@ func TestDefaults(t *testing.T) {
 		t.Errorf("Default filename was expected 'loadmodel.json' but was: %s", filename)
 	}
 	if noExec != false {
-		t.Errorf("Default -no-exec was expected false but was: %b", noExec)
+		t.Errorf("Default -no-exec was expected false but was: %t", noExec)
 	}
 	if noReport != false {
-		t.Errorf("Default -no-report was expected false but was: %b", noReport)
+		t.Errorf("Default -no-report was expected false but was: %t", noReport)
 	}
 	if noFrontend != false {
-		t.Errorf("Default -no-frontend was expected false but was: %b", noFrontend)
+		t.Errorf("Default -no-frontend was expected false but was: %t", noFrontend)
 	}
 	if port != 3000 {
 		t.Errorf("Default port was expected 3000 but was: %d", port)
@@ -56,7 +56,7 @@ func TestNoExec(t *testing.T) {
 
 	_, noExec, _, _, _, err := GetCLI()
 	if noExec != true {
-		t.Errorf("-no-exec was expected true but was: %b", noExec)
+		t.Errorf("-no-exec was expected true but was: %t", noExec)
 	}
 	if err != nil {
 		t.Errorf("err was expected nil but was: %s", err)
@@ -78,7 +78,7 @@ func TestNoFrontend(t *testing.T) {
 
 	_, _, _, noFrontend, _, err := GetCLI()
 	if noFrontend != true {
-		t.Errorf("-no-frontend was expected true but was: %b", noFrontend)
+		t.Errorf("-no-frontend was expected true but was: %t", noFrontend)
 	}
 	if err != nil {
 		t.Errorf("err was expected nil but was: %s", err)
@@ -100,7 +100,7 @@ func TestNoReport(t *testing.T) {
 
 	_, _, noReport, _, _, err := GetCLI()
 	if noReport != true {
-		t.Errorf("-no-report was expected true but was: %b", noReport)
+		t.Errorf("-no-report was expected true but was: %t", noReport)
 	}
 	if err != nil {
 		t.Errorf("err was expected nil but was: %s", err)
