@@ -2,8 +2,9 @@ package gogrinder
 
 import (
 	"bytes"
-	time "github.com/finklabs/ttime"
 	"testing"
+
+	time "github.com/finklabs/ttime"
 )
 
 // this testsuite's aim is to cover the scope of the samples in
@@ -61,6 +62,33 @@ func scenario1() {
 	gg.Schedule("02_testcase", tc2)
 	gg.Schedule("03_testcase", tc3)
 }
+
+var noConcurrencyLoadmodel string = `{
+	  "Scenario": "scenario1",
+	  "ThinkTimeFactor": 2.00,
+	  "ThinkTimeVariance": 0.0,
+	  "Loadmodel": [
+	    {
+		  "Testcase": "01_testcase",
+		  "Delay": 60.0,
+		  "Runfor": 301.0,
+		  "Rampup": 1.0,
+		  "Users": 1,
+		  "Pacing": 0.110
+		}
+	  ]
+	}`
+
+// Careful this bad boy messes up the fake clock big time!
+// test helper to poll test status
+/*
+func (test *TestScenario) waitForStatus(s status) {
+	for {
+		if gg.status == s { break }
+		time.Sleep(5 * time.Second)
+	}
+}
+*/
 
 // integration testcases for three modes:
 // Run, Schedule and Debug testcase
@@ -190,6 +218,37 @@ func TestDebug(t *testing.T) {
 	}
 }
 
+func TestAScenarioAvoidingConcurrency(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	// init
+	gg.Testscenario("scenario1", scenario1)
+
+	// main part
+	gg.ReadLoadmodelSchema(noConcurrencyLoadmodel, LoadmodelSchema)
+	//gogrinder.Webserver()  // not necessary for the integration test
+
+	start := time.Now()
+
+	gg.Exec() // exec the scenario that has been selected in the config file
+	execution := time.Now().Sub(start)
+
+	// verify total run time of the baseline senario
+	if execution != 361*time.Second {
+		t.Errorf("Error: execution time of scenario1 not as expected: %v\n", execution)
+	}
+
+	// verify Report!
+	report := stdout.(*bytes.Buffer).String()
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 2000\n") {
+		t.Fatalf("Report output of scenario1 not as expected: %s", report)
+	}
+}
+
 /*
 // TODO this test is flaky - the current approach to faketime (ttime) has concurrency issues
 // The concurrent executions mess up the fake clock. There is no evidence that there is a problem with GoGrinder itself.
@@ -252,6 +311,45 @@ func TestAScenario(t *testing.T) {
 	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 18\n" +
 		"02_01_teststep, 100.000000, 100.000000, 100.000000, 18\n" +
 		"03_01_teststep, 150.000000, 150.000000, 150.000000, 18\n") {
+		t.Fatalf("Report output of scenario1 not as expected: %s", report)
+	}
+}
+*/
+
+/*
+// this test also has concurrency which messes up the fake clock
+// two more tests like that are needed:
+// * -no-frontend
+// * -no-exec
+func TestGoGrinder(t *testing.T) {
+	//time.Freeze(time.Now())
+	//defer time.Unfreeze()
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
+	defer os.Remove(file.Name())
+	file.WriteString(noConcurrencyLoadmodel)
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+	os.Args = []string{"gogrinder", file.Name()}
+
+	// reset and run GoGrinder
+	gg.Testscenario("scenario1", scenario1)
+	gg.Reset()
+	gg.status = stopped
+	go gg.GoGrinder()
+	// wait for test stopped
+	gg.waitForStatus(running)
+	gg.waitForStatus(stopped)
+	// stop Webserver
+	req, _ := http.NewRequest("DELETE", "http://localhost:3000/stop", nil)
+	http.DefaultClient.Do(req)
+
+	// verify Report!
+	report := stdout.(*bytes.Buffer).String()
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 2000\n") {
 		t.Fatalf("Report output of scenario1 not as expected: %s", report)
 	}
 }

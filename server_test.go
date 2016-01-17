@@ -66,6 +66,10 @@ func TestHandlerServeHTTPEmptyResponse(t *testing.T) {
 	}
 }
 
+////////////////////////////////
+// test service methods
+////////////////////////////////
+
 // TODO func TestHandlerServeHTTPInvalidJson(t *testing.T) ?
 
 //func TestGetLoadmodel(t *testing.T) {
@@ -87,9 +91,14 @@ func TestHandlerServeHTTPEmptyResponse(t *testing.T) {
 //	}
 //}
 
-func TestGetStatistics(t *testing.T) {
+////////////////////////////////
+// test routes
+////////////////////////////////
+func TestRouteGetStatistics(t *testing.T) {
 	// test with 3 measurements
-	var fake = NewTest()
+	fake := NewTest()
+	srv := TestServer{}
+	srv.test = fake
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
 	fake.Update("sth", 8*time.Millisecond, now)
@@ -99,19 +108,20 @@ func TestGetStatistics(t *testing.T) {
 	<-done
 
 	// invoke REST service
-	request, _ := http.NewRequest("GET", "/statistics", nil)
-	srv := TestServer{}
-	srv.test = fake
-	response, err := srv.getStatistics(request)
-
-	if err != nil {
-		t.Fatalf("Error while processing: %s", err)
+	req, _ := http.NewRequest("GET", "/statistics", nil)
+	rsp := httptest.NewRecorder()
+	srv.Router().ServeHTTP(rsp, req)
+	if rsp.Code != http.StatusOK {
+		t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
 	}
-	if response.(map[string]interface{})["results"].([]Result)[0] != (Result{"sth", 6666666, 2000000, 10000000, 3, now.Format(ISO8601)}) {
-		t.Fatalf("Response nsot as expected: %v", response.([]Result)[0])
+
+	body := rsp.Body.String()
+	if body != fmt.Sprintf(`{"results":[{"testcase":"sth","avg":6666666,"min":2000000,"max":10000000,"count":3,"last":"%s"}],"running":false}`, now.Format(ISO8601)) {
+		t.Fatalf("Response not as expected: %s", body)
 	}
 }
 
+// TODO test the routes as well
 func TestHandlerStatisticsWithQuery(t *testing.T) {
 	// test with 3 measurements (two stats)
 	var fake = NewTest()
@@ -177,5 +187,45 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 		(Result{"sth", 8000000, 8000000, 8000000, 1, t1.Format(ISO8601)}) {
 		t.Log(t1)
 		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[1])
+	}
+}
+
+func TestRouteStartStop(t *testing.T) {
+	// prepare
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+	srv := TestServer{}
+	srv.test = NewTest()
+	tc1 := func(meta map[string]interface{}) { srv.test.Thinktime(0.050) }
+	srv.test.Testscenario("fake", func() { gg.DoIterations(tc1, 500, 0, false) })
+	loadmodel := `{"Scenario": "fake", "ThinkTimeFactor": 2.0, "ThinkTimeVariance": 0.0	}`
+	srv.test.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
+
+	{
+		// startTest
+		req, _ := http.NewRequest("POST", "/test", nil)
+		rsp := httptest.NewRecorder()
+		srv.Router().ServeHTTP(rsp, req)
+		if rsp.Code != http.StatusOK {
+			t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
+		}
+	}
+	// another fake clock problem here!
+	//	if srv.test.status != running {
+	//		t.Fatalf("Status code expected: %v but was: %v", running, srv.test.status)
+	//	}
+
+	{
+		// stopTest
+		req, _ := http.NewRequest("DELETE", "/test", nil)
+		rsp := httptest.NewRecorder()
+		srv.Router().ServeHTTP(rsp, req)
+		if rsp.Code != http.StatusOK {
+			t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
+		}
+	}
+
+	if srv.test.status == running {
+		t.Fatalf("Status code expected not running but was: %v", srv.test.status)
 	}
 }

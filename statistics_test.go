@@ -103,3 +103,16 @@ func TestDuration2Float(t *testing.T) {
 		t.Fatalf("Duration to ms float64 conversion %f not as expected", f)
 	}
 }
+
+func TestReportFeatureToggle(t *testing.T) {
+	fake := NewTest()
+	// check before
+	if fake.reportFeature != true {
+		t.Fatalf("ReportFeature should be activated by default.")
+	}
+	fake.ReportFeature(false)
+	// check after
+	if fake.reportFeature != false {
+		t.Fatalf("ReportFeature should be deactivated after setting it to false!")
+	}
+}

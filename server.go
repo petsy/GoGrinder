@@ -14,6 +14,7 @@ import (
 
 type Server interface {
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	Router()
 	Webserver()
 }
 
@@ -103,11 +104,9 @@ func (srv *TestServer) stopWebserver(r *http.Request) (interface{}, *handlerErro
 	return make(map[string]string), nil
 }
 
-// TODO: we need some kind of integration test to make sure routes work as expected
-// Start the Webserver for the GoGrinder frontend. It takes a testscenario as an argument.
-func Webserver(port int, test *TestScenario) (TestServer, error) {
-	srv := TestServer{}
-	srv.test = test
+// To simplify testing the routes I extracted the Router() following this idea:
+// https://groups.google.com/d/msg/golang-nuts/Xs-Ho1feGyg/xg5amXHsM_oJ
+func (srv *TestServer) Router() *mux.Router {
 	router := mux.NewRouter()
 
 	// frontend
@@ -126,16 +125,25 @@ func Webserver(port int, test *TestScenario) (TestServer, error) {
 	router.Handle("/test", handler(srv.stopTest)).Methods("DELETE")
 	router.Handle("/stop", handler(srv.stopWebserver)).Methods("DELETE")
 
+	return router
+}
+
+// Start the Webserver for the GoGrinder frontend. It takes a testscenario as an argument.
+func Webserver(port int, test *TestScenario) (TestServer, error) {
+	srv := TestServer{}
+	srv.test = test
+
 	srv.server = graceful.Server{
 		Timeout: 5 * time.Second,
 
 		Server: &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
-			Handler: router,
+			Handler: srv.Router(),
 		},
 	}
 
 	// start the stoppable server (this uses graceful, a stoppable server)
 	err := srv.server.ListenAndServe()
+
 	return srv, err
 }

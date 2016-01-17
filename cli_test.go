@@ -201,3 +201,26 @@ func TestFileNotFound(t *testing.T) {
 		t.Errorf("err was expected %s but was: %s", "File unknown_file.json does not exist.", err.Error())
 	}
 }
+
+func TestInvalidCombinationOfOptions(t *testing.T) {
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+	os.Args = []string{"gogrinder", "-no-exec", "-no-frontend"}
+
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	// prepare the default loadmodel.json file
+	f, ferr := os.Create("./loadmodel.json")
+	if ferr != nil {
+		t.Errorf("problem during default file creation: %s", ferr)
+	}
+	f.Close()
+	defer os.Remove("./loadmodel.json")
+
+	_, _, _, _, _, err := GetCLI()
+	if err.Error() != "Invalid combination of -no-exec and -no-frontend." {
+		t.Errorf("err was expected %s but was: %s", "Invalid combination of -no-exec and -no-frontend.", err.Error())
+	}
+}
