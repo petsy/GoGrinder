@@ -180,7 +180,7 @@ func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 func TestReadLoadmodelSchema(t *testing.T) {
 	fake := NewTest()
 
-	fake.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
+	fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
 
 	count := len(fake.loadmodel["Loadmodel"].([]interface{}))
 	if count != 3 {
@@ -192,11 +192,10 @@ func TestReadLoadmodelSchemaInvalid(t *testing.T) {
 	fake := NewTest()
 	invalid := `{"this": "is NOT a loadmodel"}`
 
-	err := fake.ReadLoadmodelSchema(invalid, LoadmodelSchema)
+	err := fake.ReadConfigValidate(invalid, LoadmodelSchema)
 
 	expected := "the loadmodel is not valid:\n" +
-		"- Scenario: Scenario is required\n" +
-		"- this: Additional property this is not allowed"
+		"- Scenario: Scenario is required"
 	error := err.Error()
 	if error != expected {
 		t.Errorf("Error msg not as expected: %s", error)
@@ -210,7 +209,7 @@ func TestReadLoadmodel(t *testing.T) {
 	t.Log(file.Name())
 
 	fake := NewTest()
-	fake.ReadLoadmodel(file.Name())
+	fake.ReadConfig(file.Name())
 	scenario := fake.loadmodel["Scenario"]
 	if scenario != "scenario1" {
 		t.Errorf("Scenario %s not 'scenario1' as expected!", scenario)
@@ -219,5 +218,62 @@ func TestReadLoadmodel(t *testing.T) {
 	count := len(fake.loadmodel["Loadmodel"].([]interface{}))
 	if count != 3 {
 		t.Errorf("Expected to find 3 testcase entries in the loadmodel but found %d!", count)
+	}
+}
+
+func TestWriteLoadmodel(t *testing.T) {
+	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
+	defer os.Remove(file.Name())
+
+	fake := NewTest()
+	fake.loadmodel["Scenario"] = "scenario1"
+	fake.loadmodel["ThinkTimeFactor"] = 2.0
+	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.filename = file.Name()
+
+	fake.WriteConfig()
+
+	buf, err := ioutil.ReadFile(file.Name())
+	if err != nil {
+		t.Errorf("Unexpected problem while reading from the file %s!", file.Name())
+	}
+
+	loadmodel := string(buf)
+	if loadmodel != `{"Scenario":"scenario1","ThinkTimeFactor":2,"ThinkTimeVariance":0.1}` {
+		t.Errorf("Loadmodel not as expected: %s!", loadmodel)
+	}
+}
+
+func TestAdditionalConfigProperties(t *testing.T) {
+	fake := NewTest()
+	loadmodel := `{
+	  "Scenario": "baseline",
+	  "ThinkTimeFactor": 2.0,
+	  "ThinkTimeVariance": 0.0,
+	  "PacingVariance": 0.0,
+	  "AdditionalProperty": 123
+	}`
+	fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
+
+	opts := fake.GetAdditionalProperties()
+
+	if v, ok := opts["AdditionalProperty"]; !ok || v != 123.0 {
+		t.Errorf("Error: AdditionalProperty not found, or value expected %f, but was %f!", 123.0, v)
+	}
+	// make sure std. fields are not contained!
+	if _, ok := opts["Scenario"]; ok {
+		t.Errorf("Error: additional properties must not contain 'Scenario'!")
+	}
+	if _, ok := opts["ThinkTimeFactor"]; ok {
+		t.Errorf("Error: additional properties must not contain 'ThinkTimeFactor'!")
+	}
+	if _, ok := opts["ThinkTimeVariance"]; ok {
+		t.Errorf("Error: additional properties must not contain 'ThinkTimeVariance'!")
+	}
+	if _, ok := opts["PacingVariance"]; ok {
+		t.Errorf("Error: additional properties must not contain 'PacingVariance'!")
+	}
+	if _, ok := opts["Loadmodel"]; ok {
+		t.Errorf("Error: additional properties must not contain 'Loadmodel'!")
 	}
 }

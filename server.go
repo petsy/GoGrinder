@@ -3,6 +3,7 @@ package gogrinder
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -15,12 +16,27 @@ import (
 type Server interface {
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 	Router() *mux.Router
-	Webserver(port int, test *TestScenario) (*TestServer, error)
+	NewTestServer(test *TestScenario) *TestServer
 }
 
 type TestServer struct {
-	test   *TestScenario
-	server graceful.Server // stoppable http server
+	test            *TestScenario
+	graceful.Server // stoppable http server
+}
+
+// Assemble the Webserver for the GoGrinder frontend. It takes a testscenario as argument.
+func NewTestServer(test *TestScenario) *TestServer {
+	var srv TestServer
+	srv = TestServer{
+		test: test,
+		Server: graceful.Server{
+			Timeout: 5 * time.Second,
+			Server: &http.Server{
+				Handler: srv.Router(),
+			},
+		},
+	}
+	return &srv
 }
 
 // Error response compliant with http.Error.
@@ -92,14 +108,35 @@ func (srv *TestServer) stopTest(r *http.Request) (interface{}, *handlerError) {
 	return make(map[string]string), nil
 }
 
-// simple get op
-//func getLoadmodel(r *http.Request) (interface{}, *handlerError) {
-//}
+// update the configuration and write it to file.
+func (srv *TestServer) updateConfig(r *http.Request) (interface{}, *handlerError) {
+	// parse config
+	config, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		e := handlerError{err, "write error while parsing the configuration", 500} // TODO corr error code
+		return make(map[string]string), &e
+	}
+	srv.test.ReadConfigValidate(string(config), LoadmodelSchema)
+
+	// write config to file
+	err = srv.test.WriteConfig()
+	if err != nil {
+		e := handlerError{err, "write error while updating the configuration", 500} // TODO corr error code
+		return make(map[string]string), &e
+	}
+	return make(map[string]string), nil
+}
+
+// write the config to file.
+func (srv *TestServer) getConfig(r *http.Request) (interface{}, *handlerError) {
+	res := srv.test.loadmodel
+	return res, nil
+}
 
 // Stop the web server.
 func (srv *TestServer) stopWebserver(r *http.Request) (interface{}, *handlerError) {
 	// e.g. curl -X "DELETE" http://localhost:3000/stop
-	srv.server.Stop(5 * time.Second)
+	srv.Stop(5 * time.Second)
 	return make(map[string]string), nil
 }
 
@@ -110,39 +147,19 @@ func (srv *TestServer) Router() *mux.Router {
 
 	// frontend
 	box := rice.MustFindBox("web")
+	//_ = box
 	appFileServer := http.FileServer(box.HTTPBox())
-	// dev mode:
-	// appFileServer := http.FileServer(http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
+	// dev mode fallback: appFileServer := http.FileServer(http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
 	// app route:
 	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
 
 	// REST routes
 	router.Handle("/statistics", handler(srv.getStatistics)).Methods("GET")
-	//router.Handle("/loadmodel", handler(getLoadmodel)).Methods("GET")
-	//router.Handle("/loadmodel", handler(updateLoadmodel)).Methods("PUT")
+	router.Handle("/config", handler(srv.getConfig)).Methods("GET")
+	router.Handle("/config", handler(srv.updateConfig)).Methods("PUT")
 	router.Handle("/test", handler(srv.startTest)).Methods("POST")
 	router.Handle("/test", handler(srv.stopTest)).Methods("DELETE")
 	router.Handle("/stop", handler(srv.stopWebserver)).Methods("DELETE")
 
 	return router
-}
-
-// Start the Webserver for the GoGrinder frontend. It takes a testscenario as an argument.
-func Webserver(port int, test *TestScenario) (TestServer, error) {
-	srv := TestServer{}
-	srv.test = test
-
-	srv.server = graceful.Server{
-		Timeout: 5 * time.Second,
-
-		Server: &http.Server{
-			Addr:    fmt.Sprintf(":%d", port),
-			Handler: srv.Router(),
-		},
-	}
-
-	// start the stoppable server (this uses graceful, a stoppable server)
-	err := srv.server.ListenAndServe()
-
-	return srv, err
 }

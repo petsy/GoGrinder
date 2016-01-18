@@ -113,7 +113,7 @@ func TestBaseline1(t *testing.T) {
 	gg.Testscenario("baseline", baseline1)
 
 	// main part
-	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
+	gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
 	//gogrinder.Webserver()  // not necessary for the integration test
 
 	start := time.Now()
@@ -156,7 +156,7 @@ func TestBaseline2(t *testing.T) {
 	gg.Testscenario("baseline", baseline2)
 
 	// main part
-	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
+	gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
 	//gogrinder.Webserver()  // not necessary for the integration test
 
 	start := time.Now()
@@ -202,7 +202,7 @@ func TestDebug(t *testing.T) {
 	gg.Testscenario("01_testcase", tc1)
 
 	// main part
-	gg.ReadLoadmodelSchema(loadmodel, LoadmodelSchema)
+	gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
 
 	start := time.Now()
 
@@ -233,7 +233,7 @@ func TestAScenarioAvoidingConcurrency(t *testing.T) {
 	gg.Testscenario("scenario1", scenario1)
 
 	// main part
-	gg.ReadLoadmodelSchema(noConcurrencyLoadmodel, LoadmodelSchema)
+	gg.ReadConfigValidate(noConcurrencyLoadmodel, LoadmodelSchema)
 
 	start := time.Now()
 

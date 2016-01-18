@@ -6,17 +6,21 @@ import (
 	"io/ioutil"
 
 	"github.com/xeipuuv/gojsonschema"
+	"os"
 )
 
 type Config interface {
-	ReadLoadmodel() error
-	ReadLoadmodelSchema(document string, schema string) error
+	ReadConfig() error
+	ReadConfigValidate(document string, schema string) error
+	WriteConfig() error
+	GetAdditionalProperties() map[string]interface{}
 	GetScenarioConfig() (string, float64, float64, float64)
 	GetTestcaseConfig(testcase string) (float64, float64, float64, int, float64, error)
 }
 
 type TestConfig struct {
-	loadmodel map[string]interface{} // datastructure to hold the json loadmodel loaded from file
+	loadmodel map[string]interface{} // datastructure to hold the json config loaded from file
+	filename  string
 }
 
 // Default schema to validate loadmodel.json files.
@@ -42,26 +46,27 @@ var LoadmodelSchema string = `{
                     "Pacing":     { "type": "number" }
                 },
                 "required": ["Testcase", "Runfor", "Users", "Pacing"],
-                "additionalProperties": true
+                "additionalProperties": false
             }
         }
     },
     "required": ["Scenario"],
-    "additionalProperties": false
+    "additionalProperties": true
 }`
 
 // Reader for the loadmodel.json file. Use the GoGrinder schema for loadmodel validation.
-func (test *TestConfig) ReadLoadmodel(filename string) error {
+func (test *TestConfig) ReadConfig(filename string) error {
+	test.filename = filename
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
 	}
 
-	return test.ReadLoadmodelSchema(string(buf), LoadmodelSchema)
+	return test.ReadConfigValidate(string(buf), LoadmodelSchema)
 }
 
 // Read loadmodel from document - you can provide your own schema to validate the loadmodel.
-func (test *TestConfig) ReadLoadmodelSchema(document string, schema string) error {
+func (test *TestConfig) ReadConfigValidate(document string, schema string) error {
 	documentLoader := gojsonschema.NewStringLoader(document)
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 
@@ -79,6 +84,23 @@ func (test *TestConfig) ReadLoadmodelSchema(document string, schema string) erro
 	}
 
 	return json.Unmarshal([]byte(document), &test.loadmodel)
+}
+
+// Write the loadmodel to file with the given filename.
+func (test *TestConfig) WriteConfig() error {
+	out, err := json.Marshal(test.loadmodel)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(test.filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(out)
+	return err
 }
 
 // Return ThinkTimeFactor, ThinkTimeVariance from the loadmodel configuration.
@@ -129,4 +151,36 @@ func (test *TestConfig) GetTestcaseConfig(testcase string) (float64, float64, fl
 	}
 	// configuration not found!
 	return 0.0, 0.0, 0.0, 0, 0.0, fmt.Errorf("config for testcase %s not found", testcase)
+}
+
+// Return map containing additional properties from the json configuration file.
+func (test *TestConfig) GetAdditionalProperties() map[string]interface{} {
+	// defaults for optional properties
+	opts := make(map[string]interface{})
+	// little helper
+	stdProperty := func(key string) bool {
+		if key == "Scenario" {
+			return true
+		}
+		if key == "ThinkTimeFactor" {
+			return true
+		}
+		if key == "ThinkTimeVariance" {
+			return true
+		}
+		if key == "PacingVariance" {
+			return true
+		}
+		if key == "Loadmodel" {
+			return true
+		}
+		return false
+	}
+
+	for k, v := range test.loadmodel {
+		if !stdProperty(k) {
+			opts[k] = v
+		}
+	}
+	return opts
 }

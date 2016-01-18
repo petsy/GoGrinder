@@ -253,7 +253,7 @@ func (test *TestScenario) GoGrinder() {
 		os.Exit(1)
 	}
 	test.ReportFeature(!noReport)
-	test.ReadLoadmodel(filename)
+	test.ReadConfig(filename)
 
 	exec := func() {
 		err := test.Exec() // exec the scenario that has been selected in the config file
@@ -263,10 +263,9 @@ func (test *TestScenario) GoGrinder() {
 	}
 
 	frontend := func() {
-		_, err := Webserver(port, test)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+		srv := NewTestServer(test)
+		srv.Addr = fmt.Sprintf(":%d", port)
+		srv.ListenAndServe()
 	}
 
 	// handle the different run modes

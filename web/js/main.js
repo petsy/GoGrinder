@@ -46,8 +46,9 @@ app.controller('MainController', function ($scope, $filter, $modal, $http, TestS
         })
     };
     $scope.save = function () {
-        $scope.editModal.hide();
-        $scope.config.saveFile()
+        $scope.config.saveConfig(function(){
+            $scope.editModal.hide();
+        });
     };
 
 });
@@ -57,23 +58,31 @@ app.controller('MainController', function ($scope, $filter, $modal, $http, TestS
 app.service('ConfigService', function ($http, $timeout) {
     var self = {
         'loadmodel': "",
-        'readFile': function () {
-            self.loadmodel = '[{"testcase": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},{"testcase": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},{"testcase": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}]';
-
-            //$http.get('http://localhost:3000/loadmodel')
-            //    .success(function(data, status, headers, config) {
-            //        self.loadmodel = data
-            //    })
-            //    .error(function(data, status, headers, config) {
-            //        // log error
-            //    });
+        'readConfig': function () {
+            $http.get('http://localhost:3000/config')
+                .success(function(data, status, headers, config) {
+                    self.loadmodel = JSON.stringify(data, null, 2);
+                })
+                .error(function(data, status, headers, config) {
+                    // log error
+                });
         },
-        'saveFile': function () {
+        'saveConfig': function (cb_ok) {
             console.log('save file');
-        },
+            $http.put('http://localhost:3000/config', self.loadmodel)
+                .success(function(data, status, headers, config) {
+                    // TODO add some confirmation
+                    console.log("config saved!");
+                    cb_ok();
+                })
+                .error(function(data, status, headers, config) {
+                    // log error
+                    // TODO user feedback on validation errors etc.
+                });
+        }
     };
 
-    self.readFile();
+    self.readConfig();
     return self;
 });
 
@@ -169,7 +178,7 @@ app.service('TestService', function ($http, $timeout) {
                 .error(function (data, status, headers, config) {
                     // log error
                 });
-        },
+        }
     };
 
     self.dataPoller();
