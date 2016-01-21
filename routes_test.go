@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	time "github.com/finklabs/ttime"
+	"runtime"
+	"time"
 )
 
 // TODO func TestHandlerServeHTTPInvalidJson(t *testing.T) ?
@@ -137,8 +137,10 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 
 func TestRouteStartStop(t *testing.T) {
 	// prepare
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	srv := TestServer{}
 	srv.test = NewTest()
 	tc1 := func(meta map[string]interface{}) { srv.test.Thinktime(0.050) }
@@ -177,8 +179,10 @@ func TestRouteStartStop(t *testing.T) {
 
 func TestRouteGetConfig(t *testing.T) {
 	// prepare
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
 	defer os.Remove(file.Name())
 
@@ -204,8 +208,10 @@ func TestRouteGetConfig(t *testing.T) {
 
 func TestRouteSaveConfig(t *testing.T) {
 	// prepare
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
 	defer os.Remove(file.Name())
 

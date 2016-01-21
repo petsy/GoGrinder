@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	time "github.com/finklabs/ttime"
+	"time"
 )
 
 func TestUpdateOneMeasurement(t *testing.T) {

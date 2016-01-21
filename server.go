@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/GeertJohan/go.rice"
-	"github.com/finklabs/graceful"
-	time "github.com/finklabs/ttime"
+	"github.com/tylerb/graceful"
+	"time"
 	"github.com/gorilla/mux"
 )
 

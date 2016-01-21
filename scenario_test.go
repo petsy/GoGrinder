@@ -3,8 +3,8 @@ package gogrinder
 import (
 	"reflect"
 	"testing"
-
-	time "github.com/finklabs/ttime"
+	"runtime"
+	"time"
 )
 
 func TestThinktimeNoVariance(t *testing.T) {
@@ -13,8 +13,10 @@ func TestThinktimeNoVariance(t *testing.T) {
 	fake.status = running
 	fake.loadmodel["Scenario"] = "scenario1"
 
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 
 	start := time.Now()
 	fake.Thinktime(0.020)
@@ -33,8 +35,10 @@ func TestThinktimeVariance(t *testing.T) {
 	fake.loadmodel["ThinkTimeVariance"] = 0.1
 
 	min, max, avg := 20.0, 20.0, 0.0
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 
 	for i := 0; i < 1000; i++ {
 		start := time.Now()
@@ -61,8 +65,10 @@ func TestThinktimeVariance(t *testing.T) {
 }
 
 func TestThinktimeStops(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	// create a fake loadmodel for testing
 	var fake = NewTest()
 	fake.status = stopping
@@ -77,8 +83,10 @@ func TestThinktimeStops(t *testing.T) {
 }
 
 func TestPaceMaker(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 
 	var fake = NewTest()
 	fake.loadmodel["Scenario"] = "scenario1"
@@ -91,8 +99,10 @@ func TestPaceMaker(t *testing.T) {
 }
 
 func TestPaceMakerNegativeValue(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 
 	var fake = NewTest()
 	fake.loadmodel["Scenario"] = "scenario1"
@@ -114,8 +124,10 @@ func TestPaceMakerVariance(t *testing.T) {
 	fake.loadmodel["PacingVariance"] = 0.1
 
 	min, max, avg := 1000.0, 1000.0, 0.0
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 
 	for i := 0; i < 1000; i++ {
 		start := time.Now()
@@ -142,8 +154,11 @@ func TestPaceMakerVariance(t *testing.T) {
 }
 
 func TestPaceMakerStops(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
+
 	// create a fake loadmodel for testing
 	var fake = NewTest()
 	fake.status = stopping
@@ -175,8 +190,10 @@ func TestTestscenario(t *testing.T) {
 }
 
 func TestTeststep(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 
 	var fake = NewTest()
 	step := func() { time.Sleep(20) }
@@ -211,8 +228,10 @@ func TestTeststep(t *testing.T) {
 }
 
 func TestRunSequential(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 
 	fake := NewTest()
 	fake.loadmodel["Scenario"] = "scenario1"

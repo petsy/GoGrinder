@@ -5,7 +5,7 @@ import (
 	"sort"
 	"sync"
 
-	time "github.com/finklabs/ttime"
+	"time"
 )
 
 type Statistics interface {

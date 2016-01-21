@@ -3,8 +3,8 @@ package gogrinder
 import (
 	"bytes"
 	"testing"
-
-	time "github.com/finklabs/ttime"
+	"time"
+	"runtime"
 )
 
 // this testsuite's aim is to cover the scope of the samples in
@@ -94,8 +94,10 @@ func (test *TestScenario) waitForStatus(s status) {
 // integration testcases for three modes:
 // Run, Schedule and Debug testcase
 func TestBaseline1(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	bak := stdout
 	stdout = new(bytes.Buffer)
 	defer func() { stdout = bak }()
@@ -137,8 +139,10 @@ func TestBaseline1(t *testing.T) {
 }
 
 func TestBaseline2(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	bak := stdout
 	stdout = new(bytes.Buffer)
 	defer func() { stdout = bak }()
@@ -182,8 +186,10 @@ func TestBaseline2(t *testing.T) {
 
 func TestDebug(t *testing.T) {
 	// just run a single testcase once
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	bak := stdout
 	stdout = new(bytes.Buffer)
 	defer func() { stdout = bak }()
@@ -223,8 +229,10 @@ func TestDebug(t *testing.T) {
 }
 
 func TestAScenarioAvoidingConcurrency(t *testing.T) {
-	time.Freeze(time.Now())
-	defer time.Unfreeze()
+	//noinspection GoUnresolvedReference
+	runtime.SetFaketime(125789400000000000)
+	//noinspection GoUnresolvedReference
+	defer runtime.SetFaketime(0)
 	bak := stdout
 	stdout = new(bytes.Buffer)
 	defer func() { stdout = bak }()

@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"sync"
 
-	time "github.com/finklabs/ttime"
+	"time"
 )
 
 // Modify stdout during testing.
