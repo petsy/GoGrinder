@@ -7,6 +7,7 @@ import (
 
 	"github.com/xeipuuv/gojsonschema"
 	"os"
+	"time"
 )
 
 type Config interface {
@@ -19,8 +20,9 @@ type Config interface {
 }
 
 type TestConfig struct {
-	loadmodel map[string]interface{} // datastructure to hold the json config loaded from file
-	filename  string
+	config   map[string]interface{} // datastructure to hold the json config loaded from file
+	filename string
+	mtime    time.Time
 }
 
 // Default schema to validate loadmodel.json files.
@@ -57,6 +59,12 @@ var LoadmodelSchema string = `{
 // Reader for the loadmodel.json file. Use the GoGrinder schema for loadmodel validation.
 func (test *TestConfig) ReadConfig(filename string) error {
 	test.filename = filename
+	fi, err := os.Stat(filename)
+	if err != nil {
+		return err
+	}
+	test.mtime = fi.ModTime()
+
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
@@ -83,12 +91,12 @@ func (test *TestConfig) ReadConfigValidate(document string, schema string) error
 		return fmt.Errorf(msg)
 	}
 
-	return json.Unmarshal([]byte(document), &test.loadmodel)
+	return json.Unmarshal([]byte(document), &test.config)
 }
 
 // Write the loadmodel to file with the given filename.
 func (test *TestConfig) WriteConfig() error {
-	out, err := json.Marshal(test.loadmodel)
+	out, err := json.Marshal(test.config)
 	if err != nil {
 		return err
 	}
@@ -98,8 +106,17 @@ func (test *TestConfig) WriteConfig() error {
 		return err
 	}
 	defer file.Close()
-
 	_, err = file.Write(out)
+	if err != nil {
+		return err
+	}
+
+	fi, err := os.Stat(test.filename)
+	if err != nil {
+		return err
+	}
+	test.mtime = fi.ModTime()
+
 	return err
 }
 
@@ -109,23 +126,23 @@ func (test *TestConfig) GetScenarioConfig() (string, float64, float64, float64) 
 	ttf := 1.0
 	ttv := 0.0
 	pv := 0.0
-	if f, ok := test.loadmodel["ThinkTimeFactor"].(float64); ok {
+	if f, ok := test.config["ThinkTimeFactor"].(float64); ok {
 		ttf = f
 	}
-	if v, ok := test.loadmodel["ThinkTimeVariance"].(float64); ok {
+	if v, ok := test.config["ThinkTimeVariance"].(float64); ok {
 		ttv = v
 	}
-	if p, ok := test.loadmodel["PacingVariance"].(float64); ok {
+	if p, ok := test.config["PacingVariance"].(float64); ok {
 		pv = p
 	}
 	// required properties
-	scenario := test.loadmodel["Scenario"].(string)
+	scenario := test.config["Scenario"].(string)
 	return scenario, ttf, ttv, pv
 }
 
 // Return delay, runfor, rampup, users, pacing from the loadmodel configuration.
 func (test *TestConfig) GetTestcaseConfig(testcase string) (float64, float64, float64, int, float64, error) {
-	if conf, ok := test.loadmodel["Loadmodel"]; ok {
+	if conf, ok := test.config["Loadmodel"]; ok {
 		if len(conf.([]interface{})) > 0 {
 			for _, tc := range conf.([]interface{}) {
 				entry := tc.(map[string]interface{})
@@ -177,7 +194,7 @@ func (test *TestConfig) GetAdditionalProperties() map[string]interface{} {
 		return false
 	}
 
-	for k, v := range test.loadmodel {
+	for k, v := range test.config {
 		if !stdProperty(k) {
 			opts[k] = v
 		}

@@ -58,10 +58,13 @@ app.controller('MainController', function ($scope, $filter, $modal, $http, TestS
 app.service('ConfigService', function ($http, $timeout) {
     var self = {
         'loadmodel': "",
+        'mtime': "",
         'readConfig': function () {
             $http.get('http://localhost:3000/config')
                 .success(function(data, status, headers, config) {
-                    self.loadmodel = JSON.stringify(data, null, 2);
+                    var config = JSON.stringify(data, null, 2);
+                    self.loadmodel = config["config"];
+                    self.mtime = config["mtime"];
                 })
                 .error(function(data, status, headers, config) {
                     // log error

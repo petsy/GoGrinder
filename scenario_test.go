@@ -11,7 +11,7 @@ func TestThinktimeNoVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
 	fake.status = running
-	fake.loadmodel["Scenario"] = "scenario1"
+	fake.config["Scenario"] = "scenario1"
 
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
@@ -28,9 +28,9 @@ func TestThinktimeVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
 	fake.status = running
-	fake.loadmodel["Scenario"] = "scenario1"
-	fake.loadmodel["ThinkTimeFactor"] = 2.0
-	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.config["Scenario"] = "scenario1"
+	fake.config["ThinkTimeFactor"] = 2.0
+	fake.config["ThinkTimeVariance"] = 0.1
 
 	min, max, avg := 20.0, 20.0, 0.0
 	time.Freeze(time.Now())
@@ -66,7 +66,7 @@ func TestThinktimeStops(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
 	fake.status = stopping
-	fake.loadmodel["Scenario"] = "scenario1"
+	fake.config["Scenario"] = "scenario1"
 
 	start := time.Now()
 	fake.Thinktime(10.0)
@@ -81,7 +81,7 @@ func TestPaceMaker(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
-	fake.loadmodel["Scenario"] = "scenario1"
+	fake.config["Scenario"] = "scenario1"
 	fake.status = running
 	start := time.Now()
 	fake.paceMaker(10*time.Second, 0)
@@ -95,7 +95,7 @@ func TestPaceMakerNegativeValue(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
-	fake.loadmodel["Scenario"] = "scenario1"
+	fake.config["Scenario"] = "scenario1"
 	fake.status = running
 	start := time.Now()
 	fake.paceMaker(-10, 0)
@@ -108,10 +108,10 @@ func TestPaceMakerVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
 	fake.status = running
-	fake.loadmodel["Scenario"] = "scenario1"
-	fake.loadmodel["ThinkTimeFactor"] = 2.0
-	fake.loadmodel["ThinkTimeVariance"] = 0.1
-	fake.loadmodel["PacingVariance"] = 0.1
+	fake.config["Scenario"] = "scenario1"
+	fake.config["ThinkTimeFactor"] = 2.0
+	fake.config["ThinkTimeVariance"] = 0.1
+	fake.config["PacingVariance"] = 0.1
 
 	min, max, avg := 1000.0, 1000.0, 0.0
 	time.Freeze(time.Now())
@@ -147,7 +147,7 @@ func TestPaceMakerStops(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
 	fake.status = stopping
-	fake.loadmodel["Scenario"] = "scenario1"
+	fake.config["Scenario"] = "scenario1"
 
 	start := time.Now()
 	fake.paceMaker(time.Duration(10*time.Second), time.Duration(0))
@@ -215,7 +215,7 @@ func TestRunSequential(t *testing.T) {
 	defer time.Unfreeze()
 
 	fake := NewTest()
-	fake.loadmodel["Scenario"] = "scenario1"
+	fake.config["Scenario"] = "scenario1"
 	var counter int = 0
 	// assemble testcase
 	tc1 := func(meta map[string]interface{}) {
@@ -254,9 +254,9 @@ func TestScheduleErrorUnknownTestcase(t *testing.T) {
 
 func TestExecErrorUnknownScenario(t *testing.T) {
 	fake := NewTest()
-	fake.loadmodel["Scenario"] = "scenario1"
-	fake.loadmodel["ThinkTimeFactor"] = 2.0
-	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.config["Scenario"] = "scenario1"
+	fake.config["ThinkTimeFactor"] = 2.0
+	fake.config["ThinkTimeVariance"] = 0.1
 	err := fake.Exec()
 
 	error := err.Error()
@@ -267,9 +267,9 @@ func TestExecErrorUnknownScenario(t *testing.T) {
 
 func TestExecErrorFunctionWithReturnValue(t *testing.T) {
 	fake := NewTest()
-	fake.loadmodel["Scenario"] = "01_testcase"
-	fake.loadmodel["ThinkTimeFactor"] = 2.0
-	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.config["Scenario"] = "01_testcase"
+	fake.config["ThinkTimeFactor"] = 2.0
+	fake.config["ThinkTimeVariance"] = 0.1
 	fake.Testscenario("01_testcase", func() int64 { return 42 })
 
 	err := fake.Exec()
@@ -282,9 +282,9 @@ func TestExecErrorFunctionWithReturnValue(t *testing.T) {
 
 func TestExecErrorFunctionWithTwoParams(t *testing.T) {
 	fake := NewTest()
-	fake.loadmodel["Scenario"] = "01_testcase"
-	fake.loadmodel["ThinkTimeFactor"] = 2.0
-	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.config["Scenario"] = "01_testcase"
+	fake.config["ThinkTimeFactor"] = 2.0
+	fake.config["ThinkTimeVariance"] = 0.1
 	fake.Testscenario("01_testcase", func(a, b int64) {})
 
 	err := fake.Exec()

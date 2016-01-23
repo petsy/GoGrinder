@@ -36,6 +36,36 @@ import (
 ////////////////////////////////
 // test routes
 ////////////////////////////////
+func TestRouteGetCsv(t *testing.T) {
+	// test with 3 measurements
+	fake := NewTest()
+	srv := TestServer{}
+	srv.test = fake
+	// put 3 measurements into the fake server
+	done := fake.Collect() // this needs a collector to unblock update
+	now := time.Now().UTC()
+	fake.Update("sth", 8*time.Millisecond, now)
+	fake.Update("sth", 10*time.Millisecond, now)
+	fake.Update("sth", 2*time.Millisecond, now)
+	close(fake.measurements)
+	<-done
+
+	// invoke REST service
+	req, _ := http.NewRequest("GET", "/csv", nil)
+	rsp := httptest.NewRecorder()
+	// I separated the Router() from the actual Webserver()
+	// In this way I can test routes without running a server
+	srv.Router().ServeHTTP(rsp, req)
+	if rsp.Code != http.StatusOK {
+		t.Fatalf("Status code expected: %v but was: %v", http.StatusOK, rsp.Code)
+	}
+
+	body := rsp.Body.String()
+	if body != `"testcase, avg, min, max, count\nsth, 6.666666, 2.000000, 10.000000, 3\n"` {
+		t.Fatalf("Response not as expected: %s", body)
+	}
+}
+
 func TestRouteGetStatistics(t *testing.T) {
 	// test with 3 measurements
 	fake := NewTest()
@@ -184,9 +214,9 @@ func TestRouteGetConfig(t *testing.T) {
 
 	srv := TestServer{}
 	srv.test = NewTest()
-	srv.test.loadmodel["Scenario"] = "scenario1"
-	srv.test.loadmodel["ThinkTimeFactor"] = 2.0
-	srv.test.loadmodel["ThinkTimeVariance"] = 0.1
+	srv.test.config["Scenario"] = "scenario1"
+	srv.test.config["ThinkTimeFactor"] = 2.0
+	srv.test.config["ThinkTimeVariance"] = 0.1
 	srv.test.filename = file.Name()
 
 	req, _ := http.NewRequest("GET", "/config", nil)
@@ -197,7 +227,8 @@ func TestRouteGetConfig(t *testing.T) {
 	}
 
 	config := rsp.Body.String()
-	if config != `{"Scenario":"scenario1","ThinkTimeFactor":2,"ThinkTimeVariance":0.1}` {
+	if config != `{"config":{"Scenario":"scenario1","ThinkTimeFactor":2,`+
+		`"ThinkTimeVariance":0.1},"mtime":"0001-01-01T00:00:00Z"}` {
 		t.Errorf("Config not as expected: %s!", config)
 	}
 }

@@ -57,7 +57,7 @@ func NewTest() *TestScenario {
 		status:        stopped,
 
 		TestConfig: TestConfig{
-			loadmodel: make(map[string]interface{}),
+			config: make(map[string]interface{}),
 		},
 
 		TestStatistics: TestStatistics{

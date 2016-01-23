@@ -36,10 +36,10 @@ var loadmodel string = `{
 func TestGetScenarioConfig(t *testing.T) {
 	expScenario, expTtf, expTtv, expPv := "Scenario1", 0.5, 0.1, 0.2
 	fake := NewTest()
-	fake.loadmodel["Scenario"] = expScenario
-	fake.loadmodel["ThinkTimeFactor"] = expTtf
-	fake.loadmodel["ThinkTimeVariance"] = expTtv
-	fake.loadmodel["PacingVariance"] = expPv
+	fake.config["Scenario"] = expScenario
+	fake.config["ThinkTimeFactor"] = expTtf
+	fake.config["ThinkTimeVariance"] = expTtv
+	fake.config["PacingVariance"] = expPv
 
 	scenario, ttf, ttv, pv := fake.GetScenarioConfig()
 	if scenario != expScenario {
@@ -59,7 +59,7 @@ func TestGetScenarioConfig(t *testing.T) {
 func TestGetScenarioConfigUsingDefaults(t *testing.T) {
 	expScenario, expTtf, expTtv, expPv := "Scenario1", 1.0, 0.0, 0.0
 	fake := NewTest()
-	fake.loadmodel["Scenario"] = expScenario
+	fake.config["Scenario"] = expScenario
 
 	scenario, ttf, ttv, pv := fake.GetScenarioConfig()
 	if scenario != expScenario {
@@ -91,7 +91,7 @@ func TestGetTestcaseConfig(t *testing.T) {
 	fake := NewTest()
 	l := make([]interface{}, 1)
 	l[0] = tc1
-	fake.loadmodel["Loadmodel"] = l
+	fake.config["Loadmodel"] = l
 
 	delay, runfor, rampup, users, pacing, _ := fake.GetTestcaseConfig("testcase1")
 
@@ -125,7 +125,7 @@ func TestGetTestcaseConfigUsingDefaults(t *testing.T) {
 	fake := NewTest()
 	l := make([]interface{}, 1)
 	l[0] = tc1
-	fake.loadmodel["Loadmodel"] = l
+	fake.config["Loadmodel"] = l
 
 	delay, runfor, rampup, users, pacing, _ := fake.GetTestcaseConfig("testcase1")
 
@@ -168,7 +168,7 @@ func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 	fake := NewTest()
 	l := make([]interface{}, 1)
 	l[0] = tc1
-	fake.loadmodel["Loadmodel"] = l
+	fake.config["Loadmodel"] = l
 
 	_, _, _, _, _, err := fake.GetTestcaseConfig("testcase2")
 	error := err.Error()
@@ -182,7 +182,7 @@ func TestReadLoadmodelSchema(t *testing.T) {
 
 	fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
 
-	count := len(fake.loadmodel["Loadmodel"].([]interface{}))
+	count := len(fake.config["Loadmodel"].([]interface{}))
 	if count != 3 {
 		t.Errorf("Expected to find 3 testcase entries in the loadmodel but found %d!", count)
 	}
@@ -210,12 +210,12 @@ func TestReadLoadmodel(t *testing.T) {
 
 	fake := NewTest()
 	fake.ReadConfig(file.Name())
-	scenario := fake.loadmodel["Scenario"]
+	scenario := fake.config["Scenario"]
 	if scenario != "scenario1" {
 		t.Errorf("Scenario %s not 'scenario1' as expected!", scenario)
 	}
 
-	count := len(fake.loadmodel["Loadmodel"].([]interface{}))
+	count := len(fake.config["Loadmodel"].([]interface{}))
 	if count != 3 {
 		t.Errorf("Expected to find 3 testcase entries in the loadmodel but found %d!", count)
 	}
@@ -226,9 +226,9 @@ func TestWriteLoadmodel(t *testing.T) {
 	defer os.Remove(file.Name())
 
 	fake := NewTest()
-	fake.loadmodel["Scenario"] = "scenario1"
-	fake.loadmodel["ThinkTimeFactor"] = 2.0
-	fake.loadmodel["ThinkTimeVariance"] = 0.1
+	fake.config["Scenario"] = "scenario1"
+	fake.config["ThinkTimeFactor"] = 2.0
+	fake.config["ThinkTimeVariance"] = 0.1
 	fake.filename = file.Name()
 
 	fake.WriteConfig()

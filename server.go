@@ -94,6 +94,15 @@ func (srv *TestServer) getStatistics(r *http.Request) (interface{}, *handlerErro
 	return res, nil
 }
 
+func (srv *TestServer) getCsv(r *http.Request) (interface{}, *handlerError) {
+	var e *handlerError
+	csv, err := srv.test.Csv()
+	if err != nil {
+		e = &handlerError{err, "error encoding csv:", 500}
+	}
+	return csv, e
+}
+
 func (srv *TestServer) startTest(r *http.Request) (interface{}, *handlerError) {
 	if srv.test.status == stopped {
 		srv.test.Exec()
@@ -124,12 +133,15 @@ func (srv *TestServer) updateConfig(r *http.Request) (interface{}, *handlerError
 		e := handlerError{err, "write error while updating the configuration", 500} // TODO corr error code
 		return make(map[string]string), &e
 	}
+
 	return make(map[string]string), nil
 }
 
 // write the config to file.
 func (srv *TestServer) getConfig(r *http.Request) (interface{}, *handlerError) {
-	res := srv.test.loadmodel
+	res := make(map[string]interface{})
+	res["config"] = srv.test.config
+	res["mtime"] = srv.test.mtime
 	return res, nil
 }
 
@@ -155,6 +167,7 @@ func (srv *TestServer) Router() *mux.Router {
 
 	// REST routes
 	router.Handle("/statistics", handler(srv.getStatistics)).Methods("GET")
+	router.Handle("/csv", handler(srv.getCsv)).Methods("GET")
 	router.Handle("/config", handler(srv.getConfig)).Methods("GET")
 	router.Handle("/config", handler(srv.updateConfig)).Methods("PUT")
 	router.Handle("/test", handler(srv.startTest)).Methods("POST")

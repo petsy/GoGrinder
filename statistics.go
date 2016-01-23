@@ -1,7 +1,9 @@
 package gogrinder
 
 import (
+	"bytes"
 	"fmt"
+	"reflect"
 	"sort"
 	"sync"
 
@@ -142,4 +144,38 @@ func (test *TestStatistics) Report() {
 // Feature Toggle
 func (test *TestStatistics) ReportFeature(set bool) {
 	test.reportFeature = set
+}
+
+// helper to convert the field name into json-tag
+func f2j(field string) string {
+	f, ok := reflect.TypeOf((*Result)(nil)).Elem().FieldByName(field)
+	if !ok {
+		panic("Field '%s' not found in Result struct!")
+	}
+	return string(f.Tag.Get("json"))
+}
+
+// not completely sure implementing the io.Reader interface is the right strategy???
+// https://medium.com/@mschuett/golangs-reader-interface-bd2917d5ce83#.8xfskt8ib
+// implementing the Reader increments appears like overkill for this
+func (test *TestStatistics) Csv() (string, error) {
+	var b bytes.Buffer
+
+	res := test.Results("") // get all results
+	// write the header (using json tags)
+	_, err := fmt.Fprintf(&b, "%s, %s, %s, %s, %s\n", f2j("Testcase"), f2j("Avg"),
+		f2j("Min"), f2j("Max"), f2j("Count"))
+	if err != nil {
+		return b.String(), err
+	}
+
+	// write the lines
+	for _, s := range res {
+		_, err := fmt.Fprintf(&b, "%s, %f, %f, %f, %d\n", s.Testcase, d2f(s.Avg),
+			d2f(s.Min), d2f(s.Max), s.Count)
+		if err != nil {
+			return b.String(), err
+		}
+	}
+	return b.String(), nil
 }

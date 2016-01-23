@@ -116,3 +116,38 @@ func TestReportFeatureToggle(t *testing.T) {
 		t.Fatalf("ReportFeature should be deactivated after setting it to false!")
 	}
 }
+
+func TestField2JsonTag(t *testing.T) {
+	j := f2j("Testcase")
+	if j != "testcase" {
+		t.Fatalf("Tag expected: %s but was: %s", "testcase", j)
+	}
+}
+
+func TestRead(t *testing.T) {
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	fake := NewTest()
+	done := fake.Collect() // this needs a collector to unblock update
+	insert := func(name string) {
+		fake.Update(name, 8*time.Millisecond, time.Now())
+		fake.Update(name, 10*time.Millisecond, time.Now())
+		fake.Update(name, 2*time.Millisecond, time.Now())
+	}
+	insert("tc2")
+	insert("tc1")
+	insert("tc3")
+
+	close(fake.measurements)
+	<-done
+
+	report, _ := fake.Csv()
+	if report != ("testcase, avg, min, max, count\n" +
+		"tc1, 6.666666, 2.000000, 10.000000, 3\n" +
+		"tc2, 6.666666, 2.000000, 10.000000, 3\n" +
+		"tc3, 6.666666, 2.000000, 10.000000, 3\n") {
+		t.Fatalf("Read output not as expected: %s", report)
+	}
+}

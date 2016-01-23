@@ -3,23 +3,18 @@ backlog
 
 frontend
 * edit loadmodel
-* loadmodel mod date
 * authenticate frontend
 * save results as csv file
 
 backend
 * handler needs some polishing (silence, maybe decorators for logging?)
 * Results Duration formating (at least define what it is ns?)
-type Duration int64
-A Duration represents the elapsed time between two instants as an int64 nanosecond count. The representation limits the largest representable duration to approximately 290 years.
 
 scenario
 * script configuration/params
 * send data to Prometheus (eg. specialized reporter plugin)
 
 sample
-* pet clinic (write dockerfile)
-* run jmeter test
 * recreate jmeter test in gogrinder
 
 tests
@@ -41,3 +36,4 @@ Version 0.01
 * test Webserver routes
 * variable pacing
 * make thinktime and pacing config optional
+* loadmodel mod date
