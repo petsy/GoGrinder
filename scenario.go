@@ -21,10 +21,10 @@ var ISO8601 = "2006-01-02T15:04:05.999Z"
 
 type Scenario interface {
 	Testscenario(name string, scenario interface{})
-	Teststep(name string, step func()) func()
-	Schedule(name string, testcase func(map[string]interface{})) error
-	DoIterations(testcase func(map[string]interface{}), iterations int, pacing float64, parallel bool)
-	Run(testcase func(map[string]interface{}), delay float64, runfor float64, rampup float64, users int, pacing float64)
+	Teststep(name string, step func(meta)) func(meta)
+	Schedule(name string, testcase func(meta)) error
+	DoIterations(testcase func(meta), iterations int, pacing float64, parallel bool)
+	Run(testcase func(meta), delay float64, runfor float64, rampup float64, users int, pacing float64)
 	Exec() error
 	Thinktime(tt int64)
 }
@@ -35,7 +35,7 @@ type TestScenario struct {
 	TestConfig // needs to be anonymous to promote access to struct field and methods
 	TestStatistics
 	testscenarios map[string]interface{} // testscenarios registry for testscenarios
-	teststeps     map[string]func()      // registry for teststeps
+	teststeps     map[string]func(meta)  // registry for teststeps
 	wg            sync.WaitGroup         // waitgroup for teststeps
 	status        status                 // status (stopped, running, stopping) (used in Report())
 }
@@ -53,7 +53,7 @@ const (
 func NewTest() *TestScenario {
 	t := TestScenario{
 		testscenarios: make(map[string]interface{}),
-		teststeps:     make(map[string]func()),
+		teststeps:     make(map[string]func(meta)),
 		status:        stopped,
 
 		TestConfig: TestConfig{
@@ -61,8 +61,8 @@ func NewTest() *TestScenario {
 		},
 
 		TestStatistics: TestStatistics{
-			stats:         make(stats),
-			measurements:  make(chan measurement),
+			stats:         make(map[string]stats_value),
+			measurements:  make(chan meta),
 			reportFeature: true,
 		},
 	}
@@ -103,19 +103,21 @@ func (test *TestScenario) Testscenario(name string, scenario interface{}) {
 }
 
 // Instrument a teststep and add it to the teststeps registry.
-func (test *TestScenario) Teststep(name string, step func()) func() {
-	// TODO this should provide meta info for the report, too
-	its := func() {
+func (test *TestScenario) Teststep(name string, step func(meta)) func(meta) {
+	its := func(meta meta) {
 		start := time.Now()
-		step()
-		test.Update(name, time.Now().Sub(start), start)
+		step(meta)
+		meta["testcase"] = name
+		meta["elapsed"] = time.Now().Sub(start)
+		meta["last"] = start
+		test.Update(meta)
 	}
 	test.teststeps[name] = its
 	return its
 }
 
 // Schedule a testcase according to its config in the loadmodel.json config file.
-func (test *TestScenario) Schedule(name string, testcase func(map[string]interface{})) error {
+func (test *TestScenario) Schedule(name string, testcase func(meta)) error {
 	delay, runfor, rampup, users, pacing, err := test.GetTestcaseConfig(name)
 	if err != nil {
 		return err
@@ -124,9 +126,9 @@ func (test *TestScenario) Schedule(name string, testcase func(map[string]interfa
 	return nil
 }
 
-func (test *TestScenario) DoIterations(testcase func(map[string]interface{}),
+func (test *TestScenario) DoIterations(testcase func(meta),
 	iterations int, pacing float64, parallel bool) {
-	meta := make(map[string]interface{})
+	meta := make(meta)
 	f := func() {
 		defer test.wg.Done()
 
@@ -155,7 +157,7 @@ func (test *TestScenario) DoIterations(testcase func(map[string]interface{}),
 }
 
 // Run a testcase. Settings are specified in Seconds!
-func (test *TestScenario) Run(testcase func(map[string]interface{}), delay float64, runfor float64, rampup float64,
+func (test *TestScenario) Run(testcase func(meta), delay float64, runfor float64, rampup float64,
 	users int, pacing float64) {
 	test.wg.Add(1) // the "Scheduler" itself is a goroutine!
 	go func() {
@@ -171,10 +173,11 @@ func (test *TestScenario) Run(testcase func(map[string]interface{}), delay float
 				defer test.wg.Done()
 				time.Sleep(time.Duration(rampup * float64(time.Second)))
 
-				for j := 0; time.Now().Sub(userStart) < time.Duration((runfor)*float64(time.Second)); j++ {
+				for j := 0; time.Now().Sub(userStart) <
+						time.Duration((runfor)*float64(time.Second)); j++ {
 					// next iteration
 					start := time.Now()
-					meta := make(map[string]interface{})
+					meta := make(meta)
 					meta["User"] = i
 					meta["Iteration"] = j
 					if test.status == stopping {
@@ -210,7 +213,7 @@ func (test *TestScenario) Exec() error {
 			}
 			if fnType.NumIn() == 1 {
 				// debugging of single testcase executions
-				meta := make(map[string]interface{})
+				meta := make(meta)
 				meta["Iteration"] = 0
 				meta["User"] = 0
 				fn.Call([]reflect.Value{reflect.ValueOf(meta)})

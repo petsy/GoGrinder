@@ -11,7 +11,7 @@ func TestUpdateOneMeasurement(t *testing.T) {
 	fake := NewTest()
 	// first measurement
 	done := fake.Collect() // this needs a collector to unblock update
-	fake.Update("sth", 8*time.Millisecond, time.Now())
+	fake.Update(meta{"testcase":"sth", "elapsed":8*time.Millisecond, "last":time.Now()})
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -32,9 +32,9 @@ func TestUpdateOneMeasurement(t *testing.T) {
 func TestUpdateMultipleMeasurements(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
-	fake.Update("sth", 8*time.Millisecond, time.Now())
-	fake.Update("sth", 10*time.Millisecond, time.Now())
-	fake.Update("sth", 2*time.Millisecond, time.Now())
+	fake.Update(meta{"testcase":"sth", "elapsed":8*time.Millisecond, "last":time.Now()})
+	fake.Update(meta{"testcase":"sth", "elapsed":10*time.Millisecond, "last":time.Now()})
+	fake.Update(meta{"testcase":"sth", "elapsed":2*time.Millisecond, "last":time.Now()})
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -56,7 +56,7 @@ func TestReset(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	// first measurement
-	fake.Update("sth", 8*time.Millisecond, time.Now())
+	fake.Update(meta{"testcase":"sth", "elapsed":8*time.Millisecond, "last":time.Now()})
 	close(fake.measurements)
 	<-done
 	if _, ok := fake.stats["sth"]; ok {
@@ -78,9 +78,9 @@ func TestReport(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(name, 8*time.Millisecond, time.Now())
-		fake.Update(name, 10*time.Millisecond, time.Now())
-		fake.Update(name, 2*time.Millisecond, time.Now())
+		fake.Update(meta{"testcase":name, "elapsed":8*time.Millisecond, "last":time.Now()})
+		fake.Update(meta{"testcase":name, "elapsed":10*time.Millisecond, "last":time.Now()})
+		fake.Update(meta{"testcase":name, "elapsed":2*time.Millisecond, "last":time.Now()})
 	}
 	insert("tc2")
 	insert("tc1")
@@ -132,9 +132,9 @@ func TestRead(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(name, 8*time.Millisecond, time.Now())
-		fake.Update(name, 10*time.Millisecond, time.Now())
-		fake.Update(name, 2*time.Millisecond, time.Now())
+		fake.Update(meta{"testcase":name, "elapsed":8*time.Millisecond, "last":time.Now()})
+		fake.Update(meta{"testcase":name, "elapsed":10*time.Millisecond, "last":time.Now()})
+		fake.Update(meta{"testcase":name, "elapsed":2*time.Millisecond, "last":time.Now()})
 	}
 	insert("tc2")
 	insert("tc1")

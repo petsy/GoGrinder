@@ -14,8 +14,8 @@ import (
 var gg = NewTest()
 
 // sleep step factory
-func myStep(duration time.Duration) func() {
-	return func() {
+func myStep(duration time.Duration) func(meta) {
+	return func(meta meta) {
 		time.Sleep(duration * time.Millisecond)
 	}
 }
@@ -27,16 +27,16 @@ var ts3 = gg.Teststep("03_01_teststep", myStep(150))
 var thinktime = gg.Thinktime
 
 // define testcases using teststeps
-func tc1(meta map[string]interface{}) {
-	ts1()
+func tc1(meta meta) {
+	ts1(meta)
 	thinktime(0.050)
 }
-func tc2(meta map[string]interface{}) {
-	ts2()
+func tc2(meta meta) {
+	ts2(meta)
 	thinktime(0.100)
 }
-func tc3(meta map[string]interface{}) {
-	ts3()
+func tc3(meta meta) {
+	ts3(meta)
 	thinktime(0.150)
 }
 

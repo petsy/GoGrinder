@@ -20,17 +20,25 @@ type Statistics interface {
 
 type TestStatistics struct {
 	lock          sync.RWMutex     // lock that is used on stats
-	stats         stats            // collect and aggregate results
-	measurements  chan measurement // channel used to collect measurements from teststeps
+	stats         map[string]stats_value            // collect and aggregate results
+	//measurements  chan measurement // channel used to collect measurements from teststeps
+	measurements chan meta
 	reportFeature bool             // specify to print a console report
 }
 
+// internal datatype to collect information about the execution of a teststep
+type meta map[string]interface{}
+
 // Internal datastructure used on the test.measurements channel.
-type measurement struct {
-	testcase string
-	value    time.Duration
-	last     time.Time
-}
+/*type measurement struct {
+	testcase  string
+	user      int
+	iteration int
+	last      time.Time
+	value     time.Duration
+	reference string
+	//meta       map([string]interface{})
+}*/
 
 // Internal datastructure to collect and aggregate measurements.
 type stats_value struct {
@@ -40,7 +48,6 @@ type stats_value struct {
 	count int64
 	last  time.Time
 }
-type stats map[string]stats_value
 
 // []Results is what is what you get from test.Results().
 // Not sure if it is necessary to export this???
@@ -62,35 +69,44 @@ func (a byTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
 
 // Update and Collect work closely together via the measurements channel.
-func (test *TestStatistics) Update(testcase string, mm time.Duration, last time.Time) {
-	test.measurements <- measurement{testcase, mm, last}
+func (test *TestStatistics) Update(meta meta) {
+	test.measurements <- meta  //measurement{testcase, user, iteration, last, mm}
 }
 
 // Collect all measurements. It blocks until measurements channel is closed.
 func (test *TestStatistics) Collect() <-chan bool {
 	done := make(chan bool)
 	go func(test *TestStatistics) {
-		for mm := range test.measurements {
-			//fmt.Println(mm)
-			val, exists := test.stats[mm.testcase]
+		for meta := range test.measurements {
+			// make sure meta contains essential keys
+			testcase, ok := meta["testcase"].(string); if !ok {
+				panic("meta needs to contain 'testcase' key!")
+			}
+			elapsed, ok := meta["elapsed"].(time.Duration); if !ok {
+				panic("meta needs to contain 'elapsed' key!")
+			}
+			last, ok := meta["last"].(time.Time); if !ok {
+				panic("meta needs to contain 'last' key!")
+			}
+			val, exists := test.stats[testcase]
 			if exists {
 				val.avg = (time.Duration(val.count)*val.avg +
-					mm.value) / time.Duration(val.count+1)
-				if mm.value > val.max {
-					val.max = mm.value
+				elapsed) / time.Duration(val.count+1)
+				if elapsed > val.max {
+					val.max = elapsed
 				}
-				if mm.value < val.min {
-					val.min = mm.value
+				if elapsed < val.min {
+					val.min = elapsed
 				}
-				val.last = mm.last
+				val.last = last
 				val.count++
 				test.lock.Lock()
-				test.stats[mm.testcase] = val
+				test.stats[testcase] = val
 				test.lock.Unlock()
 			} else {
 				// create a new statistic for t
 				test.lock.Lock()
-				test.stats[mm.testcase] = stats_value{mm.value, mm.value, mm.value, 1, mm.last}
+				test.stats[testcase] = stats_value{elapsed, elapsed, elapsed, 1, last}
 				test.lock.Unlock()
 			}
 		}
@@ -102,9 +118,9 @@ func (test *TestStatistics) Collect() <-chan bool {
 // Reset the statistics (measurements from previous run are deleted).
 func (test *TestStatistics) Reset() {
 	test.lock.Lock()
-	test.stats = make(stats)
+	test.stats = make(map[string]stats_value)
 	test.lock.Unlock()
-	test.measurements = make(chan measurement)
+	test.measurements = make(chan meta)
 }
 
 // Helper to convert time.Duration to ms in float64.

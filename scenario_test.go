@@ -179,7 +179,7 @@ func TestTeststep(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
-	step := func() { time.Sleep(20) }
+	step := func(meta) { time.Sleep(20) }
 
 	its := fake.Teststep("sth", step)
 
@@ -195,7 +195,7 @@ func TestTeststep(t *testing.T) {
 
 	// run the teststep (note: a different angle would be to mock out update)
 	done := fake.Collect() // this needs a collector to unblock update
-	its()
+	its(meta{"testcase":"sth"})
 	fake.wg.Wait()
 	close(fake.measurements)
 	<-done
@@ -218,7 +218,7 @@ func TestRunSequential(t *testing.T) {
 	fake.config["Scenario"] = "scenario1"
 	var counter int = 0
 	// assemble testcase
-	tc1 := func(meta map[string]interface{}) {
+	tc1 := func(meta meta) {
 		// check meta
 		if meta["Iteration"] != counter {
 			t.Errorf("Iteration %d but expected %d!", meta["Iteration"], counter)
@@ -244,7 +244,7 @@ func TestRunSequential(t *testing.T) {
 
 func TestScheduleErrorUnknownTestcase(t *testing.T) {
 	fake := NewTest()
-	err := fake.Schedule("unknown_testcase", func(map[string]interface{}) {})
+	err := fake.Schedule("unknown_testcase", func(meta) {})
 
 	error := err.Error()
 	if error != "config for testcase unknown_testcase not found" {

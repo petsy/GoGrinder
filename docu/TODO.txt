@@ -8,11 +8,13 @@ frontend
 
 backend
 * handler needs some polishing (silence, maybe decorators for logging?)
-* Results Duration formating (at least define what it is ns?)
+* Results Duration formatting (at least define what it is ns?)
 
 scenario
 * script configuration/params
+* provide meta info (user, iteration)
 * send data to Prometheus (eg. specialized reporter plugin)
+* need some "plugin" mechanism for measurement processing (event logging, Prometheus, ...)
 
 sample
 * recreate jmeter test in gogrinder
