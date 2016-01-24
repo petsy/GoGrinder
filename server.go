@@ -161,7 +161,9 @@ func (srv *TestServer) Router() *mux.Router {
 	box := rice.MustFindBox("web")
 	//_ = box
 	appFileServer := http.FileServer(box.HTTPBox())
-	// dev mode fallback: appFileServer := http.FileServer(http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
+	// dev mode fallback:
+	// appFileServer := http.FileServer(
+	// http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
 	// app route:
 	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
 

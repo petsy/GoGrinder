@@ -21,10 +21,10 @@ var ISO8601 = "2006-01-02T15:04:05.999Z"
 
 type Scenario interface {
 	Testscenario(name string, scenario interface{})
-	Teststep(name string, step func(meta)) func(meta)
-	Schedule(name string, testcase func(meta)) error
-	DoIterations(testcase func(meta), iterations int, pacing float64, parallel bool)
-	Run(testcase func(meta), delay float64, runfor float64, rampup float64, users int, pacing float64)
+	Teststep(name string, step func(Meta)) func(Meta)
+	Schedule(name string, testcase func(Meta)) error
+	DoIterations(testcase func(Meta), iterations int, pacing float64, parallel bool)
+	Run(testcase func(Meta), delay float64, runfor float64, rampup float64, users int, pacing float64)
 	Exec() error
 	Thinktime(tt int64)
 }
@@ -32,10 +32,10 @@ type Scenario interface {
 // TestScenario datastructure that brings all the GoGrinder functionality together.
 // TestScenario supports multiple interfaces (TestConfig, TestStatistics).
 type TestScenario struct {
-	TestConfig // needs to be anonymous to promote access to struct field and methods
+	TestConfig                           // needs to be anonymous to promote access to struct field and methods
 	TestStatistics
 	testscenarios map[string]interface{} // testscenarios registry for testscenarios
-	teststeps     map[string]func(meta)  // registry for teststeps
+	teststeps     map[string]func(Meta)  // registry for teststeps
 	wg            sync.WaitGroup         // waitgroup for teststeps
 	status        status                 // status (stopped, running, stopping) (used in Report())
 }
@@ -53,7 +53,7 @@ const (
 func NewTest() *TestScenario {
 	t := TestScenario{
 		testscenarios: make(map[string]interface{}),
-		teststeps:     make(map[string]func(meta)),
+		teststeps:     make(map[string]func(Meta)),
 		status:        stopped,
 
 		TestConfig: TestConfig{
@@ -62,7 +62,7 @@ func NewTest() *TestScenario {
 
 		TestStatistics: TestStatistics{
 			stats:         make(map[string]stats_value),
-			measurements:  make(chan meta),
+			measurements:  make(chan Meta),
 			reportFeature: true,
 		},
 	}
@@ -103,8 +103,8 @@ func (test *TestScenario) Testscenario(name string, scenario interface{}) {
 }
 
 // Instrument a teststep and add it to the teststeps registry.
-func (test *TestScenario) Teststep(name string, step func(meta)) func(meta) {
-	its := func(meta meta) {
+func (test *TestScenario) Teststep(name string, step func(Meta)) func(Meta) {
+	its := func(meta Meta) {
 		start := time.Now()
 		step(meta)
 		meta["testcase"] = name
@@ -117,25 +117,30 @@ func (test *TestScenario) Teststep(name string, step func(meta)) func(meta) {
 }
 
 // Schedule a testcase according to its config in the loadmodel.json config file.
-func (test *TestScenario) Schedule(name string, testcase func(meta)) error {
+func (test *TestScenario) Schedule(name string, testcase func(Meta)) error {
 	delay, runfor, rampup, users, pacing, err := test.GetTestcaseConfig(name)
+	settings := test.GetSettings()
 	if err != nil {
 		return err
 	}
-	test.Run(testcase, delay, runfor, rampup, users, pacing)
+	test.Run(testcase, delay, runfor, rampup, users, pacing, settings)
 	return nil
 }
 
-func (test *TestScenario) DoIterations(testcase func(meta),
+func (test *TestScenario) DoIterations(testcase func(Meta),
 	iterations int, pacing float64, parallel bool) {
-	meta := make(meta)
+	settings := test.GetSettings()
+	meta := make(Meta)
 	f := func() {
 		defer test.wg.Done()
 
 		for i := 0; i < iterations; i++ {
 			start := time.Now()
-			meta["Iteration"] = i
-			meta["User"] = 0
+			meta["iteration"] = i
+			meta["user"] = 0
+			if len(settings) > 0 {
+				meta["settings"] = settings
+			}
 			if test.status == stopping {
 				break
 			}
@@ -157,8 +162,8 @@ func (test *TestScenario) DoIterations(testcase func(meta),
 }
 
 // Run a testcase. Settings are specified in Seconds!
-func (test *TestScenario) Run(testcase func(meta), delay float64, runfor float64, rampup float64,
-	users int, pacing float64) {
+func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64, rampup float64,
+	users int, pacing float64, settings map[string]interface{}) {
 	test.wg.Add(1) // the "Scheduler" itself is a goroutine!
 	go func() {
 		// ramp up the users
@@ -174,12 +179,15 @@ func (test *TestScenario) Run(testcase func(meta), delay float64, runfor float64
 				time.Sleep(time.Duration(rampup * float64(time.Second)))
 
 				for j := 0; time.Now().Sub(userStart) <
-						time.Duration((runfor)*float64(time.Second)); j++ {
+					time.Duration((runfor)*float64(time.Second)); j++ {
 					// next iteration
 					start := time.Now()
-					meta := make(meta)
-					meta["User"] = i
-					meta["Iteration"] = j
+					meta := make(Meta)
+					meta["user"] = i
+					meta["iteration"] = j
+					if len(settings) > 0 {
+						meta["settings"] = settings
+					}
 					if test.status == stopping {
 						break
 					}
@@ -213,9 +221,9 @@ func (test *TestScenario) Exec() error {
 			}
 			if fnType.NumIn() == 1 {
 				// debugging of single testcase executions
-				meta := make(meta)
-				meta["Iteration"] = 0
-				meta["User"] = 0
+				meta := make(Meta)
+				meta["iteration"] = 0
+				meta["user"] = 0
 				fn.Call([]reflect.Value{reflect.ValueOf(meta)})
 			}
 			if fnType.NumIn() > 1 {

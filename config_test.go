@@ -151,9 +151,9 @@ func TestGetTestcaseConfigMissingLoadmodel(t *testing.T) {
 	fake := NewTest()
 
 	_, _, _, _, _, err := fake.GetTestcaseConfig("testcase1")
-	error := err.Error()
-	if error != "config for testcase testcase1 not found" {
-		t.Errorf("Error handling for missing testcase config not as expected: %s!", error)
+	e := err.Error()
+	if e != "config for testcase testcase1 not found" {
+		t.Errorf("Error handling for missing testcase config not as expected: %s!", e)
 	}
 }
 
@@ -171,9 +171,9 @@ func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 	fake.config["Loadmodel"] = l
 
 	_, _, _, _, _, err := fake.GetTestcaseConfig("testcase2")
-	error := err.Error()
-	if error != "config for testcase testcase2 not found" {
-		t.Errorf("Error handling for missing testcase configuration not as expected: %s!", error)
+	e := err.Error()
+	if e != "config for testcase testcase2 not found" {
+		t.Errorf("Error handling for missing testcase configuration not as expected: %s!", e)
 	}
 }
 
@@ -196,9 +196,9 @@ func TestReadLoadmodelSchemaInvalid(t *testing.T) {
 
 	expected := "the loadmodel is not valid:\n" +
 		"- Scenario: Scenario is required"
-	error := err.Error()
-	if error != expected {
-		t.Errorf("Error msg not as expected: %s", error)
+	e := err.Error()
+	if e != expected {
+		t.Errorf("Error msg not as expected: %s", e)
 	}
 }
 
@@ -255,7 +255,7 @@ func TestAdditionalConfigProperties(t *testing.T) {
 	}`
 	fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
 
-	opts := fake.GetAdditionalProperties()
+	opts := fake.GetSettings()
 
 	if v, ok := opts["AdditionalProperty"]; !ok || v != 123.0 {
 		t.Errorf("Error: AdditionalProperty not found, or value expected %f, but was %f!", 123.0, v)

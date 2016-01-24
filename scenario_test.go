@@ -179,7 +179,7 @@ func TestTeststep(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
-	step := func(meta) { time.Sleep(20) }
+	step := func(Meta) { time.Sleep(20) }
 
 	its := fake.Teststep("sth", step)
 
@@ -195,7 +195,7 @@ func TestTeststep(t *testing.T) {
 
 	// run the teststep (note: a different angle would be to mock out update)
 	done := fake.Collect() // this needs a collector to unblock update
-	its(meta{"testcase":"sth"})
+	its(Meta{"testcase": "sth"})
 	fake.wg.Wait()
 	close(fake.measurements)
 	<-done
@@ -218,12 +218,12 @@ func TestRunSequential(t *testing.T) {
 	fake.config["Scenario"] = "scenario1"
 	var counter int = 0
 	// assemble testcase
-	tc1 := func(meta meta) {
+	tc1 := func(meta Meta) {
 		// check meta
-		if meta["Iteration"] != counter {
-			t.Errorf("Iteration %d but expected %d!", meta["Iteration"], counter)
+		if meta["iteration"] != counter {
+			t.Errorf("Iteration %d but expected %d!", meta["iteration"], counter)
 		}
-		if meta["User"] != 0 {
+		if meta["user"] != 0 {
 			t.Error("User meta not as expected!")
 		}
 
@@ -244,11 +244,11 @@ func TestRunSequential(t *testing.T) {
 
 func TestScheduleErrorUnknownTestcase(t *testing.T) {
 	fake := NewTest()
-	err := fake.Schedule("unknown_testcase", func(meta) {})
+	err := fake.Schedule("unknown_testcase", func(Meta) {})
 
-	error := err.Error()
-	if error != "config for testcase unknown_testcase not found" {
-		t.Errorf("Error msg for unknown testcase not as expected: %s", error)
+	e := err.Error()
+	if e != "config for testcase unknown_testcase not found" {
+		t.Errorf("Error msg for unknown testcase not as expected: %s", e)
 	}
 }
 
@@ -259,9 +259,9 @@ func TestExecErrorUnknownScenario(t *testing.T) {
 	fake.config["ThinkTimeVariance"] = 0.1
 	err := fake.Exec()
 
-	error := err.Error()
-	if error != "scenario scenario1 does not exist" {
-		t.Errorf("Error msg for missing scenario not as expected: %s", error)
+	e := err.Error()
+	if e != "scenario scenario1 does not exist" {
+		t.Errorf("Error msg for missing scenario not as expected: %s", e)
 	}
 }
 
@@ -274,9 +274,9 @@ func TestExecErrorFunctionWithReturnValue(t *testing.T) {
 
 	err := fake.Exec()
 
-	error := err.Error()
-	if error != "expected a function without return value to implement 01_testcase" {
-		t.Errorf("Error msg for function with return value not as expected: %s", error)
+	e := err.Error()
+	if e != "expected a function without return value to implement 01_testcase" {
+		t.Errorf("Error msg for function with return value not as expected: %s", e)
 	}
 }
 
@@ -289,8 +289,8 @@ func TestExecErrorFunctionWithTwoParams(t *testing.T) {
 
 	err := fake.Exec()
 
-	error := err.Error()
-	if error != "expected a function with zero or one parameter to implement 01_testcase" {
-		t.Errorf("Error msg for function two or more params not as expected: %s", error)
+	e := err.Error()
+	if e != "expected a function with zero or one parameter to implement 01_testcase" {
+		t.Errorf("Error msg for function two or more params not as expected: %s", e)
 	}
 }

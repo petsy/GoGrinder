@@ -5,14 +5,14 @@ frontend
 * edit loadmodel
 * authenticate frontend
 * save results as csv file
+* use backend port
 
 backend
 * handler needs some polishing (silence, maybe decorators for logging?)
 * Results Duration formatting (at least define what it is ns?)
+* fix TODOs
 
 scenario
-* script configuration/params
-* provide meta info (user, iteration)
 * send data to Prometheus (eg. specialized reporter plugin)
 * need some "plugin" mechanism for measurement processing (event logging, Prometheus, ...)
 
@@ -39,3 +39,5 @@ Version 0.01
 * variable pacing
 * make thinktime and pacing config optional
 * loadmodel mod date
+* script configuration/params
+* provide meta info (user, iteration)

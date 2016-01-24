@@ -14,10 +14,12 @@ type Config interface {
 	ReadConfig() error
 	ReadConfigValidate(document string, schema string) error
 	WriteConfig() error
-	GetAdditionalProperties() map[string]interface{}
+	GetSettings() map[string]interface{}
 	GetScenarioConfig() (string, float64, float64, float64)
 	GetTestcaseConfig(testcase string) (float64, float64, float64, int, float64, error)
 }
+
+//type Settings map[string]interface{}
 
 type TestConfig struct {
 	config   map[string]interface{} // datastructure to hold the json config loaded from file
@@ -171,7 +173,7 @@ func (test *TestConfig) GetTestcaseConfig(testcase string) (float64, float64, fl
 }
 
 // Return map containing additional properties from the json configuration file.
-func (test *TestConfig) GetAdditionalProperties() map[string]interface{} {
+func (test *TestConfig) GetSettings() map[string]interface{} {
 	// defaults for optional properties
 	opts := make(map[string]interface{})
 	// little helper

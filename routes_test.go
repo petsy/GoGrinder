@@ -44,9 +44,9 @@ func TestRouteGetCsv(t *testing.T) {
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.Update(meta{"testcase":"sth", "elapsed":8*time.Millisecond, "last":now})
-	fake.Update(meta{"testcase":"sth", "elapsed":10*time.Millisecond, "last":now})
-	fake.Update(meta{"testcase":"sth", "elapsed":2*time.Millisecond, "last":now})
+	fake.Update(Meta{"testcase": "sth", "elapsed": 8 * time.Millisecond, "last": now})
+	fake.Update(Meta{"testcase": "sth", "elapsed": 10 * time.Millisecond, "last": now})
+	fake.Update(Meta{"testcase": "sth", "elapsed": 2 * time.Millisecond, "last": now})
 	close(fake.measurements)
 	<-done
 
@@ -74,9 +74,9 @@ func TestRouteGetStatistics(t *testing.T) {
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.Update(meta{"testcase":"sth", "elapsed":8*time.Millisecond, "last":now})
-	fake.Update(meta{"testcase":"sth", "elapsed":10*time.Millisecond, "last":now})
-	fake.Update(meta{"testcase":"sth", "elapsed":2*time.Millisecond, "last":now})
+	fake.Update(Meta{"testcase": "sth", "elapsed": 8 * time.Millisecond, "last": now})
+	fake.Update(Meta{"testcase": "sth", "elapsed": 10 * time.Millisecond, "last": now})
+	fake.Update(Meta{"testcase": "sth", "elapsed": 2 * time.Millisecond, "last": now})
 	close(fake.measurements)
 	<-done
 
@@ -103,11 +103,11 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	var fake = NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	t1 := time.Now().UTC()
-	fake.Update(meta{"testcase":"sth", "elapsed":8*time.Millisecond, "last":t1})
+	fake.Update(Meta{"testcase": "sth", "elapsed": 8 * time.Millisecond, "last": t1})
 	time.Sleep(5 * time.Millisecond)
 	t2 := t1.Add(2 * time.Millisecond)
-	fake.Update(meta{"testcase":"else", "elapsed":10*time.Millisecond, "last":t1})
-	fake.Update(meta{"testcase":"else", "elapsed":2*time.Millisecond, "last":t2})
+	fake.Update(Meta{"testcase": "else", "elapsed": 10 * time.Millisecond, "last": t1})
+	fake.Update(Meta{"testcase": "else", "elapsed": 2 * time.Millisecond, "last": t2})
 	t3 := t2.Add(2 * time.Millisecond)
 	close(fake.measurements)
 	<-done
@@ -171,7 +171,7 @@ func TestRouteStartStop(t *testing.T) {
 	defer time.Unfreeze()
 	srv := TestServer{}
 	srv.test = NewTest()
-	tc1 := func(meta meta) { srv.test.Thinktime(0.050) }
+	tc1 := func(meta Meta) { srv.test.Thinktime(0.050) }
 	srv.test.Testscenario("fake", func() { gg.DoIterations(tc1, 500, 0, false) })
 	loadmodel := `{"Scenario": "fake", "ThinkTimeFactor": 2.0, "ThinkTimeVariance": 0.0	}`
 	srv.test.ReadConfigValidate(loadmodel, LoadmodelSchema)

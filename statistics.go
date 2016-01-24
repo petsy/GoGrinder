@@ -19,26 +19,14 @@ type Statistics interface {
 }
 
 type TestStatistics struct {
-	lock          sync.RWMutex     // lock that is used on stats
-	stats         map[string]stats_value            // collect and aggregate results
-	//measurements  chan measurement // channel used to collect measurements from teststeps
-	measurements chan meta
-	reportFeature bool             // specify to print a console report
+	lock          sync.RWMutex           // lock that is used on stats
+	stats         map[string]stats_value // collect and aggregate results
+	measurements  chan Meta
+	reportFeature bool // specify to print a console report
 }
 
 // internal datatype to collect information about the execution of a teststep
-type meta map[string]interface{}
-
-// Internal datastructure used on the test.measurements channel.
-/*type measurement struct {
-	testcase  string
-	user      int
-	iteration int
-	last      time.Time
-	value     time.Duration
-	reference string
-	//meta       map([string]interface{})
-}*/
+type Meta map[string]interface{}
 
 // Internal datastructure to collect and aggregate measurements.
 type stats_value struct {
@@ -69,8 +57,8 @@ func (a byTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
 
 // Update and Collect work closely together via the measurements channel.
-func (test *TestStatistics) Update(meta meta) {
-	test.measurements <- meta  //measurement{testcase, user, iteration, last, mm}
+func (test *TestStatistics) Update(meta Meta) {
+	test.measurements <- meta //measurement{testcase, user, iteration, last, mm}
 }
 
 // Collect all measurements. It blocks until measurements channel is closed.
@@ -79,19 +67,22 @@ func (test *TestStatistics) Collect() <-chan bool {
 	go func(test *TestStatistics) {
 		for meta := range test.measurements {
 			// make sure meta contains essential keys
-			testcase, ok := meta["testcase"].(string); if !ok {
+			testcase, ok := meta["testcase"].(string)
+			if !ok {
 				panic("meta needs to contain 'testcase' key!")
 			}
-			elapsed, ok := meta["elapsed"].(time.Duration); if !ok {
+			elapsed, ok := meta["elapsed"].(time.Duration)
+			if !ok {
 				panic("meta needs to contain 'elapsed' key!")
 			}
-			last, ok := meta["last"].(time.Time); if !ok {
+			last, ok := meta["last"].(time.Time)
+			if !ok {
 				panic("meta needs to contain 'last' key!")
 			}
 			val, exists := test.stats[testcase]
 			if exists {
 				val.avg = (time.Duration(val.count)*val.avg +
-				elapsed) / time.Duration(val.count+1)
+					elapsed) / time.Duration(val.count+1)
 				if elapsed > val.max {
 					val.max = elapsed
 				}
@@ -120,7 +111,7 @@ func (test *TestStatistics) Reset() {
 	test.lock.Lock()
 	test.stats = make(map[string]stats_value)
 	test.lock.Unlock()
-	test.measurements = make(chan meta)
+	test.measurements = make(chan Meta)
 }
 
 // Helper to convert time.Duration to ms in float64.

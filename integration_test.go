@@ -14,8 +14,8 @@ import (
 var gg = NewTest()
 
 // sleep step factory
-func myStep(duration time.Duration) func(meta) {
-	return func(meta meta) {
+func myStep(duration time.Duration) func(Meta) {
+	return func(meta Meta) {
 		time.Sleep(duration * time.Millisecond)
 	}
 }
@@ -27,15 +27,15 @@ var ts3 = gg.Teststep("03_01_teststep", myStep(150))
 var thinktime = gg.Thinktime
 
 // define testcases using teststeps
-func tc1(meta meta) {
+func tc1(meta Meta) {
 	ts1(meta)
 	thinktime(0.050)
 }
-func tc2(meta meta) {
+func tc2(meta Meta) {
 	ts2(meta)
 	thinktime(0.100)
 }
-func tc3(meta meta) {
+func tc3(meta Meta) {
 	ts3(meta)
 	thinktime(0.150)
 }
@@ -357,3 +357,50 @@ func TestGoGrinder(t *testing.T) {
 	}
 }
 */
+
+func TestSettings(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	test := NewTest()
+	tsts1 := test.Teststep("tsts1", func(meta Meta) { time.Sleep(50 * time.Millisecond) })
+
+	tstc1 := func(meta Meta) {
+		// we want to make sure, that the settings work E2E so we verify them
+		// within the teststep itself!
+		settings, ok := meta["settings"].(map[string]interface{})
+		if !ok {
+			t.Errorf("Error: expected meta to contain 'settings'!")
+		}
+		_, ok = settings["Awesome"]
+		if !ok {
+			t.Errorf("Error: expected 'settings' to contain 'Awesome'!")
+		}
+		if settings["Awesome"].(string) != "yeah!" {
+			t.Errorf("Error: expected 'settings' to contain 'Awesome'!")
+		}
+		tsts1(meta)
+		test.Thinktime(0.050)
+	}
+	test.Testscenario("fake", func() { test.DoIterations(tstc1, 500, 0, false) })
+
+	// we do not need a full loadmodel to run the fake scenario
+	loadmodel := `{
+	  "Scenario": "fake",
+	  "ThinkTimeFactor": 2.0,
+	  "ThinkTimeVariance": 0.1,
+	  "PacingVariance": 0.0,
+	  "Awesome": "yeah!"
+	}`
+
+	test.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	test.Exec() // exec the scenario that has been selected in the config file
+	// verify Report to make sure the teststep was executed
+	report := stdout.(*bytes.Buffer).String()
+	if report != ("tsts1, 50.000000, 50.000000, 50.000000, 500\n") {
+		t.Fatalf("Report output of 'fake' scenario not as expected: %s", report)
+	}
+}
