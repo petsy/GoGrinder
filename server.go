@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/GeertJohan/go.rice"
+	log "github.com/Sirupsen/logrus"
 	"github.com/finklabs/graceful"
 	time "github.com/finklabs/ttime"
 	"github.com/gorilla/mux"
@@ -51,26 +51,25 @@ type handler func(r *http.Request) (interface{}, *handlerError)
 
 // Attach the standard ServeHTTP method to our handler so the http library can call it.
 func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// TODO: make the logger plugable
 	// call the service function
 	response, err := fn(r)
-
-	// check for errors
 	if err != nil {
-		log.Printf("ERROR: %v\n", err.Error)
+		log.Error(err.Error)
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Message), err.Code)
 		return
 	}
 	if response == nil {
-		log.Printf("ERROR: response from method is nil\n")
-		http.Error(w, "Internal server error.", http.StatusInternalServerError)
+		log.Error("response from method is nil")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, "no response from service method."),
+			http.StatusInternalServerError)
 		return
 	}
 
 	// turn the response into JSON
 	bytes, e := json.Marshal(response)
 	if e != nil {
-		http.Error(w, "Error marshalling Json data.", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, "marshalling Json data failed."),
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -79,7 +78,7 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// send the response and log
 	w.Write(bytes)
-	log.Printf("%s %s %s %d", r.RemoteAddr, r.Method, r.URL, 200)
+	log.Debugf("%s %s %s %v", r.RemoteAddr, r.Method, r.URL, http.StatusOK)
 }
 
 /////////////////////////////////////

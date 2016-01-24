@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 func TestHandlerServeHTTP(t *testing.T) {
@@ -35,6 +37,9 @@ func TestHandlerServeHTTP(t *testing.T) {
 
 func TestHandlerServeHTTPWrapError(t *testing.T) {
 	// make sure handler's ServeHTTP works
+	bak := log.GetLevel()
+	log.SetLevel(log.FatalLevel) // do not report the error to console
+	defer log.SetLevel(bak)
 	request, _ := http.NewRequest("GET", "/something", nil)
 	response := httptest.NewRecorder()
 
@@ -51,6 +56,9 @@ func TestHandlerServeHTTPWrapError(t *testing.T) {
 
 func TestHandlerServeHTTPEmptyResponse(t *testing.T) {
 	// make sure handler's ServeHTTP works
+	bak := log.GetLevel()
+	log.SetLevel(log.FatalLevel) // do not report the error to console
+	defer log.SetLevel(bak)
 	request, _ := http.NewRequest("GET", "/something", nil)
 	response := httptest.NewRecorder()
 

@@ -8,7 +8,6 @@ frontend
 * use backend port
 
 backend
-* handler needs some polishing (silence, maybe decorators for logging?)
 * Results Duration formatting (at least define what it is ns?)
 * fix TODOs
 
@@ -41,3 +40,5 @@ Version 0.01
 * loadmodel mod date
 * script configuration/params
 * provide meta info (user, iteration)
+* fixed handler logging and error handling
+* added logLevel to CLI

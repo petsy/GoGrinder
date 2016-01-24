@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	time "github.com/finklabs/ttime"
 )
 
@@ -32,7 +33,7 @@ type Scenario interface {
 // TestScenario datastructure that brings all the GoGrinder functionality together.
 // TestScenario supports multiple interfaces (TestConfig, TestStatistics).
 type TestScenario struct {
-	TestConfig                           // needs to be anonymous to promote access to struct field and methods
+	TestConfig // needs to be anonymous to promote access to struct field and methods
 	TestStatistics
 	testscenarios map[string]interface{} // testscenarios registry for testscenarios
 	teststeps     map[string]func(Meta)  // registry for teststeps
@@ -258,11 +259,13 @@ func (test *TestScenario) Thinktime(tt float64) {
 
 // This is the "standard" behaviour. If you need a special configuration maybe you can start with this code.
 func (test *TestScenario) GoGrinder() {
-	filename, noExec, noReport, noFrontend, port, err := GetCLI()
+	filename, noExec, noReport, noFrontend, port, logLevel, err := GetCLI()
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+	ll, _ := log.ParseLevel(logLevel)
+	log.SetLevel(ll)
 	test.ReportFeature(!noReport)
 	test.ReadConfig(filename)
 
