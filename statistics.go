@@ -16,6 +16,7 @@ type Statistics interface {
 	Reset()
 	Results(since string) []Result
 	Report()
+	SetReportPlugins([]func(Meta))
 }
 
 type TestStatistics struct {
@@ -23,6 +24,7 @@ type TestStatistics struct {
 	stats         map[string]stats_value // collect and aggregate results
 	measurements  chan Meta
 	reportFeature bool // specify to print a console report
+	reporters     []func(Meta)
 }
 
 // internal datatype to collect information about the execution of a teststep
@@ -61,8 +63,12 @@ func (test *TestStatistics) Update(meta Meta) {
 	test.measurements <- meta //measurement{testcase, user, iteration, last, mm}
 }
 
+func (test *TestStatistics) SetReportPlugins(reporters ...func(Meta)) {
+	test.reporters = reporters
+}
+
 // Collect all measurements. It blocks until measurements channel is closed.
-func (test *TestStatistics) Collect(reporters ...func(Meta)) <-chan bool {
+func (test *TestStatistics) Collect() <-chan bool {
 	done := make(chan bool)
 	go func(test *TestStatistics) {
 		for meta := range test.measurements {
@@ -79,7 +85,7 @@ func (test *TestStatistics) Collect(reporters ...func(Meta)) <-chan bool {
 			// call the default reporter
 			test.default_reporter(meta)
 			// call the plugged in reporters
-			for _, reporter := range reporters {
+			for _, reporter := range test.reporters {
 				reporter(meta)
 			}
 		}

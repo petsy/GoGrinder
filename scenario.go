@@ -269,6 +269,20 @@ func (test *TestScenario) GoGrinder() {
 	test.ReportFeature(!noReport)
 	test.ReadConfig(filename)
 
+	// initialize the event logger
+	fe, err := os.OpenFile("event-log.txt", os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Error("can not open file: %v", err)
+	}
+	defer fe.Close()
+	elog = &log.Logger{
+		Out:       fe,
+		Formatter: &log.JSONFormatter{},
+		Hooks:     make(log.LevelHooks),
+		Level:     log.InfoLevel,
+	}
+	test.SetReportPlugins(eventLogger)
+
 	exec := func() {
 		err := test.Exec() // exec the scenario that has been selected in the config file
 		if err != nil {
