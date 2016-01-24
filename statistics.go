@@ -62,48 +62,61 @@ func (test *TestStatistics) Update(meta Meta) {
 }
 
 // Collect all measurements. It blocks until measurements channel is closed.
-func (test *TestStatistics) Collect() <-chan bool {
+func (test *TestStatistics) Collect(reporters ...func(Meta)) <-chan bool {
 	done := make(chan bool)
 	go func(test *TestStatistics) {
 		for meta := range test.measurements {
-			// make sure meta contains essential keys
-			testcase, ok := meta["testcase"].(string)
-			if !ok {
+			// make sure Meta contains essential keys
+			if _, ok := meta["testcase"].(string); !ok {
 				panic("meta needs to contain 'testcase' key!")
 			}
-			elapsed, ok := meta["elapsed"].(time.Duration)
-			if !ok {
+			if _, ok := meta["elapsed"].(time.Duration); !ok {
 				panic("meta needs to contain 'elapsed' key!")
 			}
-			last, ok := meta["last"].(time.Time)
-			if !ok {
-				panic("meta needs to contain 'last' key!")
+			if _, ok := meta["timestamp"].(time.Time); !ok {
+				panic("meta needs to contain 'timestamp' key!")
 			}
-			val, exists := test.stats[testcase]
-			if exists {
-				val.avg = (time.Duration(val.count)*val.avg +
-					elapsed) / time.Duration(val.count+1)
-				if elapsed > val.max {
-					val.max = elapsed
-				}
-				if elapsed < val.min {
-					val.min = elapsed
-				}
-				val.last = last
-				val.count++
-				test.lock.Lock()
-				test.stats[testcase] = val
-				test.lock.Unlock()
-			} else {
-				// create a new statistic for t
-				test.lock.Lock()
-				test.stats[testcase] = stats_value{elapsed, elapsed, elapsed, 1, last}
-				test.lock.Unlock()
+			// call the default reporter
+			test.default_reporter(meta)
+			// call the plugged in reporters
+			for _, reporter := range reporters {
+				reporter(meta)
 			}
 		}
 		done <- true
 	}(test)
 	return done
+}
+
+// function to process the incoming measurements and update the stats
+// this is also the default-reporter. All other reporters are in reporter.go
+func (test *TestStatistics) default_reporter(meta Meta) {
+	testcase := meta["testcase"].(string)
+	elapsed := meta["elapsed"].(time.Duration)
+	timestamp := meta["timestamp"].(time.Time)
+	test.lock.RLock()
+	val, exists := test.stats[testcase]
+	test.lock.RUnlock()
+	if exists {
+		val.avg = (time.Duration(val.count)*val.avg +
+			elapsed) / time.Duration(val.count+1)
+		if elapsed > val.max {
+			val.max = elapsed
+		}
+		if elapsed < val.min {
+			val.min = elapsed
+		}
+		val.last = timestamp
+		val.count++
+		test.lock.Lock()
+		test.stats[testcase] = val
+		test.lock.Unlock()
+	} else {
+		// create a new statistic for t
+		test.lock.Lock()
+		test.stats[testcase] = stats_value{elapsed, elapsed, elapsed, 1, timestamp}
+		test.lock.Unlock()
+	}
 }
 
 // Reset the statistics (measurements from previous run are deleted).

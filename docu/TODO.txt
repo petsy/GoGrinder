@@ -10,10 +10,10 @@ frontend
 backend
 * Results Duration formatting (at least define what it is ns?)
 * fix TODOs
+* add event logging sample reporter
 
 scenario
 * send data to Prometheus (eg. specialized reporter plugin)
-* need some "plugin" mechanism for measurement processing (event logging, Prometheus, ...)
 
 sample
 * recreate jmeter test in gogrinder
@@ -42,3 +42,4 @@ Version 0.01
 * provide meta info (user, iteration)
 * fixed handler logging and error handling
 * added logLevel to CLI
+* reporter "plugin" mechanism for measurement processing (event logging, Prometheus, ...)

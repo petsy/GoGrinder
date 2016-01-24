@@ -110,7 +110,7 @@ func (test *TestScenario) Teststep(name string, step func(Meta)) func(Meta) {
 		step(meta)
 		meta["testcase"] = name
 		meta["elapsed"] = time.Now().Sub(start)
-		meta["last"] = start
+		meta["timestamp"] = start
 		test.Update(meta)
 	}
 	test.teststeps[name] = its
