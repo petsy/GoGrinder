@@ -161,8 +161,8 @@ func (srv *TestServer) Router() *mux.Router {
 	//_ = box
 	appFileServer := http.FileServer(box.HTTPBox())
 	// dev mode fallback:
-	// appFileServer := http.FileServer(
-	// http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
+	//appFileServer := http.FileServer(
+	//	http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
 	// app route:
 	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
 

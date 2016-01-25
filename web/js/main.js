@@ -62,9 +62,9 @@ app.service('ConfigService', function ($http, $timeout) {
         'readConfig': function () {
             $http.get('http://localhost:3000/config')
                 .success(function(data, status, headers, config) {
-                    var config = JSON.stringify(data, null, 2);
-                    self.loadmodel = config["config"];
-                    self.mtime = config["mtime"];
+                    //var config = JSON.stringify(data, null, 2);
+                    self.loadmodel = JSON.stringify(data["config"], null, 2);
+                    self.mtime = data["mtime"];
                 })
                 .error(function(data, status, headers, config) {
                     // log error
@@ -76,6 +76,7 @@ app.service('ConfigService', function ($http, $timeout) {
                 .success(function(data, status, headers, config) {
                     // TODO add some confirmation
                     console.log("config saved!");
+                    self.readConfig();
                     cb_ok();
                 })
                 .error(function(data, status, headers, config) {
