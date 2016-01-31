@@ -43,7 +43,7 @@ install into pkg folder:
 
 ## Frontend development
 The frontend is packaged with the executable. To access the frontend start your test and point your browser to:
-http://localhost:3000/app/index.html
+http://localhost:3030/app/index.html
 
 
 ### adding frontend dependencies using bower

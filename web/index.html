@@ -6,12 +6,6 @@
           rel="stylesheet">
     <link href="./css/slate.min.css"
           rel="stylesheet">
-<!--    <link href="./libs/bootstrap-additions/dist/bootstrap-additions.min.css"
-          rel="stylesheet">
-    <link href="./libs/angularjs-toaster/toaster.min.css"
-          rel="stylesheet">
-    <link href="./libs/ladda/dist/ladda-themeless.min.css"
-          rel="stylesheet">-->
     <link href="./libs/font-awesome/css/font-awesome.min.css"
           rel="stylesheet">
     <link href="./css/main.css"
@@ -37,6 +31,9 @@
                 </a>
                 <a class="btn btn-default" ng-show="test.running" ng-click="test.stop()">
                     <i class="fa fa-stop"></i>
+                </a>
+                <a class="btn btn-default" ng-hide="test.running" ng-click="test.csv()">
+                    <i class="fa fa-download"></i>
                 </a>
                 <a class="btn btn-default" ng-click="test.exit()">
                     <i class="fa fa-eject"></i>
@@ -66,12 +63,12 @@
                         <tr>
                             <th class="col-1">
                                 <div class="sortables">
-									<span ng-click="reverse = true; order = 'testcase';"
+									<span ng-click="reverse = true; order = 'teststep';"
                                           class="fa fa-sort-asc"></span>
-									<span ng-click="reverse = false; order = 'testcase';"
+									<span ng-click="reverse = false; order = 'teststep';"
                                           class="fa fa-sort-desc"></span>
                                 </div>
-                                Testcase
+                                Teststep
                             </th>
                             <th class="col-2">
                                 <div class="sortables">
@@ -111,16 +108,12 @@
                             </th>
                         </tr>
 
-                        <tr ng-repeat="testcase in test.results | orderBy:order:reverse">
-                        <!--    ng-style="{
-							 'background-color': testcase.name == test.selectedRow.name ? 'darkgray' : ''
-						}"
-                            ng-click="test.selectedRow = testcase">-->
-                            <td>{{ testcase.testcase }}</td>
-                            <td>{{ testcase.min }}</td>
-                            <td>{{ testcase.max }}</td>
-                            <td>{{ testcase.avg }}</td>
-                            <td>{{ testcase.count }}</td>
+                        <tr ng-repeat="teststep in test.results | orderBy:order:reverse">
+                            <td>{{ teststep.teststep }}</td>
+                            <td>{{ teststep.min }}</td>
+                            <td>{{ teststep.max }}</td>
+                            <td>{{ teststep.avg }}</td>
+                            <td>{{ teststep.count }}</td>
                         </tr>
 
 
@@ -149,15 +142,6 @@
 <script src="./libs/angular/angular.min.js"></script>
 <script src="./libs/angular-strap/dist/angular-strap.min.js"></script>
 <script src="./libs/angular-strap/dist/angular-strap.tpl.min.js"></script>
-<!--<script src="./libs/angular-resource/angular-resource.min.js"></script>-->
-<!--<script src="./libs/angular-animate/angular-animate.min.js"></script>
-<script src="./libs/ngInfiniteScroll/build/ng-infinite-scroll.min.js"></script>
-<script src="./libs/spin.js/spin.js"></script>
-<script src="./libs/angular-spinner/angular-spinner.min.js"></script>
-<script src="./libs/angular-auto-validate/dist/jcs-auto-validate.min.js"></script>
-<script src="./libs/ladda/dist/ladda.min.js"></script>
-<script src="./libs/angular-ladda/dist/angular-ladda.min.js"></script>
-<script src="./libs/angularjs-toaster/toaster.min.js"></script>-->
 <script src="./js/main.js"></script>
 </body>
 </html>

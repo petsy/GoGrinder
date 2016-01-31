@@ -44,9 +44,9 @@ func TestRouteGetCsv(t *testing.T) {
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.Update(Meta{"testcase": "sth", "elapsed": 8 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"testcase": "sth", "elapsed": 10 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"testcase": "sth", "elapsed": 2 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{"teststep": "sth", "elapsed": 8 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{"teststep": "sth", "elapsed": 10 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{"teststep": "sth", "elapsed": 2 * time.Millisecond, "timestamp": now})
 	close(fake.measurements)
 	<-done
 
@@ -61,7 +61,7 @@ func TestRouteGetCsv(t *testing.T) {
 	}
 
 	body := rsp.Body.String()
-	if body != `"testcase, avg, min, max, count\nsth, 6.666666, 2.000000, 10.000000, 3\n"` {
+	if body != `"teststep, avg, min, max, count\nsth, 6.666666, 2.000000, 10.000000, 3\n"` {
 		t.Fatalf("Response not as expected: %s", body)
 	}
 }
@@ -74,9 +74,9 @@ func TestRouteGetStatistics(t *testing.T) {
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.Update(Meta{"testcase": "sth", "elapsed": 8 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"testcase": "sth", "elapsed": 10 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"testcase": "sth", "elapsed": 2 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{"teststep": "sth", "elapsed": 8 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{"teststep": "sth", "elapsed": 10 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{"teststep": "sth", "elapsed": 2 * time.Millisecond, "timestamp": now})
 	close(fake.measurements)
 	<-done
 
@@ -91,7 +91,7 @@ func TestRouteGetStatistics(t *testing.T) {
 	}
 
 	body := rsp.Body.String()
-	if body != fmt.Sprintf(`{"results":[{"testcase":"sth","avg":6666666,"min":2000000,`+
+	if body != fmt.Sprintf(`{"results":[{"teststep":"sth","avg":6666666,"min":2000000,`+
 		`"max":10000000,"count":3,"last":"%s"}],"running":false}`, now.Format(ISO8601)) {
 		t.Fatalf("Response not as expected: %s", body)
 	}
@@ -103,11 +103,11 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	var fake = NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	t1 := time.Now().UTC()
-	fake.Update(Meta{"testcase": "sth", "elapsed": 8 * time.Millisecond, "timestamp": t1})
+	fake.Update(Meta{"teststep": "sth", "elapsed": 8 * time.Millisecond, "timestamp": t1})
 	time.Sleep(5 * time.Millisecond)
 	t2 := t1.Add(2 * time.Millisecond)
-	fake.Update(Meta{"testcase": "else", "elapsed": 10 * time.Millisecond, "timestamp": t1})
-	fake.Update(Meta{"testcase": "else", "elapsed": 2 * time.Millisecond, "timestamp": t2})
+	fake.Update(Meta{"teststep": "else", "elapsed": 10 * time.Millisecond, "timestamp": t1})
+	fake.Update(Meta{"teststep": "else", "elapsed": 2 * time.Millisecond, "timestamp": t2})
 	t3 := t2.Add(2 * time.Millisecond)
 	close(fake.measurements)
 	<-done

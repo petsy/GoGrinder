@@ -24,7 +24,7 @@ type TestStatistics struct {
 	stats         map[string]stats_value // collect and aggregate results
 	measurements  chan Meta
 	reportFeature bool // specify to print a console report
-	reporters     []func(Meta)
+	reporters     []Reporter
 }
 
 // internal datatype to collect information about the execution of a teststep
@@ -42,7 +42,7 @@ type stats_value struct {
 // []Results is what is what you get from test.Results().
 // Not sure if it is necessary to export this???
 type Result struct {
-	Testcase string        `json:"testcase"`
+	Teststep string        `json:"teststep"`
 	Avg      time.Duration `json:"avg"`
 	Min      time.Duration `json:"min"`
 	Max      time.Duration `json:"max"`
@@ -52,18 +52,18 @@ type Result struct {
 
 // Simple approach to sorting of the results.
 // byTestcase implements sort.Interface for []Results based on the Testcase field.
-type byTestcase []Result
+type byTeststep []Result
 
-func (a byTestcase) Len() int           { return len(a) }
-func (a byTestcase) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byTestcase) Less(i, j int) bool { return a[i].Testcase < a[j].Testcase }
+func (a byTeststep) Len() int           { return len(a) }
+func (a byTeststep) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byTeststep) Less(i, j int) bool { return a[i].Teststep < a[j].Teststep }
 
 // Update and Collect work closely together via the measurements channel.
 func (test *TestStatistics) Update(meta Meta) {
 	test.measurements <- meta //measurement{testcase, user, iteration, last, mm}
 }
 
-func (test *TestStatistics) SetReportPlugins(reporters ...func(Meta)) {
+func (test *TestStatistics) SetReportPlugins(reporters ...Reporter) {
 	test.reporters = reporters
 }
 
@@ -73,7 +73,7 @@ func (test *TestStatistics) Collect() <-chan bool {
 	go func(test *TestStatistics) {
 		for meta := range test.measurements {
 			// make sure Meta contains essential keys
-			if _, ok := meta["testcase"].(string); !ok {
+			if _, ok := meta["teststep"].(string); !ok {
 				panic("meta needs to contain 'testcase' key!")
 			}
 			if _, ok := meta["elapsed"].(time.Duration); !ok {
@@ -86,7 +86,7 @@ func (test *TestStatistics) Collect() <-chan bool {
 			test.default_reporter(meta)
 			// call the plugged in reporters
 			for _, reporter := range test.reporters {
-				reporter(meta)
+				reporter.Update(meta)
 			}
 		}
 		done <- true
@@ -97,11 +97,11 @@ func (test *TestStatistics) Collect() <-chan bool {
 // function to process the incoming measurements and update the stats
 // this is also the default-reporter. All other reporters are in reporter.go
 func (test *TestStatistics) default_reporter(meta Meta) {
-	testcase := meta["testcase"].(string)
+	teststep := meta["teststep"].(string)
 	elapsed := meta["elapsed"].(time.Duration)
 	timestamp := meta["timestamp"].(time.Time)
 	test.lock.RLock()
-	val, exists := test.stats[testcase]
+	val, exists := test.stats[teststep]
 	test.lock.RUnlock()
 	if exists {
 		val.avg = (time.Duration(val.count)*val.avg +
@@ -115,12 +115,12 @@ func (test *TestStatistics) default_reporter(meta Meta) {
 		val.last = timestamp
 		val.count++
 		test.lock.Lock()
-		test.stats[testcase] = val
+		test.stats[teststep] = val
 		test.lock.Unlock()
 	} else {
 		// create a new statistic for t
 		test.lock.Lock()
-		test.stats[testcase] = stats_value{elapsed, elapsed, elapsed, 1, timestamp}
+		test.stats[teststep] = stats_value{elapsed, elapsed, elapsed, 1, timestamp}
 		test.lock.Unlock()
 	}
 }
@@ -152,7 +152,7 @@ func (test *TestStatistics) Results(since string) []Result {
 			copy = append(copy, Result{k, v.avg, v.min, v.max, v.count, v.last.UTC().Format(ISO8601)})
 		}
 	}
-	sort.Sort(byTestcase(copy))
+	sort.Sort(byTeststep(copy))
 	return copy
 }
 
@@ -161,7 +161,7 @@ func (test *TestStatistics) Report() {
 	if test.reportFeature {
 		res := test.Results("") // get all results
 		for _, s := range res {
-			fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", s.Testcase, d2f(s.Avg),
+			fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", s.Teststep, d2f(s.Avg),
 				d2f(s.Min), d2f(s.Max), s.Count)
 		}
 	}
@@ -189,7 +189,7 @@ func (test *TestStatistics) Csv() (string, error) {
 
 	res := test.Results("") // get all results
 	// write the header (using json tags)
-	_, err := fmt.Fprintf(&b, "%s, %s, %s, %s, %s\n", f2j("Testcase"), f2j("Avg"),
+	_, err := fmt.Fprintf(&b, "%s, %s, %s, %s, %s\n", f2j("Teststep"), f2j("Avg"),
 		f2j("Min"), f2j("Max"), f2j("Count"))
 	if err != nil {
 		return b.String(), err
@@ -197,7 +197,7 @@ func (test *TestStatistics) Csv() (string, error) {
 
 	// write the lines
 	for _, s := range res {
-		_, err := fmt.Fprintf(&b, "%s, %f, %f, %f, %d\n", s.Testcase, d2f(s.Avg),
+		_, err := fmt.Fprintf(&b, "%s, %f, %f, %f, %d\n", s.Teststep, d2f(s.Avg),
 			d2f(s.Min), d2f(s.Max), s.Count)
 		if err != nil {
 			return b.String(), err

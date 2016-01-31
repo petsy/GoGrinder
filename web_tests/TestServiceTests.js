@@ -17,7 +17,7 @@ describe('TestService', function () {
     describe('exit()', function () {
         it('should call DELETE on REST service method /stop', function () {
             httpBackend
-                .expect('DELETE', 'http://localhost:3000/stop')
+                .expect('DELETE', 'http://localhost:3030/stop')
                 .respond(200, '');
 
             test.exit();
@@ -31,9 +31,9 @@ describe('TestService', function () {
         it('should update empty initial set', function () {
             test.results = [];
             var b = [
-                {"testcase": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
-                {"testcase": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
-                {"testcase": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
+                {"teststep": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
+                {"teststep": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
+                {"teststep": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
             ];
             test.updateResults(b);
             assert.equal(3, test.results.length, "Expected 3 elements after update!");
@@ -41,9 +41,9 @@ describe('TestService', function () {
 
         it('should update with empty set', function () {
             test.results = [
-                {"testcase": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
-                {"testcase": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
-                {"testcase": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
+                {"teststep": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
+                {"teststep": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
+                {"teststep": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
             ];
             test.updateResults([]);
             assert.equal(3, test.results.length, "Expected 3 elements after update!");
@@ -51,11 +51,11 @@ describe('TestService', function () {
 
         it('should append disjunct sets', function () {
             test.results = [
-                {"testcase": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
+                {"teststep": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
             ];
             var b = [
-                {"testcase": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
-                {"testcase": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
+                {"teststep": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
+                {"teststep": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
             ];
             test.updateResults(b);
             assert.equal(3, test.results.length, "Expected 3 elements after update!");
@@ -63,17 +63,17 @@ describe('TestService', function () {
 
         it('should handle intersecting sets', function () {
             test.results = [
-                {"testcase": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
-                {"testcase": "02_01_teststep", "avg": 0, "min": 0, "max": 0, "count": 0},
+                {"teststep": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
+                {"teststep": "02_01_teststep", "avg": 0, "min": 0, "max": 0, "count": 0},
             ];
             var b = [
-                {"testcase": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
-                {"testcase": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
+                {"teststep": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
+                {"teststep": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
             ];
             var expected = [
-                {"testcase": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
-                {"testcase": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
-                {"testcase": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
+                {"teststep": "01_01_teststep", "avg": 100222663, "min": 100151989, "max": 100303219, "count": 18},
+                {"teststep": "02_01_teststep", "avg": 200227442, "min": 200133951, "max": 200279875, "count": 9},
+                {"teststep": "03_01_teststep", "avg": 300230474, "min": 300194438, "max": 300263493, "count": 6}
             ]
             test.updateResults(b);
             assert.equal(3, test.results.length, "Expected 3 elements after update!");
@@ -103,25 +103,25 @@ describe('TestService', function () {
             test.results = []
 
             httpBackend
-                .expect('GET', 'http://localhost:3000/statistics?since=')
-                .respond(200, {"results": [{"testcase": "01", "last": "0816"}], "running": true});
+                .expect('GET', 'http://localhost:3030/statistics?since=')
+                .respond(200, {"results": [{"teststep": "01", "last": "0816"}], "running": true});
             test.loadResults();
             httpBackend.flush();
 
-            assert.deepEqual([{"testcase": "01", "last": "0816"}],
+            assert.deepEqual([{"teststep": "01", "last": "0816"}],
                 test.results, "Expected loadResults() to update the result set!");
         });
 
         it('should update results', function () {
-            test.results = [{"testcase": "01", "last": "0815"}]
+            test.results = [{"teststep": "01", "last": "0815"}]
 
             httpBackend
-                .expect('GET', 'http://localhost:3000/statistics?since=0815')
-                .respond(200, {"results": [{"testcase": "01", "last": "0816"}], "running": true});
+                .expect('GET', 'http://localhost:3030/statistics?since=0815')
+                .respond(200, {"results": [{"teststep": "01", "last": "0816"}], "running": true});
             test.loadResults();
             httpBackend.flush();
 
-            assert.deepEqual([{"testcase": "01", "last": "0816"}],
+            assert.deepEqual([{"teststep": "01", "last": "0816"}],
                 test.results, "Expected loadResults() to update the result set!");
         });
     });
@@ -129,12 +129,12 @@ describe('TestService', function () {
 
     describe('dataPoller()', function () {
         it('should run until test stops', function () {
-            test.results = [{"testcase": "01", "last": "0815"}];
+            test.results = [{"teststep": "01", "last": "0815"}];
             // note: dataPoller runs automatically with TestService
 
             httpBackend
-                .expect('GET', 'http://localhost:3000/statistics?since=0815')
-                .respond(200, {"results": [{"testcase": "01", "last": "0816"}], "running": false});
+                .expect('GET', 'http://localhost:3030/statistics?since=0815')
+                .respond(200, {"results": [{"teststep": "01", "last": "0816"}], "running": false});
             timeout.flush();
             httpBackend.flush();
 

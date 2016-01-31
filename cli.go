@@ -21,7 +21,7 @@ func contains(s []string, e string) bool {
 //  * -no-exec
 //  * -no-report
 //  * -no-frontend
-func GetCLI() (string, bool, bool, bool, int, string, error) {
+func GetCLI() (string, bool, bool, bool, bool, int, string, error) {
 	// for now try to work with the std. Golang flag package
 
 	// In my research I found this tutorial useful:
@@ -33,6 +33,7 @@ func GetCLI() (string, bool, bool, bool, int, string, error) {
 	var noExec bool
 	var noReport bool
 	var noFrontend bool
+	var noPrometheus bool
 	var port int
 	var logLevel string
 	var err error = nil
@@ -45,8 +46,9 @@ func GetCLI() (string, bool, bool, bool, int, string, error) {
 	cli.BoolVar(&noExec, "no-exec", false, "supress auto execution of the test scenario.")
 	cli.BoolVar(&noReport, "no-report", false, "supress the console report.")
 	cli.BoolVar(&noFrontend, "no-frontend", false, "do not start the web frontend.")
+	cli.BoolVar(&noPrometheus, "no-prometheus", false, "do not start the prometheus reporter.")
 	cli.StringVar(&logLevel, "log-level", "warn", "panic, fatal, error, warn, info, debug")
-	cli.IntVar(&port, "port", 3000, "specify the port for the web frontend.")
+	cli.IntVar(&port, "port", 3030, "specify the port for the web frontend.")
 
 	cli.Usage = func() {
 		fmt.Fprintf(stdout, "Usage of %s:\n", os.Args[0])
@@ -83,5 +85,5 @@ func GetCLI() (string, bool, bool, bool, int, string, error) {
 		err = fmt.Errorf("Invalid combination of -no-exec and -no-frontend.")
 	}
 
-	return filename, noExec, noReport, noFrontend, port, logLevel, err
+	return filename, noExec, noReport, noFrontend, noPrometheus, port, logLevel, err
 }

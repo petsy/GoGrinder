@@ -195,7 +195,7 @@ func TestTeststep(t *testing.T) {
 
 	// run the teststep (note: a different angle would be to mock out update)
 	done := fake.Collect() // this needs a collector to unblock update
-	its(Meta{"testcase": "sth"})
+	its(Meta{"teststep": "sth"})
 	fake.wg.Wait()
 	close(fake.measurements)
 	<-done

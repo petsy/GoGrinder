@@ -1,27 +1,15 @@
 var app = angular.module('gogrinder', [
-    //'ngResource',
-    //'infinite-scroll',
-    //'angularSpinner',
-    //'jcs-autoValidate',
-    //'angular-ladda',
     'mgcrea.ngStrap',
-    //'toaster',
-    //'ngAnimate'
 ]);
 
 
 app.config(function ($httpProvider) {
-    //laddaProvider
     $httpProvider.defaults.headers.common['Authorization'] = 'Token 20002cd74d5ce124ae219e739e18956614aab490';
-    //$resourceProvider.defaults.stripTrailingSlashes = false;
-    //laddaProvider.setOption({
-    //    style: 'expand-right'
-    //});
 });
 
 // service to start, stop, provide test results
 app.controller('MainController', function ($scope, $filter, $modal, $http, TestService, ConfigService) {
-    $scope.order = "testcase";
+    $scope.order = "teststep";
     $scope.reverse = false;
     $scope.test = TestService;
     $scope.config = ConfigService;
@@ -60,9 +48,8 @@ app.service('ConfigService', function ($http, $timeout) {
         'loadmodel': "",
         'mtime': "",
         'readConfig': function () {
-            $http.get('http://localhost:3000/config')
+            $http.get('http://localhost:3030/config')
                 .success(function(data, status, headers, config) {
-                    //var config = JSON.stringify(data, null, 2);
                     self.loadmodel = JSON.stringify(data["config"], null, 2);
                     self.mtime = data["mtime"];
                 })
@@ -72,7 +59,7 @@ app.service('ConfigService', function ($http, $timeout) {
         },
         'saveConfig': function (cb_ok) {
             console.log('save file');
-            $http.put('http://localhost:3000/config', self.loadmodel)
+            $http.put('http://localhost:3030/config', self.loadmodel)
                 .success(function(data, status, headers, config) {
                     // TODO add some confirmation
                     console.log("config saved!");
@@ -112,7 +99,7 @@ app.service('TestService', function ($http, $timeout) {
                 var found = false;
                 for (var j = 0; j < self.results.length; j++) {
                     // loop over self.results
-                    if (results[i]['testcase'] === self.results[j]['testcase']) {
+                    if (results[i]['teststep'] === self.results[j]['teststep']) {
                         //update
                         self.results[j] = results[i];
                         found = true;
@@ -126,7 +113,7 @@ app.service('TestService', function ($http, $timeout) {
             }
         },
         'loadResults': function () {
-            $http.get('http://localhost:3000/statistics?since=' + self.last())
+            $http.get('http://localhost:3030/statistics?since=' + self.last())
                 .success(function (data, status, headers, config) {
                     self.updateResults(data.results);
                     self.running = data.running;
@@ -154,7 +141,7 @@ app.service('TestService', function ($http, $timeout) {
             self.running = true;
             self.results = [];
             self.dataPoller();
-            $http.post('http://localhost:3000/test')
+            $http.post('http://localhost:3030/test')
                 .success(function (data, status, headers, config) {
                     console.log('test started');
                 })
@@ -166,7 +153,7 @@ app.service('TestService', function ($http, $timeout) {
             if (!self.running) {
                 return;
             }
-            $http.delete('http://localhost:3000/test')
+            $http.delete('http://localhost:3030/test')
                 .success(function (data, status, headers, config) {
                     console.log('test stopped');
                 })
@@ -175,13 +162,16 @@ app.service('TestService', function ($http, $timeout) {
                 });
         },
         'exit': function () {
-            $http.delete('http://localhost:3000/stop')
+            $http.delete('http://localhost:3030/stop')
                 .success(function (data, status, headers, config) {
                     console.log('webserver stopped');
                 })
                 .error(function (data, status, headers, config) {
                     // log error
                 });
+        },
+        'csv': function () {
+            console.log("download csv.")
         }
     };
 

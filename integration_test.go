@@ -347,7 +347,7 @@ func TestGoGrinder(t *testing.T) {
 	gg.waitForStatus(running)
 	gg.waitForStatus(stopped)
 	// stop Webserver
-	req, _ := http.NewRequest("DELETE", "http://localhost:3000/stop", nil)
+	req, _ := http.NewRequest("DELETE", "http://localhost:3030/stop", nil)
 	http.DefaultClient.Do(req)
 
 	// verify Report!

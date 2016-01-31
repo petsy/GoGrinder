@@ -146,7 +146,7 @@ func (srv *TestServer) getConfig(r *http.Request) (interface{}, *handlerError) {
 
 // Stop the web server.
 func (srv *TestServer) stopWebserver(r *http.Request) (interface{}, *handlerError) {
-	// e.g. curl -X "DELETE" http://localhost:3000/stop
+	// e.g. curl -X "DELETE" http://localhost:3030/stop
 	srv.Stop(5 * time.Second)
 	return make(map[string]string), nil
 }

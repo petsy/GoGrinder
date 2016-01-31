@@ -108,10 +108,14 @@ func (test *TestScenario) Teststep(name string, step func(Meta)) func(Meta) {
 	its := func(meta Meta) {
 		start := time.Now()
 		step(meta)
-		meta["testcase"] = name
+		meta["teststep"] = name
 		meta["elapsed"] = time.Now().Sub(start)
 		meta["timestamp"] = start
 		test.Update(meta)
+	}
+	// invoke reporters so they can register the teststep, too
+	for _, reporter := range test.TestStatistics.reporters {
+		reporter.Register(name)
 	}
 	test.teststeps[name] = its
 	return its
@@ -259,7 +263,7 @@ func (test *TestScenario) Thinktime(tt float64) {
 
 // This is the "standard" behaviour. If you need a special configuration maybe you can start with this code.
 func (test *TestScenario) GoGrinder() {
-	filename, noExec, noReport, noFrontend, port, logLevel, err := GetCLI()
+	filename, noExec, noReport, noFrontend, noPrometheus, port, logLevel, err := GetCLI()
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -275,16 +279,24 @@ func (test *TestScenario) GoGrinder() {
 		log.Error("can not open file: %v", err)
 	}
 	defer fe.Close()
-	elog = &log.Logger{
-		Out:       fe,
-		Formatter: &log.JSONFormatter{},
-		Hooks:     make(log.LevelHooks),
-		Level:     log.InfoLevel,
+	lr := &LogReporter{
+		&log.Logger{
+			Out:       fe,
+			Formatter: &log.JSONFormatter{},
+			Hooks:     make(log.LevelHooks),
+			Level:     log.InfoLevel,
+		},
 	}
-	test.SetReportPlugins(eventLogger)
+	test.SetReportPlugins(lr)
 
 	exec := func() {
-		err := test.Exec() // exec the scenario that has been selected in the config file
+		if !noPrometheus {
+			srv := NewPrometheusReporterServer()
+			srv.Addr = fmt.Sprintf(":%d", 9110)
+			go srv.ListenAndServe()
+			//defer srv.Stop(1 * time.Second)
+		}
+		err := test.Exec()
 		if err != nil {
 			fmt.Println(err.Error())
 		}
@@ -297,6 +309,7 @@ func (test *TestScenario) GoGrinder() {
 	}
 
 	// handle the different run modes
+	// invalid mode of noExec && noFrontend is handled in cli.go
 	if noExec {
 		frontend()
 	}
