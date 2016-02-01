@@ -134,9 +134,9 @@ func (test *TestScenario) Schedule(name string, testcase func(Meta)) error {
 
 func (test *TestScenario) DoIterations(testcase func(Meta),
 	iterations int, pacing float64, parallel bool) {
-	settings := test.GetSettings()
-	meta := make(Meta)
-	f := func() {
+	f := func(test *TestScenario) {
+		settings := test.GetSettings()
+		meta := make(Meta)
 		defer test.wg.Done()
 
 		for i := 0; i < iterations; i++ {
@@ -158,11 +158,11 @@ func (test *TestScenario) DoIterations(testcase func(Meta),
 	}
 	if parallel {
 		test.wg.Add(1)
-		go f()
+		go f(test)
 	} else {
 		test.wg.Wait() // sequential processing: wait for running goroutines to finish
 		test.wg.Add(1)
-		f()
+		f(test)
 	}
 }
 
@@ -170,7 +170,7 @@ func (test *TestScenario) DoIterations(testcase func(Meta),
 func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64, rampup float64,
 	users int, pacing float64, settings map[string]interface{}) {
 	test.wg.Add(1) // the "Scheduler" itself is a goroutine!
-	go func() {
+	go func(test *TestScenario) {
 		// ramp up the users
 		defer test.wg.Done()
 		time.Sleep(time.Duration(delay * float64(time.Second)))
@@ -179,7 +179,7 @@ func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64
 		test.wg.Add(int(users))
 		for i := 0; i < users; i++ {
 			// start user
-			go func() {
+			go func(nbr int) {
 				defer test.wg.Done()
 				time.Sleep(time.Duration(rampup * float64(time.Second)))
 
@@ -188,7 +188,7 @@ func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64
 					// next iteration
 					start := time.Now()
 					meta := make(Meta)
-					meta["user"] = i
+					meta["user"] = nbr
 					meta["iteration"] = j
 					if len(settings) > 0 {
 						meta["settings"] = settings
@@ -202,9 +202,9 @@ func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64
 					}
 					test.paceMaker(time.Duration(pacing*float64(time.Second)), time.Now().Sub(start))
 				}
-			}()
+			}(i)
 		}
-	}()
+	}(test)
 }
 
 // Execute the scenario set in the loadmodel.json file.
@@ -287,14 +287,15 @@ func (test *TestScenario) GoGrinder() {
 			Level:     log.InfoLevel,
 		},
 	}
-	test.SetReportPlugins(lr)
+	pr := NewMetricsReporter()
+	test.SetReportPlugins(lr, pr)
 
 	exec := func() {
 		if !noPrometheus {
 			srv := NewPrometheusReporterServer()
 			srv.Addr = fmt.Sprintf(":%d", 9110)
 			go srv.ListenAndServe()
-			//defer srv.Stop(1 * time.Second)
+			defer srv.Stop(1 * time.Second)
 		}
 		err := test.Exec()
 		if err != nil {
