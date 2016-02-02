@@ -7,10 +7,9 @@ frontend
 * download results as csv file
 * use backend port
 * mtime format (is there a std. json time format)?
+* format measurements (ms)
 
 backend
-* URGENT: what is called testcase in the report is in fact a teststep!!!
-* Results Duration formatting (at least define what it is ns?)
 * fix TODOs
 * need to check if frontend port is available at startup
 
@@ -28,6 +27,7 @@ defects
 
 Version 0.01
 ============
+* prometheus reporter buckets(0.5, 0.9, 0.95, 0.99)
 * show table with results
 * get results from restful ws
 * make table sortable
@@ -37,6 +37,7 @@ Version 0.01
 * -no-exec
 * -no-report
 * -no-frontend
+* -no-prometheus
 * add revision to frontend
 * multiple users
 * test Webserver routes

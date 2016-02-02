@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/finklabs/graceful"
 	time "github.com/finklabs/ttime"
 )
 
@@ -291,15 +292,20 @@ func (test *TestScenario) GoGrinder() {
 	test.SetReportPlugins(lr, pr)
 
 	exec := func() {
+		var srv *graceful.Server
 		if !noPrometheus {
-			srv := NewPrometheusReporterServer()
+			srv = NewPrometheusReporterServer()
 			srv.Addr = fmt.Sprintf(":%d", 9110)
 			go srv.ListenAndServe()
-			defer srv.Stop(1 * time.Second)
 		}
 		err := test.Exec()
 		if err != nil {
 			fmt.Println(err.Error())
+		}
+		if !noPrometheus {
+			// run for another +2 * scrape_interval so we read all metrics in
+			time.Sleep(11 * time.Second)
+			srv.Stop(1 * time.Second)
 		}
 	}
 
