@@ -127,6 +127,7 @@ func TestBaseline1(t *testing.T) {
 		t.Errorf("Error: execution time of baseline test not as expected: %v\n", execution)
 	}
 
+	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 500\n" +
@@ -171,6 +172,7 @@ func TestBaseline2(t *testing.T) {
 		t.Errorf("Error: execution time of scenario1 not as expected: %v\n", execution)
 	}
 
+	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 18\n" +
@@ -215,6 +217,7 @@ func TestDebug(t *testing.T) {
 		t.Errorf("Error: execution time of debug test not as expected: %f ms.\n", d2f(execution))
 	}
 
+	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
 	if report != "01_01_teststep, 50.000000, 50.000000, 50.000000, 1\n" {
@@ -245,6 +248,7 @@ func TestAScenarioAvoidingConcurrency(t *testing.T) {
 		t.Errorf("Error: execution time of scenario1 not as expected: %v\n", execution)
 	}
 
+	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 2000\n") {
@@ -399,6 +403,7 @@ func TestSettings(t *testing.T) {
 	test.ReadConfigValidate(loadmodel, LoadmodelSchema)
 	test.Exec() // exec the scenario that has been selected in the config file
 	// verify Report to make sure the teststep was executed
+	test.Report(stdout)
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("tsts1, 50.000000, 50.000000, 50.000000, 500\n") {
 		t.Fatalf("Report output of 'fake' scenario not as expected: %s", report)

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	time "github.com/finklabs/ttime"
+	"io"
 )
 
 type Statistics interface {
@@ -20,11 +21,10 @@ type Statistics interface {
 }
 
 type TestStatistics struct {
-	lock          sync.RWMutex           // lock that is used on stats
-	stats         map[string]stats_value // collect and aggregate results
-	measurements  chan Meta
-	reportFeature bool // specify to print a console report
-	reporters     []Reporter
+	lock         sync.RWMutex           // lock that is used on stats
+	stats        map[string]stats_value // collect and aggregate results
+	measurements chan Meta
+	reporters    []Reporter
 }
 
 // internal datatype to collect information about the execution of a teststep
@@ -42,12 +42,12 @@ type stats_value struct {
 // []Results is what is what you get from test.Results().
 // Not sure if it is necessary to export this???
 type Result struct {
-	Teststep string        `json:"teststep"`
-	Avg      time.Duration `json:"avg"`
-	Min      time.Duration `json:"min"`
-	Max      time.Duration `json:"max"`
-	Count    int64         `json:"count"`
-	Last     string        `json:"last"`
+	Teststep string  `json:"teststep"`
+	Avg      float64 `json:"avg_ms"`
+	Min      float64 `json:"min_ms"`
+	Max      float64 `json:"max_ms"`
+	Count    int64   `json:"count"`
+	Last     string  `json:"last"`
 }
 
 // Simple approach to sorting of the results.
@@ -149,7 +149,7 @@ func (test *TestStatistics) Results(since string) []Result {
 	all := (err != nil)
 	for k, v := range test.stats {
 		if all || (v.last.After(s)) {
-			copy = append(copy, Result{k, v.avg, v.min, v.max, v.count, v.last.UTC().Format(ISO8601)})
+			copy = append(copy, Result{k, d2f(v.avg), d2f(v.min), d2f(v.max), v.count, v.last.UTC().Format(ISO8601)})
 		}
 	}
 	sort.Sort(byTeststep(copy))
@@ -157,19 +157,12 @@ func (test *TestStatistics) Results(since string) []Result {
 }
 
 // Format the statistics to stdout.
-func (test *TestStatistics) Report() {
-	if test.reportFeature {
-		res := test.Results("") // get all results
-		for _, s := range res {
-			fmt.Fprintf(stdout, "%s, %f, %f, %f, %d\n", s.Teststep, d2f(s.Avg),
-				d2f(s.Min), d2f(s.Max), s.Count)
-		}
+func (test *TestStatistics) Report(w io.Writer) {
+	res := test.Results("") // get all results
+	for _, s := range res {
+		fmt.Fprintf(w, "%s, %f, %f, %f, %d\n", s.Teststep, s.Avg,
+			s.Min, s.Max, s.Count)
 	}
-}
-
-// Feature Toggle
-func (test *TestStatistics) ReportFeature(set bool) {
-	test.reportFeature = set
 }
 
 // helper to convert the field name into json-tag
@@ -187,7 +180,7 @@ func f2j(field string) string {
 func (test *TestStatistics) Csv() (string, error) {
 	var b bytes.Buffer
 
-	res := test.Results("") // get all results
+	//res := test.Results("") // get all results
 	// write the header (using json tags)
 	_, err := fmt.Fprintf(&b, "%s, %s, %s, %s, %s\n", f2j("Teststep"), f2j("Avg"),
 		f2j("Min"), f2j("Max"), f2j("Count"))
@@ -196,12 +189,13 @@ func (test *TestStatistics) Csv() (string, error) {
 	}
 
 	// write the lines
-	for _, s := range res {
-		_, err := fmt.Fprintf(&b, "%s, %f, %f, %f, %d\n", s.Teststep, d2f(s.Avg),
-			d2f(s.Min), d2f(s.Max), s.Count)
-		if err != nil {
-			return b.String(), err
-		}
-	}
+	//	for _, s := range res {
+	//		_, err := fmt.Fprintf(&b, "%s, %f, %f, %f, %d\n", s.Teststep, d2f(s.Avg),
+	//			d2f(s.Min), d2f(s.Max), s.Count)
+	//		if err != nil {
+	//			return b.String(), err
+	//		}
+	//	}
+	test.Report(&b)
 	return b.String(), nil
 }

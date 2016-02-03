@@ -88,7 +88,7 @@ func TestReport(t *testing.T) {
 
 	close(fake.measurements)
 	<-done
-	fake.Report() // run the report
+	fake.Report(stdout) // run the report
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("tc1, 6.666666, 2.000000, 10.000000, 3\n" +
 		"tc2, 6.666666, 2.000000, 10.000000, 3\n" +
@@ -101,19 +101,6 @@ func TestDuration2Float(t *testing.T) {
 	f := d2f(20 * time.Microsecond)
 	if f != 0.020 {
 		t.Fatalf("Duration to ms float64 conversion %f not as expected", f)
-	}
-}
-
-func TestReportFeatureToggle(t *testing.T) {
-	fake := NewTest()
-	// check before
-	if fake.reportFeature != true {
-		t.Fatalf("ReportFeature should be activated by default.")
-	}
-	fake.ReportFeature(false)
-	// check after
-	if fake.reportFeature != false {
-		t.Fatalf("ReportFeature should be deactivated after setting it to false!")
 	}
 }
 
@@ -144,7 +131,7 @@ func TestRead(t *testing.T) {
 	<-done
 
 	report, _ := fake.Csv()
-	if report != ("teststep, avg, min, max, count\n" +
+	if report != ("teststep, avg_ms, min_ms, max_ms, count\n" +
 		"tc1, 6.666666, 2.000000, 10.000000, 3\n" +
 		"tc2, 6.666666, 2.000000, 10.000000, 3\n" +
 		"tc3, 6.666666, 2.000000, 10.000000, 3\n") {

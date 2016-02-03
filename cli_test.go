@@ -179,6 +179,25 @@ func TestLogLevel(t *testing.T) {
 	}
 }
 
+func TestLogLevelUnknown(t *testing.T) {
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+	os.Args = []string{"gogrinder", "-log-level", "unknown"}
+
+	// prepare the default loadmodel.json file
+	f, ferr := os.Create("./loadmodel.json")
+	if ferr != nil {
+		t.Errorf("problem during default file creation: %s", ferr)
+	}
+	f.Close()
+	defer os.Remove("./loadmodel.json")
+
+	_, _, _, _, _, _, _, err := GetCLI()
+	if err.Error() != "Command line usage problem." {
+		t.Errorf("err was expected %s but was: %s", "Command line usage problem.", err.Error())
+	}
+}
+
 func TestFilename(t *testing.T) {
 	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
 	defer os.Remove(file.Name())

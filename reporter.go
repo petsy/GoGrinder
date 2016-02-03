@@ -38,6 +38,7 @@ func (r *LogReporter) Update(meta Meta) {
 // MetricsReporter
 type MetricsReporter struct {
 	//elapsed *prometheus.HistogramVec
+	kbytes *prometheus.SummaryVec
 	elapsed *prometheus.SummaryVec
 }
 
@@ -50,13 +51,19 @@ func NewMetricsReporter() *MetricsReporter {
 	//	Help: "Current time elapsed of gogrinder teststep",
 	//}, []string{"teststep"})
 	//regElapsed := prometheus.MustRegisterOrGet(elapsed).(*prometheus.HistogramVec)
+	kBytes := prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Name:       "gogrinder_response_kb",
+		Help:       "Current response of gogrinder teststep in kb.",
+		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.95: 0.005, 0.99: 0.001},
+	}, []string{"teststep"})
+	regKBytes := prometheus.MustRegisterOrGet(kBytes).(*prometheus.SummaryVec)
 	elapsed := prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Name:       "gogrinder_elapsed_ms",
 		Help:       "Current time elapsed of gogrinder teststep in ms.",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.95: 0.005, 0.99: 0.001},
 	}, []string{"teststep"})
 	regElapsed := prometheus.MustRegisterOrGet(elapsed).(*prometheus.SummaryVec)
-	return &MetricsReporter{regElapsed}
+	return &MetricsReporter{regKBytes, regElapsed}
 }
 
 // Implement the reporter interface
@@ -64,12 +71,19 @@ func (r *MetricsReporter) Register(teststep string) {}
 
 // Update the GoGrinder node reporter.
 func (r *MetricsReporter) Update(meta Meta) {
-	r.elapsed.WithLabelValues(
-		meta["teststep"].(string),
-		//fmt.Sprintf("%d", meta["user"].(int)),
-		//fmt.Sprintf("%d", meta["iteration"].(int)),
-		//meta["timestamp"].(time.Time).UTC().Format(ISO8601),
-	).Observe(float64(meta["elapsed"].(time.Duration)) / float64(time.Millisecond))
+	if kbytes, ok := meta["kbytes"].(time.Duration); ok {
+		r.kbytes.WithLabelValues(
+			meta["teststep"].(string),
+		).Observe(float64(kbytes))
+	}
+	if elapsed, ok := meta["elapsed"].(time.Duration); ok {
+		r.elapsed.WithLabelValues(
+			meta["teststep"].(string),
+			//fmt.Sprintf("%d", meta["user"].(int)),
+			//fmt.Sprintf("%d", meta["iteration"].(int)),
+			//meta["timestamp"].(time.Time).UTC().Format(ISO8601),
+		).Observe(float64(elapsed) / float64(time.Millisecond))
+	}
 }
 
 // Assemble the Server for the Prometheus reporter

@@ -1,4 +1,5 @@
-// Package gogrinder provides functionality for implementing and executing load & performance tests.
+// Package gogrinder provides functionality for implementing and executing
+// load & performance tests.
 //
 package gogrinder
 
@@ -63,9 +64,8 @@ func NewTest() *TestScenario {
 		},
 
 		TestStatistics: TestStatistics{
-			stats:         make(map[string]stats_value),
-			measurements:  make(chan Meta),
-			reportFeature: true,
+			stats:        make(map[string]stats_value),
+			measurements: make(chan Meta),
 		},
 	}
 	return &t
@@ -243,7 +243,7 @@ func (test *TestScenario) Exec() error {
 		test.wg.Wait()           // wait till end
 		close(test.measurements) // need to close the channel so that collect can exit, too
 		<-done                   // wait for collector to finish
-		test.Report()
+		//test.Report(stdout)
 		test.status = stopped
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)
@@ -262,22 +262,27 @@ func (test *TestScenario) Thinktime(tt float64) {
 	}
 }
 
-// This is the "standard" behaviour. If you need a special configuration maybe you can start with this code.
-func (test *TestScenario) GoGrinder() {
+// This is the "standard" gogrinder behaviour. If you need a special configuration
+// or setup then maybe you should start with this code.
+func (test *TestScenario) GoGrinder() error {
+	var err error
 	filename, noExec, noReport, noFrontend, noPrometheus, port, logLevel, err := GetCLI()
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return err
 	}
 	ll, _ := log.ParseLevel(logLevel)
 	log.SetLevel(ll)
-	test.ReportFeature(!noReport)
-	test.ReadConfig(filename)
+	err = test.ReadConfig(filename)
+	if err != nil {
+		return err
+	}
 
+	// prepare reporter plugins
 	// initialize the event logger
 	fe, err := os.OpenFile("event-log.txt", os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		log.Error("can not open file: %v", err)
+		log.Error("can not open event log file: %v", err)
+		// we do not need to stop in this case...
 	}
 	defer fe.Close()
 	lr := &LogReporter{
@@ -292,27 +297,25 @@ func (test *TestScenario) GoGrinder() {
 	test.SetReportPlugins(lr, pr)
 
 	exec := func() {
-		var srv *graceful.Server
-		if !noPrometheus {
-			srv = NewPrometheusReporterServer()
-			srv.Addr = fmt.Sprintf(":%d", 9110)
-			go srv.ListenAndServe()
-		}
-		err := test.Exec()
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-		if !noPrometheus {
-			// run for another +2 * scrape_interval so we read all metrics in
-			time.Sleep(11 * time.Second)
-			srv.Stop(1 * time.Second)
+		err = test.Exec()
+		if !noReport {
+			test.Report(stdout)
 		}
 	}
 
 	frontend := func() {
 		srv := NewTestServer(test)
 		srv.Addr = fmt.Sprintf(":%d", port)
-		srv.ListenAndServe()
+		err = srv.ListenAndServe()
+	}
+
+	// prometheus reporter needs to "wrap" all test executions
+	var srv *graceful.Server
+	if !noPrometheus {
+		srv = NewPrometheusReporterServer()
+		srv.Addr = fmt.Sprintf(":%d", 9110)
+		go srv.ListenAndServe()
+		// if for example the port is in use we continue...
 	}
 
 	// handle the different run modes
@@ -328,4 +331,12 @@ func (test *TestScenario) GoGrinder() {
 		go exec()
 		frontend()
 	}
+
+	// run for another +2 * scrape_interval so we read all metrics in
+	if !noPrometheus {
+		time.Sleep(11 * time.Second)
+		srv.Stop(1 * time.Second)
+	}
+
+	return err
 }

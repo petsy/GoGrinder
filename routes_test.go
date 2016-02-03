@@ -61,7 +61,7 @@ func TestRouteGetCsv(t *testing.T) {
 	}
 
 	body := rsp.Body.String()
-	if body != `"teststep, avg, min, max, count\nsth, 6.666666, 2.000000, 10.000000, 3\n"` {
+	if body != `"teststep, avg_ms, min_ms, max_ms, count\nsth, 6.666666, 2.000000, 10.000000, 3\n"` {
 		t.Fatalf("Response not as expected: %s", body)
 	}
 }
@@ -91,8 +91,8 @@ func TestRouteGetStatistics(t *testing.T) {
 	}
 
 	body := rsp.Body.String()
-	if body != fmt.Sprintf(`{"results":[{"teststep":"sth","avg":6666666,"min":2000000,`+
-		`"max":10000000,"count":3,"last":"%s"}],"running":false}`, now.Format(ISO8601)) {
+	if body != fmt.Sprintf(`{"results":[{"teststep":"sth","avg_ms":6.666666,"min_ms":2,`+
+		`"max_ms":10,"count":3,"last":"%s"}],"running":false}`, now.Format(ISO8601)) {
 		t.Fatalf("Response not as expected: %s", body)
 	}
 }
@@ -126,7 +126,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 		t.Fatalf("Response should contain exactly 1 row.")
 	}
 	if response.(map[string]interface{})["results"].([]Result)[0] !=
-		(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+		(Result{"else", 6, 2, 10, 2, t2.Format(ISO8601)}) {
 		t.Fatalf("Response not as expected: %v", response.([]Result)[0])
 	}
 
@@ -151,7 +151,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	}
 	// "else" is [0]
 	if response.(map[string]interface{})["results"].([]Result)[0] !=
-		(Result{"else", 6000000, 2000000, 10000000, 2, t2.Format(ISO8601)}) {
+		(Result{"else", 6, 2, 10, 2, t2.Format(ISO8601)}) {
 		t.Log(t2.Format(ISO8601))
 		t.Logf("Response 0: %v", response.(map[string]interface{})["results"].([]Result)[0])
 		t.Logf("Response 1: %v", response.(map[string]interface{})["results"].([]Result)[1])
@@ -159,7 +159,7 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	}
 	// "sth" is [1]
 	if response.(map[string]interface{})["results"].([]Result)[1] !=
-		(Result{"sth", 8000000, 8000000, 8000000, 1, t1.Format(ISO8601)}) {
+		(Result{"sth", 8, 8, 8, 1, t1.Format(ISO8601)}) {
 		t.Log(t1)
 		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[1])
 	}

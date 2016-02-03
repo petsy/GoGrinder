@@ -11,10 +11,8 @@ frontend
 
 backend
 * fix TODOs
-* need to check if frontend port is available at startup
 
 scenario
-* send data to Prometheus (eg. specialized node exporter plugin)
 
 sample
 * recreate jmeter test in gogrinder
@@ -23,10 +21,15 @@ tests
 
 defects
 * loadmodel json format error not detected / reported
+* need to check if frontend port is available at startup
+
+docu
+* add some description on how to get things together with prometheus and grafana
 
 
 Version 0.01
 ============
+* send data to Prometheus (specialized prometheus reporter plugin)
 * prometheus reporter buckets(0.5, 0.9, 0.95, 0.99)
 * show table with results
 * get results from restful ws

@@ -72,30 +72,30 @@
                             </th>
                             <th class="col-2">
                                 <div class="sortables">
-									<span ng-click="reverse = true; order = 'min';"
+									<span ng-click="reverse = true; order = 'min_ms';"
                                           class="fa fa-sort-asc"></span>
-									<span ng-click="reverse = false; order = 'min';"
+									<span ng-click="reverse = false; order = 'min_ms';"
                                           class="fa fa-sort-desc"></span>
                                 </div>
-                                Min
+                                Min [ms]
                             </th>
                             <th class="col-3">
                                 <div class="sortables">
-									<span ng-click="reverse = true; order = 'max';"
+									<span ng-click="reverse = true; order = 'max_ms';"
                                           class="fa fa-sort-asc"></span>
-									<span ng-click="reverse = false; order = 'max';"
+									<span ng-click="reverse = false; order = 'max_ms';"
                                           class="fa fa-sort-desc"></span>
                                 </div>
-                                Max
+                                Max [ms]
                             </th>
                             <th class="col-4">
                                 <div class="sortables">
-									<span ng-click="reverse = true; order = 'avg';"
+									<span ng-click="reverse = true; order = 'avg_ms';"
                                           class="fa fa-sort-asc"></span>
-									<span ng-click="reverse = false; order = 'avg';"
+									<span ng-click="reverse = false; order = 'avg_ms';"
                                           class="fa fa-sort-desc"></span>
                                 </div>
-                                Avg
+                                Avg [ms]
                             </th>
                             <th class="col-5">
                                 <div class="sortables">
@@ -110,9 +110,9 @@
 
                         <tr ng-repeat="teststep in test.results | orderBy:order:reverse">
                             <td>{{ teststep.teststep }}</td>
-                            <td>{{ teststep.min }}</td>
-                            <td>{{ teststep.max }}</td>
-                            <td>{{ teststep.avg }}</td>
+                            <td>{{ teststep.min_ms }}</td>
+                            <td>{{ teststep.max_ms }}</td>
+                            <td>{{ teststep.avg_ms }}</td>
                             <td>{{ teststep.count }}</td>
                         </tr>
 
