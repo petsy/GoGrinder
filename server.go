@@ -11,6 +11,7 @@ import (
 	"github.com/finklabs/graceful"
 	time "github.com/finklabs/ttime"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Server interface {
@@ -176,4 +177,21 @@ func (srv *TestServer) Router() *mux.Router {
 	router.Handle("/stop", handler(srv.stopWebserver)).Methods("DELETE")
 
 	return router
+}
+
+// Assemble the Server for the Prometheus reporter
+func NewPrometheusReporterServer() *graceful.Server {
+	//handler := prometheus.Handler()
+	// how to disable default go_collector metrics?
+	handler := prometheus.UninstrumentedHandler()
+	// register the /metrics route
+	http.Handle("/metrics", handler)
+
+	srv := &graceful.Server{
+		Timeout: 5 * time.Second,
+		Server: &http.Server{
+			Handler: handler,
+		},
+	}
+	return srv
 }

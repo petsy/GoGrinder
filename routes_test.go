@@ -44,9 +44,9 @@ func TestRouteGetCsv(t *testing.T) {
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.Update(Meta{"teststep": "sth", "elapsed": 8 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"teststep": "sth", "elapsed": 10 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"teststep": "sth", "elapsed": 2 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: 10 * time.Millisecond, Timestamp: now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: 2 * time.Millisecond, Timestamp: now})
 	close(fake.measurements)
 	<-done
 
@@ -74,9 +74,9 @@ func TestRouteGetStatistics(t *testing.T) {
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.Update(Meta{"teststep": "sth", "elapsed": 8 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"teststep": "sth", "elapsed": 10 * time.Millisecond, "timestamp": now})
-	fake.Update(Meta{"teststep": "sth", "elapsed": 2 * time.Millisecond, "timestamp": now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: 10 * time.Millisecond, Timestamp: now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: 2 * time.Millisecond, Timestamp: now})
 	close(fake.measurements)
 	<-done
 
@@ -103,11 +103,11 @@ func TestHandlerStatisticsWithQuery(t *testing.T) {
 	var fake = NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	t1 := time.Now().UTC()
-	fake.Update(Meta{"teststep": "sth", "elapsed": 8 * time.Millisecond, "timestamp": t1})
+	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: t1})
 	time.Sleep(5 * time.Millisecond)
 	t2 := t1.Add(2 * time.Millisecond)
-	fake.Update(Meta{"teststep": "else", "elapsed": 10 * time.Millisecond, "timestamp": t1})
-	fake.Update(Meta{"teststep": "else", "elapsed": 2 * time.Millisecond, "timestamp": t2})
+	fake.Update(Meta{Teststep: "else", Elapsed: 10 * time.Millisecond, Timestamp: t1})
+	fake.Update(Meta{Teststep: "else", Elapsed: 2 * time.Millisecond, Timestamp: t2})
 	t3 := t2.Add(2 * time.Millisecond)
 	close(fake.measurements)
 	<-done

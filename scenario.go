@@ -5,71 +5,11 @@ package gogrinder
 
 import (
 	"fmt"
-	"io"
 	"math/rand"
-	"os"
 	"reflect"
-	"sync"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/finklabs/graceful"
 	time "github.com/finklabs/ttime"
 )
-
-// Modify stdout during testing.
-var stdout io.Writer = os.Stdout
-
-// ISO8601 should be available in ttime package but we keep it here for now.
-var ISO8601 = "2006-01-02T15:04:05.999Z"
-
-type Scenario interface {
-	Testscenario(name string, scenario interface{})
-	Teststep(name string, step func(Meta)) func(Meta)
-	Schedule(name string, testcase func(Meta)) error
-	DoIterations(testcase func(Meta), iterations int, pacing float64, parallel bool)
-	Run(testcase func(Meta), delay float64, runfor float64, rampup float64, users int, pacing float64)
-	Exec() error
-	Thinktime(tt int64)
-}
-
-// TestScenario datastructure that brings all the GoGrinder functionality together.
-// TestScenario supports multiple interfaces (TestConfig, TestStatistics).
-type TestScenario struct {
-	TestConfig // needs to be anonymous to promote access to struct field and methods
-	TestStatistics
-	testscenarios map[string]interface{} // testscenarios registry for testscenarios
-	teststeps     map[string]func(Meta)  // registry for teststeps
-	wg            sync.WaitGroup         // waitgroup for teststeps
-	status        status                 // status (stopped, running, stopping) (used in Report())
-}
-
-// Constants of internal test status.
-type status int
-
-const (
-	stopped = iota
-	running
-	stopping
-)
-
-// Constructor takes care of initializing the TestScenario datastructure.
-func NewTest() *TestScenario {
-	t := TestScenario{
-		testscenarios: make(map[string]interface{}),
-		teststeps:     make(map[string]func(Meta)),
-		status:        stopped,
-
-		TestConfig: TestConfig{
-			config: make(map[string]interface{}),
-		},
-
-		TestStatistics: TestStatistics{
-			stats:        make(map[string]stats_value),
-			measurements: make(chan Meta),
-		},
-	}
-	return &t
-}
 
 // paceMaker is used internally. It is not an internal function for testability.
 // Parameter <pace> is given in nanoseconds.
@@ -105,19 +45,34 @@ func (test *TestScenario) Testscenario(name string, scenario interface{}) {
 }
 
 // Instrument a teststep and add it to the teststeps registry.
-func (test *TestScenario) Teststep(name string, step func(Meta)) func(Meta) {
-	its := func(meta Meta) {
+// This implements Elapsed. For more detailed metrics please implement Teststep.
+func (test *TestScenario) TeststepBasic(name string, step func(Meta)) func(Meta) interface{} {
+	its := func(meta Meta) interface{} {
 		start := time.Now()
+		meta.Teststep = name
+		meta.Timestamp = start
 		step(meta)
-		meta["teststep"] = name
-		meta["elapsed"] = time.Now().Sub(start)
-		meta["timestamp"] = start
+
+		meta.Elapsed = time.Now().Sub(start)
 		test.Update(meta)
+		return nil
 	}
 	// invoke reporters so they can register the teststep, too
-	for _, reporter := range test.TestStatistics.reporters {
-		reporter.Register(name)
+	//for _, reporter := range test.TestStatistics.reporters {
+	//	reporter.Register(name)
+	//}
+	test.teststeps[name] = its
+	return its
+}
+
+func (test *TestScenario) Teststep(name string, step func(Meta) (interface{}, Metric)) func(Meta) interface{} {
+	its := func(meta Meta) interface{} {
+		meta.Teststep = name
+		result, metric := step(meta)
+		test.Update(metric)
+		return result
 	}
+
 	test.teststeps[name] = its
 	return its
 }
@@ -136,17 +91,16 @@ func (test *TestScenario) Schedule(name string, testcase func(Meta)) error {
 func (test *TestScenario) DoIterations(testcase func(Meta),
 	iterations int, pacing float64, parallel bool) {
 	f := func(test *TestScenario) {
-		settings := test.GetSettings()
-		meta := make(Meta)
+		//settings := test.GetSettings()
 		defer test.wg.Done()
 
 		for i := 0; i < iterations; i++ {
 			start := time.Now()
-			meta["iteration"] = i
-			meta["user"] = 0
-			if len(settings) > 0 {
-				meta["settings"] = settings
-			}
+			meta := Meta{Iteration: i, User: 0}
+			// TODO add the settings
+			//if len(settings) > 0 {
+			//	meta["settings"] = settings
+			//}
 			if test.status == stopping {
 				break
 			}
@@ -188,12 +142,11 @@ func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64
 					time.Duration((runfor)*float64(time.Second)); j++ {
 					// next iteration
 					start := time.Now()
-					meta := make(Meta)
-					meta["user"] = nbr
-					meta["iteration"] = j
-					if len(settings) > 0 {
-						meta["settings"] = settings
-					}
+					// TODO
+					//if len(settings) > 0 {
+					//	meta["settings"] = settings
+					//}
+					meta := Meta{Iteration: j, User: nbr}
 					if test.status == stopping {
 						break
 					}
@@ -227,9 +180,7 @@ func (test *TestScenario) Exec() error {
 			}
 			if fnType.NumIn() == 1 {
 				// debugging of single testcase executions
-				meta := make(Meta)
-				meta["iteration"] = 0
-				meta["user"] = 0
+				meta := Meta{}
 				fn.Call([]reflect.Value{reflect.ValueOf(meta)})
 			}
 			if fnType.NumIn() > 1 {
@@ -243,7 +194,6 @@ func (test *TestScenario) Exec() error {
 		test.wg.Wait()           // wait till end
 		close(test.measurements) // need to close the channel so that collect can exit, too
 		<-done                   // wait for collector to finish
-		//test.Report(stdout)
 		test.status = stopped
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)
@@ -260,83 +210,4 @@ func (test *TestScenario) Thinktime(tt float64) {
 		v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Second)
 		time.Sleep(time.Duration(v))
 	}
-}
-
-// This is the "standard" gogrinder behaviour. If you need a special configuration
-// or setup then maybe you should start with this code.
-func (test *TestScenario) GoGrinder() error {
-	var err error
-	filename, noExec, noReport, noFrontend, noPrometheus, port, logLevel, err := GetCLI()
-	if err != nil {
-		return err
-	}
-	ll, _ := log.ParseLevel(logLevel)
-	log.SetLevel(ll)
-	err = test.ReadConfig(filename)
-	if err != nil {
-		return err
-	}
-
-	// prepare reporter plugins
-	// initialize the event logger
-	fe, err := os.OpenFile("event-log.txt", os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Error("can not open event log file: %v", err)
-		// we do not need to stop in this case...
-	}
-	defer fe.Close()
-	lr := &LogReporter{
-		&log.Logger{
-			Out:       fe,
-			Formatter: &log.JSONFormatter{},
-			Hooks:     make(log.LevelHooks),
-			Level:     log.InfoLevel,
-		},
-	}
-	pr := NewMetricsReporter()
-	test.SetReportPlugins(lr, pr)
-
-	exec := func() {
-		err = test.Exec()
-		if !noReport {
-			test.Report(stdout)
-		}
-	}
-
-	frontend := func() {
-		srv := NewTestServer(test)
-		srv.Addr = fmt.Sprintf(":%d", port)
-		err = srv.ListenAndServe()
-	}
-
-	// prometheus reporter needs to "wrap" all test executions
-	var srv *graceful.Server
-	if !noPrometheus {
-		srv = NewPrometheusReporterServer()
-		srv.Addr = fmt.Sprintf(":%d", 9110)
-		go srv.ListenAndServe()
-		// if for example the port is in use we continue...
-	}
-
-	// handle the different run modes
-	// invalid mode of noExec && noFrontend is handled in cli.go
-	if noExec {
-		frontend()
-	}
-	if noFrontend {
-		exec()
-	}
-	if !noExec && !noFrontend {
-		// this is the "normal" case - webserver is blocking
-		go exec()
-		frontend()
-	}
-
-	// run for another +2 * scrape_interval so we read all metrics in
-	if !noPrometheus {
-		time.Sleep(11 * time.Second)
-		srv.Stop(1 * time.Second)
-	}
-
-	return err
 }

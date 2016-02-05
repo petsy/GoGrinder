@@ -2,15 +2,19 @@ backlog
 =======
 
 frontend
-* edit loadmodel
 * authenticate frontend
 * download results as csv file
 * use backend port
 * mtime format (is there a std. json time format)?
-* format measurements (ms)
+* fix sorting UI
+* exit only if test is stopped
 
 backend
 * fix TODOs
+* event-logger new file with every test run + fix timestamps
+* event logger remove msg
+* add reporter for response kbytes and first-byte-after
+* move GOGRINDER + glue code to sep. file
 
 scenario
 
@@ -18,10 +22,19 @@ sample
 * recreate jmeter test in gogrinder
 
 tests
+* test reporters (cover at least reporting of all std. metrics like elapsed, size, ...)
+* test resource consumption
+* meta["settings"]
+* reporters: Register(), Update()
+* stop webserver route
+* SetReportPlugins
 
 defects
 * loadmodel json format error not detected / reported
 * need to check if frontend port is available at startup
+
+samples
+* prepare alpine container to run the supercars sample
 
 docu
 * add some description on how to get things together with prometheus and grafana

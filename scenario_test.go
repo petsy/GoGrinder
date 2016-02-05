@@ -181,7 +181,7 @@ func TestTeststep(t *testing.T) {
 	var fake = NewTest()
 	step := func(Meta) { time.Sleep(20) }
 
-	its := fake.Teststep("sth", step)
+	its := fake.TeststepBasic("sth", step)
 
 	if v, ok := fake.teststeps["sth"]; ok {
 		sf1 := reflect.ValueOf(v)
@@ -195,7 +195,7 @@ func TestTeststep(t *testing.T) {
 
 	// run the teststep (note: a different angle would be to mock out update)
 	done := fake.Collect() // this needs a collector to unblock update
-	its(Meta{"teststep": "sth"})
+	its(Meta{Teststep: "sth"})
 	fake.wg.Wait()
 	close(fake.measurements)
 	<-done
@@ -220,10 +220,10 @@ func TestRunSequential(t *testing.T) {
 	// assemble testcase
 	tc1 := func(meta Meta) {
 		// check meta
-		if meta["iteration"] != counter {
-			t.Errorf("Iteration %d but expected %d!", meta["iteration"], counter)
+		if meta.Iteration != counter {
+			t.Errorf("Iteration %d but expected %d!", meta.Iteration, counter)
 		}
-		if meta["user"] != 0 {
+		if meta.User != 0 {
 			t.Error("User meta not as expected!")
 		}
 

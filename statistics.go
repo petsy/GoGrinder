@@ -3,32 +3,30 @@ package gogrinder
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"reflect"
 	"sort"
 	"sync"
 
 	time "github.com/finklabs/ttime"
-	"io"
 )
 
 type Statistics interface {
-	Update(testcase string, mm time.Duration, last time.Time)
+	Update(m Metric)
 	Collect() <-chan bool
 	Reset()
 	Results(since string) []Result
 	Report()
-	SetReportPlugins([]func(Meta))
+	SetReportPlugins([]func(Metric))
+	AddReportPlugins([]func(Metric))
 }
 
 type TestStatistics struct {
 	lock         sync.RWMutex           // lock that is used on stats
 	stats        map[string]stats_value // collect and aggregate results
-	measurements chan Meta
+	measurements chan Metric
 	reporters    []Reporter
 }
-
-// internal datatype to collect information about the execution of a teststep
-type Meta map[string]interface{}
 
 // Internal datastructure to collect and aggregate measurements.
 type stats_value struct {
@@ -59,34 +57,28 @@ func (a byTeststep) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byTeststep) Less(i, j int) bool { return a[i].Teststep < a[j].Teststep }
 
 // Update and Collect work closely together via the measurements channel.
-func (test *TestStatistics) Update(meta Meta) {
-	test.measurements <- meta //measurement{testcase, user, iteration, last, mm}
+func (test *TestStatistics) Update(m Metric) {
+	test.measurements <- m
 }
 
 func (test *TestStatistics) SetReportPlugins(reporters ...Reporter) {
 	test.reporters = reporters
 }
 
+func (test *TestStatistics) AddReportPlugins(reporter Reporter) {
+	test.reporters = append(test.reporters, reporter)
+}
+
 // Collect all measurements. It blocks until measurements channel is closed.
 func (test *TestStatistics) Collect() <-chan bool {
 	done := make(chan bool)
 	go func(test *TestStatistics) {
-		for meta := range test.measurements {
-			// make sure Meta contains essential keys
-			if _, ok := meta["teststep"].(string); !ok {
-				panic("meta needs to contain 'testcase' key!")
-			}
-			if _, ok := meta["elapsed"].(time.Duration); !ok {
-				panic("meta needs to contain 'elapsed' key!")
-			}
-			if _, ok := meta["timestamp"].(time.Time); !ok {
-				panic("meta needs to contain 'timestamp' key!")
-			}
+		for metric := range test.measurements {
 			// call the default reporter
-			test.default_reporter(meta)
+			test.default_reporter(metric)
 			// call the plugged in reporters
 			for _, reporter := range test.reporters {
-				reporter.Update(meta)
+				reporter.Update(metric)
 			}
 		}
 		done <- true
@@ -96,10 +88,10 @@ func (test *TestStatistics) Collect() <-chan bool {
 
 // function to process the incoming measurements and update the stats
 // this is also the default-reporter. All other reporters are in reporter.go
-func (test *TestStatistics) default_reporter(meta Meta) {
-	teststep := meta["teststep"].(string)
-	elapsed := meta["elapsed"].(time.Duration)
-	timestamp := meta["timestamp"].(time.Time)
+func (test *TestStatistics) default_reporter(m Metric) {
+	teststep := m.GetMeta().Teststep
+	elapsed := m.GetMeta().Elapsed
+	timestamp := m.GetMeta().Timestamp
 	test.lock.RLock()
 	val, exists := test.stats[teststep]
 	test.lock.RUnlock()
@@ -130,7 +122,7 @@ func (test *TestStatistics) Reset() {
 	test.lock.Lock()
 	test.stats = make(map[string]stats_value)
 	test.lock.Unlock()
-	test.measurements = make(chan Meta)
+	test.measurements = make(chan Metric)
 }
 
 // Helper to convert time.Duration to ms in float64.
@@ -149,7 +141,8 @@ func (test *TestStatistics) Results(since string) []Result {
 	all := (err != nil)
 	for k, v := range test.stats {
 		if all || (v.last.After(s)) {
-			copy = append(copy, Result{k, d2f(v.avg), d2f(v.min), d2f(v.max), v.count, v.last.UTC().Format(ISO8601)})
+			copy = append(copy, Result{k, d2f(v.avg), d2f(v.min), d2f(v.max),
+				v.count, v.last.UTC().Format(ISO8601)})
 		}
 	}
 	sort.Sort(byTeststep(copy))
@@ -174,13 +167,9 @@ func f2j(field string) string {
 	return string(f.Tag.Get("json"))
 }
 
-// not completely sure implementing the io.Reader interface is the right strategy???
-// https://medium.com/@mschuett/golangs-reader-interface-bd2917d5ce83#.8xfskt8ib
-// implementing the Reader increments appears like overkill for this
 func (test *TestStatistics) Csv() (string, error) {
 	var b bytes.Buffer
 
-	//res := test.Results("") // get all results
 	// write the header (using json tags)
 	_, err := fmt.Fprintf(&b, "%s, %s, %s, %s, %s\n", f2j("Teststep"), f2j("Avg"),
 		f2j("Min"), f2j("Max"), f2j("Count"))
@@ -189,13 +178,6 @@ func (test *TestStatistics) Csv() (string, error) {
 	}
 
 	// write the lines
-	//	for _, s := range res {
-	//		_, err := fmt.Fprintf(&b, "%s, %f, %f, %f, %d\n", s.Teststep, d2f(s.Avg),
-	//			d2f(s.Min), d2f(s.Max), s.Count)
-	//		if err != nil {
-	//			return b.String(), err
-	//		}
-	//	}
 	test.Report(&b)
 	return b.String(), nil
 }
