@@ -24,11 +24,11 @@ func newSummaryVec(name string, help string) *prometheus.SummaryVec {
 }
 
 type HttpMetric struct {
-	gogrinder.Meta               // std. GoGrinder metric info
-	firstByte      time.Duration // first byte after [ns]
-	kbytes         int           // response size [kb]
-	code           int           // http status code
-	err            string        // error message
+	gogrinder.Meta          // std. GoGrinder metric info
+	firstByte time.Duration // first byte after [ns]
+	bytes     int           // response size [kb]
+	code      int           // http status code
+	err       string        // error message
 }
 
 // implement the Metric interface
@@ -45,7 +45,7 @@ func (m HttpMetric) GetMeta() gogrinder.Meta {
 type HttpMetricReporter struct {
 	elapsed   *prometheus.SummaryVec
 	firstByte *prometheus.SummaryVec
-	kbytes    *prometheus.SummaryVec
+	bytes     *prometheus.SummaryVec
 	code      *prometheus.CounterVec
 	error     *prometheus.CounterVec
 }
@@ -77,7 +77,7 @@ func NewHttpMetricReporter() *HttpMetricReporter {
 func (r *HttpMetricReporter) Update(m gogrinder.Metric) {
 	// find out if we deal with a HttpMetric
 	if h, ok := m.(HttpMetric); ok {
-		r.kbytes.WithLabelValues(h.Teststep).Observe(float64(h.kbytes))
+		r.bytes.WithLabelValues(h.Teststep).Observe(float64(h.bytes) / float64(1024))
 		r.firstByte.WithLabelValues(h.Teststep).Observe(float64(h.firstByte))
 		r.elapsed.WithLabelValues(h.Teststep).Observe(float64(h.Elapsed))
 		r.code.WithLabelValues(h.Teststep, string(h.code)).Inc()

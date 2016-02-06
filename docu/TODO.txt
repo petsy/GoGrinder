@@ -11,15 +11,15 @@ frontend
 
 backend
 * fix TODOs
+* rework event-logger
 * event-logger new file with every test run + fix timestamps
 * event logger remove msg
-* add reporter for response kbytes and first-byte-after
-* move GOGRINDER + glue code to sep. file
 
 scenario
+* add back the settings feature
 
 sample
-* recreate jmeter test in gogrinder
+* recreate jmeter petclinic test in gogrinder
 
 tests
 * test reporters (cover at least reporting of all std. metrics like elapsed, size, ...)
@@ -27,14 +27,15 @@ tests
 * meta["settings"]
 * reporters: Register(), Update()
 * stop webserver route
-* SetReportPlugins
+* Add/SetReportPlugins
+* metrics
+* webrequest
 
 defects
 * loadmodel json format error not detected / reported
 * need to check if frontend port is available at startup
 
 samples
-* prepare alpine container to run the supercars sample
 
 docu
 * add some description on how to get things together with prometheus and grafana
@@ -42,6 +43,8 @@ docu
 
 Version 0.01
 ============
+* added metrics_reporter for response kbytes and first-byte-after
+* prepared alpine container to run the supercars example
 * send data to Prometheus (specialized prometheus reporter plugin)
 * prometheus reporter buckets(0.5, 0.9, 0.95, 0.99)
 * show table with results
