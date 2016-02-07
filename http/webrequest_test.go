@@ -1,11 +1,14 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	//"golang.org/x/net/html"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/finklabs/GoGrinder"
@@ -25,7 +28,7 @@ func TestFirstByteAfterReader(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
 	tr := testReader{}
-	fbr := newMetricReader(tr)
+	fbr := newMetricReader(time.Now(), tr)
 
 	b1 := make([]byte, 4)
 	fbr.Read(b1)
@@ -71,51 +74,12 @@ func TestGoquery(t *testing.T) {
 	})
 }
 
-func TestGet(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
-			"<p>My first paragraph.</p></body></html>"))
-	}))
-	defer ts.Close()
-
-	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	val, metric := Get(ts.URL)(m)
-	if len(metric.(HttpMetric).err) > 0 {
-		t.Fatal(metric.(HttpMetric).err)
-	}
-	resp := val.(Response)
-
-	resp.Doc.Find("html body h1").Each(func(i int, s *goquery.Selection) {
-		if s.Text() != "My First Heading" {
-			t.Fatalf("Heading was expected '%s', but was: '%s'", "My First Heading", s.Text())
-		}
-	})
-}
-
-func TestGetRaw(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
-			"<p>My first paragraph.</p></body></html>"))
-	}))
-	defer ts.Close()
-
-	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	val, metric := GetRaw(ts.URL)(m)
-	if len(metric.(HttpMetric).err) > 0 {
-		t.Fatal(metric.(HttpMetric).err)
-	}
-	resp := val.(ResponseRaw)
-
-	if string(resp.Raw) != "<!DOCTYPE html><html><body><h1>My First Heading</h1>"+
-		"<p>My first paragraph.</p></body></html>" {
-		t.Fatalf("GetRaw response not as expected: '%s'", resp.Raw)
-	}
-}
+// JSON
 
 func TestGetJson(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"id": 1,"name": "A green door","price": 12.50,"tags":` +
-		`["home", "green"]}`))
+			`["home", "green"]}`))
 	}))
 	defer ts.Close()
 
@@ -136,3 +100,107 @@ func TestGetJson(t *testing.T) {
 		t.Fatalf("Id was expected '%s', but was: '%s'", "A green door", name)
 	}
 }
+
+func TestPostJson(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body) // echo server
+	}))
+	defer ts.Close()
+
+	msg := []byte(`{"id": 1,"name": "A green door","price": 12.50,"tags":` +
+		`["home", "green"]}`)
+	data := make(map[string]interface{})
+	json.Unmarshal(msg, &data)
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	val, metric := PostJson(ts.URL, data)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(ResponseJson)
+
+	id := resp.Json["id"].(float64)
+	name := resp.Json["name"].(string)
+
+	if id != 1.0 {
+		t.Fatalf("Id was expected '%f', but was: '%f'", 1.0, id)
+	}
+	if name != "A green door" {
+		t.Fatalf("Id was expected '%s', but was: '%s'", "A green door", name)
+	}
+}
+
+// RAW
+
+func TestGetRaw(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
+		"<p>My first paragraph.</p></body></html>"))
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	val, metric := GetRaw(ts.URL)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(ResponseRaw)
+
+	if string(resp.Raw) != "<!DOCTYPE html><html><body><h1>My First Heading</h1>"+
+	"<p>My first paragraph.</p></body></html>" {
+		t.Fatalf("GetRaw response not as expected: '%s'", resp.Raw)
+	}
+}
+
+
+// DOC
+func TestGet(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
+		"<p>My first paragraph.</p></body></html>"))
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	val, metric := Get(ts.URL)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(Response)
+
+	resp.Doc.Find("html body h1").Each(func(i int, s *goquery.Selection) {
+		if s.Text() != "My First Heading" {
+			t.Fatalf("Heading was expected '%s', but was: '%s'", "My First Heading", s.Text())
+		}
+	})
+}
+
+/*
+func TestPost(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body) // echo server
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	doc := "<doc><id>1</id><name>A green door</name><price>12.50</price>" +
+		"<tags><tag>home</tag><tag>green</tag></tags></doc>"
+	//msg, err := goquery.NewDocument(doc)
+	msg, err := html.Parse(strings.NewReader(doc))
+	if err != nil {
+		t.Fatalf("Error while creating message from XML document: %s", err.Error())
+	}
+	val, metric := Post(ts.URL, msg)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(Response)
+
+	resp.Doc.Find("doc name").Each(func(i int, s *goquery.Selection) {
+		if s.Text() != "A green door" {
+			t.Fatalf("Name was expected '%s', but was: '%s'", "A green door", s.Text())
+		}
+	})
+}
+*/
+
