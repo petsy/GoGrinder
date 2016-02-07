@@ -24,11 +24,11 @@ func newSummaryVec(name string, help string) *prometheus.SummaryVec {
 }
 
 type HttpMetric struct {
-	gogrinder.Meta          // std. GoGrinder metric info
-	firstByte time.Duration // first byte after [ns]
-	bytes     int           // response size [kb]
-	code      int           // http status code
-	err       string        // error message
+	gogrinder.Meta               // std. GoGrinder metric info
+	firstByte      time.Duration // first byte after [ns]
+	bytes          int           // response size [kb]
+	code           int           // http status code
+	err            string        // error message
 }
 
 // implement the Metric interface
