@@ -3,12 +3,12 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/net/html"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	//"golang.org/x/net/html"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/finklabs/GoGrinder"
@@ -135,7 +135,7 @@ func TestPostJson(t *testing.T) {
 func TestGetRaw(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
-		"<p>My first paragraph.</p></body></html>"))
+			"<p>My first paragraph.</p></body></html>"))
 	}))
 	defer ts.Close()
 
@@ -147,17 +147,53 @@ func TestGetRaw(t *testing.T) {
 	resp := val.(ResponseRaw)
 
 	if string(resp.Raw) != "<!DOCTYPE html><html><body><h1>My First Heading</h1>"+
-	"<p>My first paragraph.</p></body></html>" {
+		"<p>My first paragraph.</p></body></html>" {
 		t.Fatalf("GetRaw response not as expected: '%s'", resp.Raw)
 	}
 }
 
+func TestPostRaw(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body) // echo server
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	r := strings.NewReader("abcdefghijklmnopq")
+	val, metric := PostRaw(ts.URL, r)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(ResponseRaw)
+
+	if string(resp.Raw) != "abcdefghijklmnopq" {
+		t.Fatalf("GetRaw response not as expected: '%s'", resp.Raw)
+	}
+}
+
+func TestDeleteRaw(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	tmp1, tmp2 := DeleteRaw(ts.URL)(m)
+	metric := tmp2.(HttpMetric)
+	if len(metric.err) > 0 {
+		t.Fatal(metric.err)
+	}
+	_ = tmp1.(ResponseRaw)
+
+	if metric.code != http.StatusOK {
+		t.Fatalf("DeleteRaw status code not as expected: '%s'", metric.code)
+	}
+}
 
 // DOC
 func TestGet(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
-		"<p>My first paragraph.</p></body></html>"))
+			"<p>My first paragraph.</p></body></html>"))
 	}))
 	defer ts.Close()
 
@@ -175,7 +211,6 @@ func TestGet(t *testing.T) {
 	})
 }
 
-/*
 func TestPost(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.Copy(w, r.Body) // echo server
@@ -202,5 +237,3 @@ func TestPost(t *testing.T) {
 		}
 	})
 }
-*/
-

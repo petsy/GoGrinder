@@ -141,6 +141,26 @@ func GetRaw(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	}
 }
 
+func PostRaw(url string, r io.Reader) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
+	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+		req, err := http.NewRequest("Post", url, r)
+		if err != nil {
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+		}
+		return doRaw(req, m)
+	}
+}
+
+func DeleteRaw(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
+	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+		r, err := http.NewRequest("Delete", url, nil)
+		if err != nil {
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+		}
+		return doRaw(r, m)
+	}
+}
+
 // DOC
 // Response from Get consists of goquery Doc and http Header.
 type Response struct {
@@ -184,11 +204,9 @@ func Get(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	}
 }
 
-//func Post(url string, msg *goquery.Document) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 func Post(url string, msg *html.Node) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
-		var buf bytes.Buffer  // alternatively use io.Pipe()
-		//err := html.Render(&buf, msg.Nodes[0])
+		var buf bytes.Buffer // alternatively use io.Pipe()
 		err := html.Render(&buf, msg)
 
 		if err != nil {
