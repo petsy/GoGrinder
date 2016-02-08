@@ -130,6 +130,35 @@ func TestPostJson(t *testing.T) {
 	}
 }
 
+func TestPutJson(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body) // echo server
+	}))
+	defer ts.Close()
+
+	msg := []byte(`{"id": 1,"name": "A green door","price": 12.50,"tags":` +
+		`["home", "green"]}`)
+	data := make(map[string]interface{})
+	json.Unmarshal(msg, &data)
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	val, metric := PutJson(ts.URL, data)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(ResponseJson)
+
+	id := resp.Json["id"].(float64)
+	name := resp.Json["name"].(string)
+
+	if id != 1.0 {
+		t.Fatalf("Id was expected '%f', but was: '%f'", 1.0, id)
+	}
+	if name != "A green door" {
+		t.Fatalf("Id was expected '%s', but was: '%s'", "A green door", name)
+	}
+}
+
 // RAW
 
 func TestGetRaw(t *testing.T) {
@@ -161,6 +190,25 @@ func TestPostRaw(t *testing.T) {
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
 	r := strings.NewReader("abcdefghijklmnopq")
 	val, metric := PostRaw(ts.URL, r)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(ResponseRaw)
+
+	if string(resp.Raw) != "abcdefghijklmnopq" {
+		t.Fatalf("GetRaw response not as expected: '%s'", resp.Raw)
+	}
+}
+
+func TestPutRaw(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body) // echo server
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	r := strings.NewReader("abcdefghijklmnopq")
+	val, metric := PutRaw(ts.URL, r)(m)
 	if len(metric.(HttpMetric).err) > 0 {
 		t.Fatal(metric.(HttpMetric).err)
 	}
@@ -226,6 +274,33 @@ func TestPost(t *testing.T) {
 		t.Fatalf("Error while creating message from XML document: %s", err.Error())
 	}
 	val, metric := Post(ts.URL, msg)(m)
+	if len(metric.(HttpMetric).err) > 0 {
+		t.Fatal(metric.(HttpMetric).err)
+	}
+	resp := val.(Response)
+
+	resp.Doc.Find("doc name").Each(func(i int, s *goquery.Selection) {
+		if s.Text() != "A green door" {
+			t.Fatalf("Name was expected '%s', but was: '%s'", "A green door", s.Text())
+		}
+	})
+}
+
+func TestPut(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body) // echo server
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	doc := "<doc><id>1</id><name>A green door</name><price>12.50</price>" +
+		"<tags><tag>home</tag><tag>green</tag></tags></doc>"
+	//msg, err := goquery.NewDocument(doc)
+	msg, err := html.Parse(strings.NewReader(doc))
+	if err != nil {
+		t.Fatalf("Error while creating message from XML document: %s", err.Error())
+	}
+	val, metric := Put(ts.URL, msg)(m)
 	if len(metric.(HttpMetric).err) > 0 {
 		t.Fatal(metric.(HttpMetric).err)
 	}

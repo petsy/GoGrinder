@@ -171,7 +171,7 @@ func TestRouteStartStop(t *testing.T) {
 	defer time.Unfreeze()
 	srv := TestServer{}
 	srv.test = NewTest()
-	tc1 := func(meta Meta) { srv.test.Thinktime(0.050) }
+	tc1 := func(meta Meta, s Settings) { srv.test.Thinktime(0.050) }
 	srv.test.Testscenario("fake", func() { gg.DoIterations(tc1, 500, 0, false) })
 	loadmodel := `{"Scenario": "fake", "ThinkTimeFactor": 2.0, "ThinkTimeVariance": 0.0	}`
 	srv.test.ReadConfigValidate(loadmodel, LoadmodelSchema)

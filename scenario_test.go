@@ -218,7 +218,7 @@ func TestRunSequential(t *testing.T) {
 	fake.config["Scenario"] = "scenario1"
 	var counter int = 0
 	// assemble testcase
-	tc1 := func(meta Meta) {
+	tc1 := func(meta Meta, s Settings) {
 		// check meta
 		if meta.Iteration != counter {
 			t.Errorf("Iteration %d but expected %d!", meta.Iteration, counter)
@@ -244,7 +244,7 @@ func TestRunSequential(t *testing.T) {
 
 func TestScheduleErrorUnknownTestcase(t *testing.T) {
 	fake := NewTest()
-	err := fake.Schedule("unknown_testcase", func(Meta) {})
+	err := fake.Schedule("unknown_testcase", func(Meta, Settings) {})
 
 	e := err.Error()
 	if e != "config for testcase unknown_testcase not found" {
@@ -280,17 +280,32 @@ func TestExecErrorFunctionWithReturnValue(t *testing.T) {
 	}
 }
 
-func TestExecErrorFunctionWithTwoParams(t *testing.T) {
+func TestExecErrorFunctionWithOneParams(t *testing.T) {
 	fake := NewTest()
 	fake.config["Scenario"] = "01_testcase"
 	fake.config["ThinkTimeFactor"] = 2.0
 	fake.config["ThinkTimeVariance"] = 0.1
-	fake.Testscenario("01_testcase", func(a, b int64) {})
+	fake.Testscenario("01_testcase", func(a int64) {})
 
 	err := fake.Exec()
 
 	e := err.Error()
-	if e != "expected a function with zero or one parameter to implement 01_testcase" {
-		t.Errorf("Error msg for function two or more params not as expected: %s", e)
+	if e != "expected a function with zero or two parameters to implement 01_testcase" {
+		t.Errorf("Error msg for function one or more than two params not as expected: %s", e)
+	}
+}
+
+func TestExecErrorFunctionWithThreeParams(t *testing.T) {
+	fake := NewTest()
+	fake.config["Scenario"] = "01_testcase"
+	fake.config["ThinkTimeFactor"] = 2.0
+	fake.config["ThinkTimeVariance"] = 0.1
+	fake.Testscenario("01_testcase", func(a, b, c int64) {})
+
+	err := fake.Exec()
+
+	e := err.Error()
+	if e != "expected a function with zero or two parameters to implement 01_testcase" {
+		t.Errorf("Error msg for function one or more than two params not as expected: %s", e)
 	}
 }

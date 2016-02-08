@@ -27,15 +27,15 @@ var ts3 = gg.TeststepBasic("03_01_teststep", myStep(150))
 var thinktime = gg.Thinktime
 
 // define testcases using teststeps
-func tc1(meta Meta) {
+func tc1(meta Meta, s Settings) {
 	ts1(meta)
 	thinktime(0.050)
 }
-func tc2(meta Meta) {
+func tc2(meta Meta, s Settings) {
 	ts2(meta)
 	thinktime(0.100)
 }
-func tc3(meta Meta) {
+func tc3(meta Meta, s Settings) {
 	ts3(meta)
 	thinktime(0.150)
 }

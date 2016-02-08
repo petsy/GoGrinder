@@ -17,10 +17,7 @@ func contains(s []string, e string) bool {
 }
 
 // Simple command line interface for GoGrinder.
-//  * (default is to start/stop test via UI and have a console report)
-//  * -no-exec
-//  * -no-report
-//  * -no-frontend
+//  * (default is to start/stop test via UI, event-log and prometheus reporter)
 func GetCLI() (string, bool, bool, bool, bool, int, string, error) {
 	// for now try to work with the std. Golang flag package
 

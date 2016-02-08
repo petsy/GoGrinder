@@ -244,7 +244,7 @@ func TestWriteLoadmodel(t *testing.T) {
 	}
 }
 
-func TestAdditionalConfigProperties(t *testing.T) {
+func TestGetSettings(t *testing.T) {
 	fake := NewTest()
 	loadmodel := `{
 	  "Scenario": "baseline",

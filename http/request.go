@@ -93,6 +93,22 @@ func PostJson(url string, msg map[string]interface{}) func(gogrinder.Meta) (inte
 			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
 		}
 		r, err := http.NewRequest("Post", url, bytes.NewReader(b))
+		r.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+		}
+		return doJson(r, m)
+	}
+}
+
+func PutJson(url string, msg map[string]interface{}) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
+	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+		b, err := json.Marshal(msg)
+		if err != nil {
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+		}
+		r, err := http.NewRequest("Put", url, bytes.NewReader(b))
+		r.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
 		}
@@ -144,6 +160,16 @@ func GetRaw(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 func PostRaw(url string, r io.Reader) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		req, err := http.NewRequest("Post", url, r)
+		if err != nil {
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+		}
+		return doRaw(req, m)
+	}
+}
+
+func PutRaw(url string, r io.Reader) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
+	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+		req, err := http.NewRequest("Put", url, r)
 		if err != nil {
 			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
 		}
@@ -213,6 +239,24 @@ func Post(url string, msg *html.Node) func(gogrinder.Meta) (interface{}, gogrind
 			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
 		}
 		r, err := http.NewRequest("Post", url, &buf)
+		r.Header.Set("Content-Type", "application/xml")
+		if err != nil {
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+		}
+		return do(r, m)
+	}
+}
+
+func Put(url string, msg *html.Node) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
+	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+		var buf bytes.Buffer // alternatively use io.Pipe()
+		err := html.Render(&buf, msg)
+
+		if err != nil {
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+		}
+		r, err := http.NewRequest("Put", url, &buf)
+		r.Header.Set("Content-Type", "application/xml")
 		if err != nil {
 			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
 		}

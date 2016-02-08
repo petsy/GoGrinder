@@ -1,3 +1,6 @@
+// Package gogrinder provides tools for implementing and executing
+// load & performance tests.
+//
 package gogrinder
 
 import (

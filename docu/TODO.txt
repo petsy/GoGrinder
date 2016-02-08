@@ -29,7 +29,7 @@ tests
 * stop webserver route
 * Add/SetReportPlugins
 * metrics
-* webrequest
+* http_reporter
 
 defects
 * loadmodel json format error not detected / reported

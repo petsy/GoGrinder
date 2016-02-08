@@ -1,6 +1,3 @@
-// Package gogrinder provides functionality for implementing and executing
-// load & performance tests.
-//
 package gogrinder
 
 import (
@@ -11,7 +8,7 @@ import (
 	time "github.com/finklabs/ttime"
 )
 
-// paceMaker is used internally. It is not an internal function for testability.
+// paceMaker is used internally. For testability it is not implemented as an internal function.
 // Parameter <pace> is given in nanoseconds.
 func (test *TestScenario) paceMaker(pacing time.Duration, elapsed time.Duration) {
 	_, _, _, pv := test.GetScenarioConfig()
@@ -57,14 +54,12 @@ func (test *TestScenario) TeststepBasic(name string, step func(Meta)) func(Meta)
 		test.Update(meta)
 		return nil
 	}
-	// invoke reporters so they can register the teststep, too
-	//for _, reporter := range test.TestStatistics.reporters {
-	//	reporter.Register(name)
-	//}
 	test.teststeps[name] = its
 	return its
 }
 
+// Instrument a teststep and add it to the teststeps registry.
+// Teststeps need to return payload and Metric.
 func (test *TestScenario) Teststep(name string, step func(Meta) (interface{}, Metric)) func(Meta) interface{} {
 	its := func(meta Meta) interface{} {
 		meta.Teststep = name
@@ -78,7 +73,7 @@ func (test *TestScenario) Teststep(name string, step func(Meta) (interface{}, Me
 }
 
 // Schedule a testcase according to its config in the loadmodel.json config file.
-func (test *TestScenario) Schedule(name string, testcase func(Meta)) error {
+func (test *TestScenario) Schedule(name string, testcase func(Meta, Settings)) error {
 	delay, runfor, rampup, users, pacing, err := test.GetTestcaseConfig(name)
 	settings := test.GetSettings()
 	if err != nil {
@@ -88,23 +83,19 @@ func (test *TestScenario) Schedule(name string, testcase func(Meta)) error {
 	return nil
 }
 
-func (test *TestScenario) DoIterations(testcase func(Meta),
+func (test *TestScenario) DoIterations(testcase func(Meta, Settings),
 	iterations int, pacing float64, parallel bool) {
 	f := func(test *TestScenario) {
-		//settings := test.GetSettings()
+		settings := test.GetSettings()
 		defer test.wg.Done()
 
 		for i := 0; i < iterations; i++ {
 			start := time.Now()
 			meta := Meta{Iteration: i, User: 0}
-			// TODO add the settings
-			//if len(settings) > 0 {
-			//	meta["settings"] = settings
-			//}
 			if test.status == stopping {
 				break
 			}
-			testcase(meta)
+			testcase(meta, settings)
 			if test.status == stopping {
 				break
 			}
@@ -122,8 +113,8 @@ func (test *TestScenario) DoIterations(testcase func(Meta),
 }
 
 // Run a testcase. Settings are specified in Seconds!
-func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64, rampup float64,
-	users int, pacing float64, settings map[string]interface{}) {
+func (test *TestScenario) Run(testcase func(Meta, Settings), delay float64,
+	runfor float64, rampup float64, users int, pacing float64, settings Settings) {
 	test.wg.Add(1) // the "Scheduler" itself is a goroutine!
 	go func(test *TestScenario) {
 		// ramp up the users
@@ -142,15 +133,11 @@ func (test *TestScenario) Run(testcase func(Meta), delay float64, runfor float64
 					time.Duration((runfor)*float64(time.Second)); j++ {
 					// next iteration
 					start := time.Now()
-					// TODO
-					//if len(settings) > 0 {
-					//	meta["settings"] = settings
-					//}
 					meta := Meta{Iteration: j, User: nbr}
 					if test.status == stopping {
 						break
 					}
-					testcase(meta)
+					testcase(meta, settings)
 					if test.status == stopping {
 						break
 					}
@@ -178,13 +165,16 @@ func (test *TestScenario) Exec() error {
 				// execute the selected scenario
 				fn.Call([]reflect.Value{})
 			}
-			if fnType.NumIn() == 1 {
+			if fnType.NumIn() == 2 {
 				// debugging of single testcase executions
 				meta := Meta{}
-				fn.Call([]reflect.Value{reflect.ValueOf(meta)})
+				settings := Settings{}
+				fn.Call([]reflect.Value{reflect.ValueOf(meta),
+					reflect.ValueOf(settings)},
+				)
 			}
-			if fnType.NumIn() > 1 {
-				return fmt.Errorf("expected a function with zero or one parameter to implement %s", sel)
+			if fnType.NumIn() != 0 && fnType.NumIn() != 2 {
+				return fmt.Errorf("expected a function with zero or two parameters to implement %s", sel)
 			}
 		} else {
 			return fmt.Errorf("expected a function without return value to implement %s", sel)

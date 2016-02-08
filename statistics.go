@@ -37,7 +37,7 @@ type stats_value struct {
 	last  time.Time
 }
 
-// []Results is what is what you get from test.Results().
+// []Result is what is what you get from test.Results().
 // Not sure if it is necessary to export this???
 type Result struct {
 	Teststep string  `json:"teststep"`
