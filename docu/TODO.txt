@@ -14,28 +14,26 @@ backend
 * rework event-logger
 * event-logger new file with every test run + fix timestamps
 * event logger remove msg
+* prometheus reporter for Meta
 
 scenario
 * add back the settings feature
 
-sample
-* recreate jmeter petclinic test in gogrinder
-
 tests
 * test reporters (cover at least reporting of all std. metrics like elapsed, size, ...)
 * test resource consumption
-* meta["settings"]
 * reporters: Register(), Update()
 * stop webserver route
 * Add/SetReportPlugins
 * metrics
-* http_reporter
 
 defects
 * loadmodel json format error not detected / reported
 * need to check if frontend port is available at startup
 
 samples
+* recreate jmeter petclinic test in gogrinder
+* implement supercars test in gogrinder
 
 docu
 * add some description on how to get things together with prometheus and grafana
@@ -45,6 +43,9 @@ Version 0.01
 ============
 * added metrics_reporter for response kbytes and first-byte-after
 * prepared alpine container to run the supercars example
+* reporter "plugin" mechanism for measurement processing (event logging, Prometheus, ...)
+* event logging sample reporter
+* added logLevel to CLI
 * send data to Prometheus (specialized prometheus reporter plugin)
 * prometheus reporter buckets(0.5, 0.9, 0.95, 0.99)
 * show table with results
@@ -66,6 +67,3 @@ Version 0.01
 * script configuration/params
 * provide meta info (user, iteration)
 * fixed handler logging and error handling
-* added logLevel to CLI
-* reporter "plugin" mechanism for measurement processing (event logging, Prometheus, ...)
-* event logging sample reporter

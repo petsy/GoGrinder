@@ -12,6 +12,7 @@ type Meta struct {
 	Iteration int
 	Timestamp time.Time
 	Elapsed   time.Duration // elapsed time [ns]
+	Error     string
 }
 
 type Metric interface {

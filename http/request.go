@@ -48,12 +48,11 @@ type ResponseJson struct {
 
 func doJson(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	start := time.Now()
-	error := ""
 
 	c := &http.Client{} // Defaultclient
 	resp, err := c.Do(r)
 	if err != nil {
-		error += err.Error()
+		m.Error += err.Error()
 	}
 	defer resp.Body.Close()
 
@@ -63,24 +62,25 @@ func doJson(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	doc := make(map[string]interface{})
 	raw, err := ioutil.ReadAll(mr)
 	if err != nil {
-		error = err.Error()
+		m.Error += err.Error()
 	}
 	err = json.Unmarshal(raw, &doc)
 	if err != nil {
-		error += err.Error()
+		m.Error += err.Error()
 	}
 
 	m.Elapsed = time.Now().Sub(start)
 
 	return ResponseJson{doc, resp.Header}, HttpMetric{m, mr.firstByteAfter, mr.bytes,
-		resp.StatusCode, error}
+		resp.StatusCode}
 }
 
 func GetJson(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		r, err := http.NewRequest("Get", url, nil)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return doJson(r, m)
 	}
@@ -90,12 +90,14 @@ func PostJson(url string, msg map[string]interface{}) func(gogrinder.Meta) (inte
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		b, err := json.Marshal(msg)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		r, err := http.NewRequest("Post", url, bytes.NewReader(b))
 		r.Header.Set("Content-Type", "application/json")
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return doJson(r, m)
 	}
@@ -105,12 +107,14 @@ func PutJson(url string, msg map[string]interface{}) func(gogrinder.Meta) (inter
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		b, err := json.Marshal(msg)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		r, err := http.NewRequest("Put", url, bytes.NewReader(b))
 		r.Header.Set("Content-Type", "application/json")
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return doJson(r, m)
 	}
@@ -126,12 +130,11 @@ type ResponseRaw struct {
 
 func doRaw(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	start := time.Now()
-	error := ""
 
 	c := &http.Client{} // Defaultclient
 	resp, err := c.Do(r)
 	if err != nil {
-		error += err.Error()
+		m.Error += err.Error()
 	}
 	defer resp.Body.Close()
 	mr := newMetricReader(start, resp.Body)
@@ -139,19 +142,20 @@ func doRaw(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	// read the response body
 	raw, err := ioutil.ReadAll(mr)
 	if err != nil {
-		error += err.Error()
+		m.Error += err.Error()
 	}
 
 	m.Elapsed = time.Now().Sub(start)
 	return ResponseRaw{raw, resp.Header}, HttpMetric{m, mr.firstByteAfter, mr.bytes,
-		resp.StatusCode, error}
+		resp.StatusCode}
 }
 
 func GetRaw(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		r, err := http.NewRequest("Get", url, nil)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return doRaw(r, m)
 	}
@@ -161,7 +165,8 @@ func PostRaw(url string, r io.Reader) func(gogrinder.Meta) (interface{}, gogrind
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		req, err := http.NewRequest("Post", url, r)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error = err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return doRaw(req, m)
 	}
@@ -171,7 +176,8 @@ func PutRaw(url string, r io.Reader) func(gogrinder.Meta) (interface{}, gogrinde
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		req, err := http.NewRequest("Put", url, r)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return doRaw(req, m)
 	}
@@ -181,7 +187,8 @@ func DeleteRaw(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) 
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		r, err := http.NewRequest("Delete", url, nil)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return doRaw(r, m)
 	}
@@ -196,12 +203,11 @@ type Response struct {
 
 func do(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	start := time.Now()
-	error := ""
 
 	c := &http.Client{} // Defaultclient
 	resp, err := c.Do(r)
 	if err != nil {
-		error += err.Error()
+		m.Error += err.Error()
 	}
 	defer resp.Body.Close()
 	mr := newMetricReader(start, resp.Body)
@@ -209,12 +215,12 @@ func do(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	// read the response body and parse into document
 	doc, err := goquery.NewDocumentFromReader(mr)
 	if err != nil {
-		error += err.Error()
+		m.Error += err.Error()
 	}
 
 	m.Elapsed = time.Now().Sub(start)
 	return Response{doc, resp.Header}, HttpMetric{m, mr.firstByteAfter, mr.bytes,
-		resp.StatusCode, error}
+		resp.StatusCode}
 }
 
 // Get returns a goquery document.
@@ -224,7 +230,8 @@ func Get(url string) func(gogrinder.Meta) (interface{}, gogrinder.Metric) {
 	return func(m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		r, err := http.NewRequest("Get", url, nil)
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return do(r, m)
 	}
@@ -236,12 +243,14 @@ func Post(url string, msg *html.Node) func(gogrinder.Meta) (interface{}, gogrind
 		err := html.Render(&buf, msg)
 
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		r, err := http.NewRequest("Post", url, &buf)
 		r.Header.Set("Content-Type", "application/xml")
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return do(r, m)
 	}
@@ -253,12 +262,14 @@ func Put(url string, msg *html.Node) func(gogrinder.Meta) (interface{}, gogrinde
 		err := html.Render(&buf, msg)
 
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		r, err := http.NewRequest("Put", url, &buf)
 		r.Header.Set("Content-Type", "application/xml")
 		if err != nil {
-			return ResponseJson{}, HttpMetric{m, 0, 0, 400, err.Error()}
+			m.Error += err.Error()
+			return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 		}
 		return do(r, m)
 	}
