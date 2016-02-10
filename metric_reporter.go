@@ -22,12 +22,11 @@ func NewSummaryVec(name string, help string) *prometheus.SummaryVec {
 	}, []string{"teststep"})
 }
 
-
 // Specific prometheus reporter for Meta metric.
 // All metrics are represents as vectors of teststeps
 type MetricReporter struct {
-	elapsed   *prometheus.SummaryVec
-	error     *prometheus.CounterVec
+	elapsed *prometheus.SummaryVec
+	error   *prometheus.CounterVec
 }
 
 func NewMetricReporter() *MetricReporter {
@@ -48,6 +47,8 @@ func (r *MetricReporter) Update(m Metric) {
 	// find out if we deal with a Meta
 	if h, ok := m.(Meta); ok {
 		r.elapsed.WithLabelValues(h.Teststep).Observe(float64(h.Elapsed) / float64(time.Millisecond))
-		if len(h.Error) > 0 {	r.error.WithLabelValues(h.Teststep).Inc() }
+		if len(h.Error) > 0 {
+			r.error.WithLabelValues(h.Teststep).Inc()
+		}
 	}
 }

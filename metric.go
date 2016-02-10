@@ -6,25 +6,15 @@ import (
 
 // Datatype to collect reference information about the execution of a teststep
 type Meta struct {
-	Testcase  string
-	Teststep  string
-	User      int
-	Iteration int
-	Timestamp time.Time
-	Elapsed   time.Duration // elapsed time [ns]
-	Error     string
+	Testcase  string        `json:"testcase"`
+	Teststep  string        `json:"teststep"`
+	User      int           `json:"user"`
+	Iteration int           `json:"iteration"`
+	Timestamp time.Time     `json:"ts"`
+	Elapsed   time.Duration `json:"elapsed"` // elapsed time [ns]
+	Error     string        `json:"error,omitempty"`
 }
 
-type Metric interface {
-	GetValues() map[string]string
-	GetMeta() Meta
-}
-
-// implement the Metric interface for Meta so it can be used for "simple" case
-func (m Meta) GetValues() map[string]string {
-	return nil
-}
-
-func (m Meta) GetMeta() Meta {
-	return m
-}
+// Every type implements the Metric type since it is so simple.
+// Only important thing is that every Metric type embeds Meta.
+type Metric interface {}

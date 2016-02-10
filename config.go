@@ -11,7 +11,7 @@ import (
 )
 
 type Config interface {
-	ReadConfig() error
+	ReadConfig(filename string) error
 	ReadConfigValidate(document string, schema string) error
 	WriteConfig() error
 	GetSettings() Settings

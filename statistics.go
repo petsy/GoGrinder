@@ -12,13 +12,13 @@ import (
 )
 
 type Statistics interface {
-	Update(m Metric)
+	Update(Metric)
 	Collect() <-chan bool
 	Reset()
 	Results(since string) []Result
-	Report()
-	SetReportPlugins([]func(Metric))
-	AddReportPlugins([]func(Metric))
+	Report(io.Writer)
+	SetReportPlugins(reporters ...Reporter)
+	AddReportPlugin(reporter Reporter)
 }
 
 type TestStatistics struct {
@@ -65,7 +65,7 @@ func (test *TestStatistics) SetReportPlugins(reporters ...Reporter) {
 	test.reporters = reporters
 }
 
-func (test *TestStatistics) AddReportPlugins(reporter Reporter) {
+func (test *TestStatistics) AddReportPlugin(reporter Reporter) {
 	test.reporters = append(test.reporters, reporter)
 }
 
@@ -89,9 +89,9 @@ func (test *TestStatistics) Collect() <-chan bool {
 // function to process the incoming measurements and update the stats
 // this is also the default-reporter. All other reporters are in reporter.go
 func (test *TestStatistics) default_reporter(m Metric) {
-	teststep := m.GetMeta().Teststep
-	elapsed := m.GetMeta().Elapsed
-	timestamp := m.GetMeta().Timestamp
+	teststep := m.(Meta).Teststep
+	elapsed := m.(Meta).Elapsed
+	timestamp := m.(Meta).Timestamp
 	test.lock.RLock()
 	val, exists := test.stats[teststep]
 	test.lock.RUnlock()

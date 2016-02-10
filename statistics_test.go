@@ -139,3 +139,13 @@ func TestRead(t *testing.T) {
 		t.Fatalf("Read output not as expected: %s", report)
 	}
 }
+
+func TestCheckTestStatisticsImplementsStatisticsInterface(t *testing.T) {
+	s := &TestStatistics{}
+	if _, ok := interface{}(s).(Statistics); !ok {
+		t.Errorf("TestStatistics does not implement the Statistics interface!")
+	}
+}
+
+// TODO:
+// test default_reporter with Meta AND HttpMetric!

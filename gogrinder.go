@@ -20,6 +20,7 @@ var stdout io.Writer = os.Stdout
 // ISO8601 should be available in ttime package but we keep it here for now.
 var ISO8601 = "2006-01-02T15:04:05.999Z"
 
+/*
 type Scenario interface {
 	Testscenario(name string, scenario interface{})
 	Teststep(name string, step func(Meta)) func(Meta)
@@ -29,6 +30,7 @@ type Scenario interface {
 	Exec() error
 	Thinktime(tt int64)
 }
+*/
 
 // TestScenario datastructure that brings all the GoGrinder functionality together.
 // TestScenario supports multiple interfaces (TestConfig, TestStatistics).
@@ -71,6 +73,8 @@ func NewTest() *TestScenario {
 
 // This is the "standard" gogrinder behaviour. If you need a special configuration
 // or setup then maybe you should start with this code.
+// TODO: this should probably look like this:
+// GoGrinder(test *Scenario) error {
 func (test *TestScenario) GoGrinder() error {
 	var err error
 	filename, noExec, noReport, noFrontend, noPrometheus, port, logLevel, err := GetCLI()
@@ -86,21 +90,13 @@ func (test *TestScenario) GoGrinder() error {
 
 	// prepare reporter plugins
 	// initialize the event logger
-	fe, err := os.OpenFile("event-log.txt", os.O_CREATE|os.O_WRONLY, 0666)
+	fe, err := os.OpenFile("event-log.txt", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Error("can not open event log file: %v", err)
 		// we do not need to stop in this case...
 	}
 	defer fe.Close()
-	lr := &EventReporter{
-		&log.Logger{
-			Out:       fe,
-			Formatter: &log.JSONFormatter{},
-			Hooks:     make(log.LevelHooks),
-			Level:     log.InfoLevel,
-		},
-	}
-	test.AddReportPlugins(lr)
+	test.AddReportPlugin(&EventReporter{fe})
 
 	exec := func() {
 		err = test.Exec()

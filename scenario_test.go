@@ -309,3 +309,13 @@ func TestExecErrorFunctionWithThreeParams(t *testing.T) {
 		t.Errorf("Error msg for function one or more than two params not as expected: %s", e)
 	}
 }
+
+/*
+func TestCheckTestScenarioImplementsScenarioInterface(t *testing.T) {
+	nt := NewTest()
+
+	if ok := nt.(Scenario); !ok {
+		t.Errorf("TestScenario does not implement the Scenario interface!")
+	}
+}
+*/

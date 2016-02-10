@@ -79,7 +79,7 @@ func (test *TestScenario) Schedule(name string, testcase func(Meta, Settings)) e
 	if err != nil {
 		return err
 	}
-	test.Run(testcase, delay, runfor, rampup, users, pacing, settings)
+	test.Run(name, testcase, delay, runfor, rampup, users, pacing, settings)
 	return nil
 }
 
@@ -113,8 +113,9 @@ func (test *TestScenario) DoIterations(testcase func(Meta, Settings),
 }
 
 // Run a testcase. Settings are specified in Seconds!
-func (test *TestScenario) Run(testcase func(Meta, Settings), delay float64,
-	runfor float64, rampup float64, users int, pacing float64, settings Settings) {
+func (test *TestScenario) Run(name string, testcase func(Meta, Settings),
+	delay float64, runfor float64, rampup float64, users int, pacing float64,
+	settings Settings) {
 	test.wg.Add(1) // the "Scheduler" itself is a goroutine!
 	go func(test *TestScenario) {
 		// ramp up the users
@@ -133,7 +134,7 @@ func (test *TestScenario) Run(testcase func(Meta, Settings), delay float64,
 					time.Duration((runfor)*float64(time.Second)); j++ {
 					// next iteration
 					start := time.Now()
-					meta := Meta{Iteration: j, User: nbr}
+					meta := Meta{Testcase: name, Iteration: j, User: nbr}
 					if test.status == stopping {
 						break
 					}

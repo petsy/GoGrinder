@@ -277,3 +277,10 @@ func TestGetSettings(t *testing.T) {
 		t.Errorf("Error: additional properties must not contain 'Loadmodel'!")
 	}
 }
+
+func TestCheckTestConfigImplementsConfigInterface(t *testing.T) {
+	s := &TestConfig{}
+	if _, ok := interface{}(s).(Config); !ok {
+		t.Errorf("TestConfig does not implement the Config interface!")
+	}
+}

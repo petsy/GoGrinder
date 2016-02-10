@@ -9,20 +9,11 @@ import (
 )
 
 type HttpMetric struct {
-	gogrinder.Meta               // std. GoGrinder metric info
-	firstByte      time.Duration // first byte after [ns]
-	bytes          int           // response size [kb]
-	code           int           // http status code
-	//err            string        // error message
-}
-
-// implement the Metric interface
-func (m HttpMetric) GetValues() map[string]string {
-	return nil
-}
-
-func (m HttpMetric) GetMeta() gogrinder.Meta {
-	return m.Meta
+	gogrinder.Meta                              // std. GoGrinder metric info
+	FirstByte time.Duration `json:"first-byte"` // first byte after [ns]
+	Bytes     int           `json:"kb"`         // response size [kb]
+	Code      int           `json:"status"`     // http status code
+												//err            string        // error message
 }
 
 // Specific prometheus reporter for HttpMetric.
@@ -62,10 +53,12 @@ func NewHttpMetricReporter() *HttpMetricReporter {
 func (r *HttpMetricReporter) Update(m gogrinder.Metric) {
 	// find out if we deal with a HttpMetric
 	if h, ok := m.(HttpMetric); ok {
-		r.bytes.WithLabelValues(h.Teststep).Observe(float64(h.bytes) / float64(1024))
-		r.firstByte.WithLabelValues(h.Teststep).Observe(float64(h.firstByte) / float64(time.Millisecond))
+		r.bytes.WithLabelValues(h.Teststep).Observe(float64(h.Bytes) / float64(1024))
+		r.firstByte.WithLabelValues(h.Teststep).Observe(float64(h.FirstByte) / float64(time.Millisecond))
 		r.elapsed.WithLabelValues(h.Teststep).Observe(float64(h.Elapsed) / float64(time.Millisecond))
-		r.code.WithLabelValues(h.Teststep, strconv.FormatInt(int64(h.code), 10)).Inc()
-		if len(h.Error) > 0 {	r.error.WithLabelValues(h.Teststep).Inc() }
+		r.code.WithLabelValues(h.Teststep, strconv.FormatInt(int64(h.Code), 10)).Inc()
+		if len(h.Error) > 0 {
+			r.error.WithLabelValues(h.Teststep).Inc()
+		}
 	}
 }

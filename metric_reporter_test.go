@@ -1,10 +1,10 @@
 package gogrinder
 
-import(
+import (
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
 	time "github.com/finklabs/ttime"
+	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )
 
@@ -29,7 +29,7 @@ func TestHttpMetricUpdate(t *testing.T) {
 
 	// add datapoint
 	m := Meta{"01_tc", "01_01_ts", 0, 0, time.Now(),
-			time.Duration(600 * time.Millisecond), "something went wrong!"}
+		time.Duration(600 * time.Millisecond), "something went wrong!"}
 	mr.Update(m)
 
 	// check that datapoint was reported
@@ -42,3 +42,5 @@ func TestHttpMetricUpdate(t *testing.T) {
 		t.Errorf("Expected error counter %f, got %f.", exp, got)
 	}
 }
+
+// TODO add test with HttpMetric!

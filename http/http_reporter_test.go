@@ -1,15 +1,14 @@
 package http
 
-import(
-	"testing"
+import (
 	"net/http"
+	"testing"
 
 	"github.com/finklabs/GoGrinder"
-	"github.com/prometheus/client_golang/prometheus"
 	time "github.com/finklabs/ttime"
+	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )
-
 
 // TODO: Pending prometheus/client_golang#58
 // read metric helpers needs rework once testability is improved!
@@ -32,7 +31,7 @@ func TestHttpMetricUpdate(t *testing.T) {
 
 	// add datapoint
 	hm := HttpMetric{gogrinder.Meta{"01_tc", "01_01_ts", 0, 0, time.Now(),
-			time.Duration(600 * time.Millisecond), "something is wrong!"},
+		time.Duration(600 * time.Millisecond), "something is wrong!"},
 		time.Duration(500 * time.Millisecond), 10240, http.StatusOK}
 	hmr.Update(hm)
 
@@ -58,3 +57,27 @@ func TestHttpMetricUpdate(t *testing.T) {
 		t.Errorf("Expected code counter %f, got %f.", exp, got)
 	}
 }
+
+func TestCheckHttpMetricReporterImplementsReporterInterface(t *testing.T) {
+	mr := NewHttpMetricReporter()
+	if _, ok := interface{}(mr).(gogrinder.Reporter); !ok {
+		t.Errorf("HttpMetricReporter does not implement the Reporter interface!")
+	}
+}
+
+func TestCheckHttpMetricImplementsMetricInterface(t *testing.T) {
+	mr := HttpMetric{}
+	if _, ok := interface{}(mr).(gogrinder.Metric); !ok {
+		t.Errorf("HttpMetric does not implement the Metric interface!")
+	}
+}
+
+/* FIXME
+func TestCheckHttpMetricEmbedsMeta(t *testing.T) {
+	//mr := HttpMetric{gogrinder.Meta{}, time.Duration(0), 0, 0}
+	mr := HttpMetric{}
+	if _, ok := (gogrinder.Metric(mr)).(gogrinder.Meta); !ok {
+		t.Errorf("HttpMetric does not embed Meta!")
+	}
+}
+*/

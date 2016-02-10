@@ -232,8 +232,8 @@ func TestDeleteRaw(t *testing.T) {
 	}
 	_ = tmp1.(ResponseRaw)
 
-	if metric.code != http.StatusOK {
-		t.Fatalf("DeleteRaw status code not as expected: '%s'", metric.code)
+	if metric.Code != http.StatusOK {
+		t.Fatalf("DeleteRaw status code not as expected: '%s'", metric.Code)
 	}
 }
 

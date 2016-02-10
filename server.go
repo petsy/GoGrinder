@@ -14,12 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type Server interface {
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
-	Router() *mux.Router
-	NewTestServer(test *TestScenario) *TestServer
-}
-
 type TestServer struct {
 	test            *TestScenario
 	graceful.Server // stoppable http server
