@@ -15,12 +15,12 @@ import (
 )
 
 type TestServer struct {
-	test            *TestScenario
+	test            Scenario
 	graceful.Server // stoppable http server
 }
 
 // Assemble the Webserver for the GoGrinder frontend. It takes a testscenario as argument.
-func NewTestServer(test *TestScenario) *TestServer {
+func NewTestServer(test Scenario) *TestServer {
 	var srv TestServer
 	srv = TestServer{
 		test: test,
@@ -84,7 +84,7 @@ func (srv *TestServer) getStatistics(r *http.Request) (interface{}, *handlerErro
 	since = r.URL.Query().Get("since")
 	res := make(map[string]interface{})
 	res["results"] = srv.test.Results(since)
-	res["running"] = srv.test.status != stopped // could be stopping or running
+	res["running"] = srv.test.Status() != Stopped // could be stopping or running
 	return res, nil
 }
 
@@ -98,15 +98,16 @@ func (srv *TestServer) getCsv(r *http.Request) (interface{}, *handlerError) {
 }
 
 func (srv *TestServer) startTest(r *http.Request) (interface{}, *handlerError) {
-	if srv.test.status == stopped {
+	if srv.test.Status() == Stopped {
 		srv.test.Exec()
 	}
 	return make(map[string]string), nil
 }
 
 func (srv *TestServer) stopTest(r *http.Request) (interface{}, *handlerError) {
-	if srv.test.status != stopped {
-		srv.test.status = stopping
+	if srv.test.Status() != Stopped {
+		// FIXME
+		//srv.test.status = Stopping
 	}
 	return make(map[string]string), nil
 }
@@ -134,8 +135,8 @@ func (srv *TestServer) updateConfig(r *http.Request) (interface{}, *handlerError
 // write the config to file.
 func (srv *TestServer) getConfig(r *http.Request) (interface{}, *handlerError) {
 	res := make(map[string]interface{})
-	res["config"] = srv.test.config
-	res["mtime"] = srv.test.mtime
+	res["config"] = srv.test.GetConfigMap()
+	res["mtime"] = srv.test.GetConfigMTime()
 	return res, nil
 }
 

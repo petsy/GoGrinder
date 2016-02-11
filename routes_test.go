@@ -200,8 +200,8 @@ func TestRouteStartStop(t *testing.T) {
 		}
 	}
 
-	if srv.test.status == running {
-		t.Fatalf("Status code expected not running but was: %v", srv.test.status)
+	if srv.test.Status() == Running {
+		t.Fatalf("Status code expected not running but was: %v", srv.test.Status())
 	}
 }
 
@@ -214,10 +214,12 @@ func TestRouteGetConfig(t *testing.T) {
 
 	srv := TestServer{}
 	srv.test = NewTest()
-	srv.test.config["Scenario"] = "scenario1"
-	srv.test.config["ThinkTimeFactor"] = 2.0
-	srv.test.config["ThinkTimeVariance"] = 0.1
-	srv.test.filename = file.Name()
+	loadmodel := `{
+	  "Scenario": "scenario1",
+	  "ThinkTimeFactor": 2.0,
+	  "ThinkTimeVariance": 0.1
+	}`
+	srv.test.ReadConfigValidate(loadmodel, LoadmodelSchema)
 
 	req, _ := http.NewRequest("GET", "/config", nil)
 	rsp := httptest.NewRecorder()
@@ -241,12 +243,12 @@ func TestRouteSaveConfig(t *testing.T) {
 	defer os.Remove(file.Name())
 
 	srv := TestServer{}
-	srv.test = NewTest()
-	srv.test.filename = file.Name()
-
-	config := `{"Scenario":"scenario1","ThinkTimeFactor":2,"ThinkTimeVariance":0.1}`
+	scenario := NewTest()
+	scenario.filename = file.Name()
+	srv.test = scenario
 
 	{
+		config := `{"Scenario":"scenario1","ThinkTimeFactor":2,"ThinkTimeVariance":0.1}`
 		req, _ := http.NewRequest("PUT", "/config", strings.NewReader(config))
 		rsp := httptest.NewRecorder()
 		srv.Router().ServeHTTP(rsp, req)

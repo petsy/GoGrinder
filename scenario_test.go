@@ -10,7 +10,7 @@ import (
 func TestThinktimeNoVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
-	fake.status = running
+	fake.status = Running
 	fake.config["Scenario"] = "scenario1"
 
 	time.Freeze(time.Now())
@@ -27,7 +27,7 @@ func TestThinktimeNoVariance(t *testing.T) {
 func TestThinktimeVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
-	fake.status = running
+	fake.status = Running
 	fake.config["Scenario"] = "scenario1"
 	fake.config["ThinkTimeFactor"] = 2.0
 	fake.config["ThinkTimeVariance"] = 0.1
@@ -65,7 +65,7 @@ func TestThinktimeStops(t *testing.T) {
 	defer time.Unfreeze()
 	// create a fake loadmodel for testing
 	var fake = NewTest()
-	fake.status = stopping
+	fake.status = Stopping
 	fake.config["Scenario"] = "scenario1"
 
 	start := time.Now()
@@ -82,7 +82,7 @@ func TestPaceMaker(t *testing.T) {
 
 	var fake = NewTest()
 	fake.config["Scenario"] = "scenario1"
-	fake.status = running
+	fake.status = Running
 	start := time.Now()
 	fake.paceMaker(10*time.Second, 0)
 	if time.Now().Sub(start) != 10*time.Second {
@@ -96,7 +96,7 @@ func TestPaceMakerNegativeValue(t *testing.T) {
 
 	var fake = NewTest()
 	fake.config["Scenario"] = "scenario1"
-	fake.status = running
+	fake.status = Running
 	start := time.Now()
 	fake.paceMaker(-10, 0)
 	if time.Now().Sub(start) != 0 {
@@ -107,7 +107,7 @@ func TestPaceMakerNegativeValue(t *testing.T) {
 func TestPaceMakerVariance(t *testing.T) {
 	// create a fake loadmodel for testing
 	var fake = NewTest()
-	fake.status = running
+	fake.status = Running
 	fake.config["Scenario"] = "scenario1"
 	fake.config["ThinkTimeFactor"] = 2.0
 	fake.config["ThinkTimeVariance"] = 0.1
@@ -146,7 +146,7 @@ func TestPaceMakerStops(t *testing.T) {
 	defer time.Unfreeze()
 	// create a fake loadmodel for testing
 	var fake = NewTest()
-	fake.status = stopping
+	fake.status = Stopping
 	fake.config["Scenario"] = "scenario1"
 
 	start := time.Now()
@@ -310,12 +310,26 @@ func TestExecErrorFunctionWithThreeParams(t *testing.T) {
 	}
 }
 
-/*
 func TestCheckTestScenarioImplementsScenarioInterface(t *testing.T) {
 	nt := NewTest()
 
-	if ok := nt.(Scenario); !ok {
+	if _, ok := interface{}(nt).(Scenario); !ok {
 		t.Errorf("TestScenario does not implement the Scenario interface!")
 	}
 }
-*/
+
+func TestCheckTestScenarioImplementsStatisticsInterface(t *testing.T) {
+	nt := NewTest()
+
+	if _, ok := interface{}(nt).(Statistics); !ok {
+		t.Errorf("TestScenario does not implement the Statistics interface!")
+	}
+}
+
+func TestCheckTestScenarioImplementsConfigInterface(t *testing.T) {
+	nt := NewTest()
+
+	if _, ok := interface{}(nt).(Config); !ok {
+		t.Errorf("TestScenario does not implement the Config interface!")
+	}
+}

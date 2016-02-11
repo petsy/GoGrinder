@@ -4,9 +4,78 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"sync"
 
 	time "github.com/finklabs/ttime"
 )
+
+// Scenario builds on interfaces Config and Statistics.
+type Scenario interface {
+	Config
+	Statistics
+	Testscenario(name string, scenario interface{})
+	TeststepBasic(name string, step func(Meta)) func(Meta) interface{}
+	Teststep(name string, step func(Meta) (interface{}, Metric)) func(Meta) interface{}
+	Schedule(name string, testcase func(Meta, Settings)) error
+	DoIterations(testcase func(Meta, Settings),
+		iterations int, pacing float64, parallel bool)
+	Run(name string, testcase func(Meta, Settings),
+		delay float64, runfor float64, rampup float64, users int, pacing float64,
+		settings Settings)
+	Exec() error
+	Thinktime(tt float64)
+	Status() Status
+}
+
+// Datatype to collect reference information about the execution of a teststep
+type Meta struct {
+	Testcase  string        `json:"testcase"`
+	Teststep  string        `json:"teststep"`
+	User      int           `json:"user"`
+	Iteration int           `json:"iteration"`
+	Timestamp time.Time     `json:"ts"`
+	Elapsed   time.Duration `json:"elapsed"` // elapsed time [ns]
+	Error     string        `json:"error,omitempty"`
+}
+
+// TestScenario datastructure that brings all the GoGrinder functionality together.
+// TestScenario supports multiple interfaces (TestConfig, TestStatistics).
+type TestScenario struct {
+	TestConfig // needs to be anonymous to promote access to struct field and methods
+	TestStatistics
+	testscenarios map[string]interface{}            // testscenarios registry for testscenarios
+	teststeps     map[string]func(Meta) interface{} // registry for teststeps
+	wg            sync.WaitGroup                    // waitgroup for teststeps
+	status        Status                            // status (stopped, running, stopping) (used in Report())
+}
+
+// Constants of internal test status.
+type Status int
+
+const (
+	Stopped = iota
+	Running
+	Stopping
+)
+
+// Constructor takes care of initializing the TestScenario datastructure.
+func NewTest() *TestScenario {
+	t := TestScenario{
+		testscenarios: make(map[string]interface{}),
+		teststeps:     make(map[string]func(Meta) interface{}),
+		status:        Stopped,
+
+		TestConfig: TestConfig{
+			config: make(map[string]interface{}),
+		},
+
+		TestStatistics: TestStatistics{
+			stats:        make(map[string]stats_value),
+			measurements: make(chan Metric),
+		},
+	}
+	return &t
+}
 
 // paceMaker is used internally. For testability it is not implemented as an internal function.
 // Parameter <pace> is given in nanoseconds.
@@ -24,13 +93,13 @@ func (test *TestScenario) paceMaker(pacing time.Duration, elapsed time.Duration)
 
 	// split up in small intervals so we can stop out of this
 	for ; p > small; p = p - small {
-		if test.status != running {
+		if test.status != Running {
 			break
 		}
 		time.Sleep(small)
 	}
 	// remaining sleep time
-	if test.status == running {
+	if test.status == Running {
 		time.Sleep(p)
 	}
 }
@@ -92,11 +161,11 @@ func (test *TestScenario) DoIterations(testcase func(Meta, Settings),
 		for i := 0; i < iterations; i++ {
 			start := time.Now()
 			meta := Meta{Iteration: i, User: 0}
-			if test.status == stopping {
+			if test.status == Stopping {
 				break
 			}
 			testcase(meta, settings)
-			if test.status == stopping {
+			if test.status == Stopping {
 				break
 			}
 			test.paceMaker(time.Duration(pacing*float64(time.Second)), time.Now().Sub(start))
@@ -135,11 +204,11 @@ func (test *TestScenario) Run(name string, testcase func(Meta, Settings),
 					// next iteration
 					start := time.Now()
 					meta := Meta{Testcase: name, Iteration: j, User: nbr}
-					if test.status == stopping {
+					if test.status == Stopping {
 						break
 					}
 					testcase(meta, settings)
-					if test.status == stopping {
+					if test.status == Stopping {
 						break
 					}
 					test.paceMaker(time.Duration(pacing*float64(time.Second)), time.Now().Sub(start))
@@ -156,7 +225,7 @@ func (test *TestScenario) Exec() error {
 	if scenario, ok := test.testscenarios[sel]; ok {
 		test.Reset()           // clear stats from previous run
 		done := test.Collect() // start the collector
-		test.status = running
+		test.status = Running
 
 		fn := reflect.ValueOf(scenario)
 		fnType := fn.Type()
@@ -185,7 +254,7 @@ func (test *TestScenario) Exec() error {
 		test.wg.Wait()           // wait till end
 		close(test.measurements) // need to close the channel so that collect can exit, too
 		<-done                   // wait for collector to finish
-		test.status = stopped
+		test.status = Stopped
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)
 	}
@@ -195,10 +264,15 @@ func (test *TestScenario) Exec() error {
 // Thinktime takes ThinkTimeFactor and ThinkTimeVariance into account.
 // tt is given in Seconds. So for example 3.0 equates to 3 seconds; 0.3 to 300ms.
 func (test *TestScenario) Thinktime(tt float64) {
-	if test.status == running {
+	if test.status == Running {
 		_, ttf, ttv, _ := test.GetScenarioConfig()
 		r := (rand.Float64() * 2.0) - 1.0 // r in [-1.0 - 1.0)
 		v := float64(tt) * ttf * ((r * ttv) + 1.0) * float64(time.Second)
 		time.Sleep(time.Duration(v))
 	}
+}
+
+// Read the Status of the test: Running, Stopping, Stopped
+func (test *TestScenario) Status() Status {
+	return test.status
 }

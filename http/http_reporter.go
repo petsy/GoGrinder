@@ -9,11 +9,11 @@ import (
 )
 
 type HttpMetric struct {
-	gogrinder.Meta                              // std. GoGrinder metric info
-	FirstByte time.Duration `json:"first-byte"` // first byte after [ns]
-	Bytes     int           `json:"kb"`         // response size [kb]
-	Code      int           `json:"status"`     // http status code
-												//err            string        // error message
+	gogrinder.Meta               // std. GoGrinder metric info
+	FirstByte      time.Duration `json:"first-byte"` // first byte after [ns]
+	Bytes          int           `json:"kb"`         // response size [kb]
+	Code           int           `json:"status"`     // http status code
+	//err            string        // error message
 }
 
 // Specific prometheus reporter for HttpMetric.

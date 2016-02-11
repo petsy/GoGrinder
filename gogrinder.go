@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/finklabs/graceful"
@@ -20,62 +19,9 @@ var stdout io.Writer = os.Stdout
 // ISO8601 should be available in ttime package but we keep it here for now.
 var ISO8601 = "2006-01-02T15:04:05.999Z"
 
-/*
-type Scenario interface {
-	Testscenario(name string, scenario interface{})
-	Teststep(name string, step func(Meta)) func(Meta)
-	Schedule(name string, testcase func(Meta)) error
-	DoIterations(testcase func(Meta), iterations int, pacing float64, parallel bool)
-	Run(testcase func(Meta), delay float64, runfor float64, rampup float64, users int, pacing float64)
-	Exec() error
-	Thinktime(tt int64)
-}
-*/
-
-// TestScenario datastructure that brings all the GoGrinder functionality together.
-// TestScenario supports multiple interfaces (TestConfig, TestStatistics).
-type TestScenario struct {
-	TestConfig // needs to be anonymous to promote access to struct field and methods
-	TestStatistics
-	testscenarios map[string]interface{}            // testscenarios registry for testscenarios
-	teststeps     map[string]func(Meta) interface{} // registry for teststeps
-	wg            sync.WaitGroup                    // waitgroup for teststeps
-	status        status                            // status (stopped, running, stopping) (used in Report())
-}
-
-// Constants of internal test status.
-type status int
-
-const (
-	stopped = iota
-	running
-	stopping
-)
-
-// Constructor takes care of initializing the TestScenario datastructure.
-func NewTest() *TestScenario {
-	t := TestScenario{
-		testscenarios: make(map[string]interface{}),
-		teststeps:     make(map[string]func(Meta) interface{}),
-		status:        stopped,
-
-		TestConfig: TestConfig{
-			config: make(map[string]interface{}),
-		},
-
-		TestStatistics: TestStatistics{
-			stats:        make(map[string]stats_value),
-			measurements: make(chan Metric),
-		},
-	}
-	return &t
-}
-
 // This is the "standard" gogrinder behaviour. If you need a special configuration
 // or setup then maybe you should start with this code.
-// TODO: this should probably look like this:
-// GoGrinder(test *Scenario) error {
-func (test *TestScenario) GoGrinder() error {
+func GoGrinder(test Scenario) error {
 	var err error
 	filename, noExec, noReport, noFrontend, noPrometheus, port, logLevel, err := GetCLI()
 	if err != nil {

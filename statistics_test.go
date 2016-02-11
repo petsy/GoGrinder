@@ -112,7 +112,7 @@ func TestField2JsonTag(t *testing.T) {
 	}
 }
 
-func TestRead(t *testing.T) {
+func TestCsv(t *testing.T) {
 	bak := stdout
 	stdout = new(bytes.Buffer)
 	defer func() { stdout = bak }()
@@ -147,5 +147,61 @@ func TestCheckTestStatisticsImplementsStatisticsInterface(t *testing.T) {
 	}
 }
 
-// TODO:
-// test default_reporter with Meta AND HttpMetric!
+func TestSetReportPlugins(t *testing.T) {
+	mr := NewMetricReporter()
+	ts := &TestStatistics{}
+	ts.SetReportPlugins(mr)
+
+	if ts.reporters[0] != mr {
+		t.Errorf("SetReportPlugins did not set the MetricReporter")
+	}
+}
+
+func TestAddReportPlugin(t *testing.T) {
+	ts := &TestStatistics{}
+	mr := NewMetricReporter()
+	er := &EventReporter{}
+	ts.SetReportPlugins(mr)
+	ts.AddReportPlugin(er)
+
+	if ts.reporters[0] != mr {
+		t.Errorf("AddReportPlugin changed already set reporters!")
+	}
+
+	if ts.reporters[1] != er {
+		t.Errorf("AddReportPlugin did not set the EventReporter!")
+	}
+}
+
+// someMetric is used in TestReportWithSomeMetric
+type someMetric struct {
+	Meta     // std. GoGrinder metric info
+	Code int `json:"status"` // http status code
+}
+
+func TestReportWithSomeMetric(t *testing.T) {
+	bak := stdout
+	stdout = new(bytes.Buffer)
+	defer func() { stdout = bak }()
+
+	fake := NewTest()
+	done := fake.Collect() // this needs a collector to unblock update
+	insert := func(name string) {
+		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: 8 * time.Millisecond, Timestamp: time.Now()}, 100}))
+		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: 10 * time.Millisecond, Timestamp: time.Now()}, 200}))
+		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: 2 * time.Millisecond, Timestamp: time.Now()}, 300}))
+	}
+	insert("tc2")
+	insert("tc1")
+	insert("tc3")
+
+	close(fake.measurements)
+	<-done
+	fake.Report(stdout) // run the report
+	report := stdout.(*bytes.Buffer).String()
+	if report != ("tc1, 6.666666, 2.000000, 10.000000, 3\n" +
+		"tc2, 6.666666, 2.000000, 10.000000, 3\n" +
+		"tc3, 6.666666, 2.000000, 10.000000, 3\n") {
+		t.Fatalf("Report output not as expected: %s", report)
+	}
+}

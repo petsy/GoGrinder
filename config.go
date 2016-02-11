@@ -17,6 +17,8 @@ type Config interface {
 	GetSettings() Settings
 	GetScenarioConfig() (string, float64, float64, float64)
 	GetTestcaseConfig(testcase string) (float64, float64, float64, int, float64, error)
+	GetConfigMap() map[string]interface{}
+	GetConfigMTime() time.Time
 }
 
 type Settings map[string]interface{}
@@ -202,4 +204,14 @@ func (test *TestConfig) GetSettings() Settings {
 		}
 	}
 	return opts
+}
+
+// Get the Json config data.
+func (test *TestConfig) GetConfigMap() map[string]interface{} {
+	return test.config
+}
+
+// Query the timestamp (mtime) of the config file.
+func (test *TestConfig) GetConfigMTime() time.Time {
+	return test.mtime
 }

@@ -42,5 +42,3 @@ func TestHttpMetricUpdate(t *testing.T) {
 		t.Errorf("Expected error counter %f, got %f.", exp, got)
 	}
 }
-
-// TODO add test with HttpMetric!

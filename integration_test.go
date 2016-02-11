@@ -362,8 +362,6 @@ func TestGoGrinder(t *testing.T) {
 }
 */
 
-/*
-// TODO add settings back in!
 func TestSettings(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
@@ -372,16 +370,12 @@ func TestSettings(t *testing.T) {
 	defer func() { stdout = bak }()
 
 	test := NewTest()
-	tsts1 := test.Teststep("tsts1", func(meta Meta) { time.Sleep(50 * time.Millisecond) })
+	tsts1 := test.TeststepBasic("tsts1", func(meta Meta) { time.Sleep(50 * time.Millisecond) })
 
-	tstc1 := func(meta Meta) {
+	tstc1 := func(meta Meta, settings Settings) {
 		// we want to make sure, that the settings work E2E so we verify them
 		// within the teststep itself!
-		settings, ok := meta["settings"].(map[string]interface{})
-		if !ok {
-			t.Errorf("Error: expected meta to contain 'settings'!")
-		}
-		_, ok = settings["Awesome"]
+		_, ok := settings["Awesome"]
 		if !ok {
 			t.Errorf("Error: expected 'settings' to contain 'Awesome'!")
 		}
@@ -411,4 +405,3 @@ func TestSettings(t *testing.T) {
 		t.Fatalf("Report output of 'fake' scenario not as expected: %s", report)
 	}
 }
-*/

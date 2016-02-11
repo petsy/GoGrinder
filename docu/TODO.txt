@@ -11,17 +11,13 @@ frontend
 
 backend
 * fix TODOs
-* refactor GoGrinder to operate on Scenario interface
-* remove GetMeta() from Metric interface
 
 scenario
-* add back the settings feature
 
 tests
 * test resource consumption
-* reporters: Update(), event-reporter
+=> reporters: Update(), event-reporter
 * stop webserver route
-* Add/SetReportPlugins
 * metrics
 * check all components implement their interface
 * code looks better but test coverage goes down?
