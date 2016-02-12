@@ -174,10 +174,10 @@ func TestAddReportPlugin(t *testing.T) {
 }
 
 // someMetric is used in TestReportWithSomeMetric
-type someMetric struct {
-	Meta     // std. GoGrinder metric info
-	Code int `json:"status"` // http status code
-}
+//type someMetric struct {
+//	Meta     // std. GoGrinder metric info
+//	Code int `json:"status"` // http status code
+//}
 
 func TestReportWithSomeMetric(t *testing.T) {
 	bak := stdout
