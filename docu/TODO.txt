@@ -16,7 +16,6 @@ scenario
 
 tests
 * test resource consumption
-=> reporters: Update(), event-reporter
 * stop webserver route
 * metrics
 * check all components implement their interface

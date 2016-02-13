@@ -30,9 +30,9 @@ func TestHttpMetricUpdate(t *testing.T) {
 	hmr := NewHttpMetricReporter()
 
 	// add datapoint
-	hm := HttpMetric{gogrinder.Meta{"01_tc", "01_01_ts", 0, 0, time.Now(),
-		time.Duration(600 * time.Millisecond), "something is wrong!"},
-		time.Duration(500 * time.Millisecond), 10240, http.StatusOK}
+	hm := HttpMetric{gogrinder.Meta{"01_tc", "01_01_ts", 0, 0, gogrinder.Timestamp(time.Now()),
+		gogrinder.Elapsed(600 * time.Millisecond), "something is wrong!"},
+		gogrinder.Elapsed(500 * time.Millisecond), 10240, http.StatusOK}
 	hmr.Update(hm)
 
 	// check that datapoint was reported

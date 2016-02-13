@@ -2,6 +2,7 @@ package gogrinder
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 
 	time "github.com/finklabs/ttime"
@@ -12,7 +13,7 @@ func TestUpdateOneMeasurement(t *testing.T) {
 	// first measurement
 	done := fake.Collect() // this needs a collector to unblock update
 
-	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: time.Now()})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -33,9 +34,9 @@ func TestUpdateOneMeasurement(t *testing.T) {
 func TestUpdateMultipleMeasurements(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
-	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: time.Now()})
-	fake.Update(Meta{Teststep: "sth", Elapsed: 10 * time.Millisecond, Timestamp: time.Now()})
-	fake.Update(Meta{Teststep: "sth", Elapsed: 2 * time.Millisecond, Timestamp: time.Now()})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -57,7 +58,7 @@ func TestReset(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	// first measurement
-	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: time.Now()})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
 	if _, ok := fake.stats["sth"]; ok {
@@ -79,9 +80,9 @@ func TestReport(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(Meta{Teststep: name, Elapsed: 8 * time.Millisecond, Timestamp: time.Now()})
-		fake.Update(Meta{Teststep: name, Elapsed: 10 * time.Millisecond, Timestamp: time.Now()})
-		fake.Update(Meta{Teststep: name, Elapsed: 2 * time.Millisecond, Timestamp: time.Now()})
+		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	}
 	insert("tc2")
 	insert("tc1")
@@ -120,9 +121,9 @@ func TestCsv(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(Meta{Teststep: name, Elapsed: 8 * time.Millisecond, Timestamp: time.Now()})
-		fake.Update(Meta{Teststep: name, Elapsed: 10 * time.Millisecond, Timestamp: time.Now()})
-		fake.Update(Meta{Teststep: name, Elapsed: 2 * time.Millisecond, Timestamp: time.Now()})
+		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	}
 	insert("tc2")
 	insert("tc1")
@@ -173,12 +174,6 @@ func TestAddReportPlugin(t *testing.T) {
 	}
 }
 
-// someMetric is used in TestReportWithSomeMetric
-//type someMetric struct {
-//	Meta     // std. GoGrinder metric info
-//	Code int `json:"status"` // http status code
-//}
-
 func TestReportWithSomeMetric(t *testing.T) {
 	bak := stdout
 	stdout = new(bytes.Buffer)
@@ -187,9 +182,9 @@ func TestReportWithSomeMetric(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: 8 * time.Millisecond, Timestamp: time.Now()}, 100}))
-		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: 10 * time.Millisecond, Timestamp: time.Now()}, 200}))
-		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: 2 * time.Millisecond, Timestamp: time.Now()}, 300}))
+		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 100}))
+		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 200}))
+		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 300}))
 	}
 	insert("tc2")
 	insert("tc1")
@@ -205,3 +200,57 @@ func TestReportWithSomeMetric(t *testing.T) {
 		t.Fatalf("Report output not as expected: %s", report)
 	}
 }
+
+type someReporter struct{}
+
+func (s someReporter) Update(m Metric) {
+	v := reflect.ValueOf(m)
+	teststep := v.FieldByName("Teststep").Interface().(string)
+	if teststep != "sth" {
+		panic("Error: invalid teststep name during test execution.")
+	}
+}
+
+func TestCollectCallsReporterUpdate(t *testing.T) {
+	fake := NewTest()
+	fake.AddReportPlugin(someReporter{})
+
+	// first measurement
+	done := fake.Collect() // this needs a collector to unblock update
+
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	close(fake.measurements)
+	<-done
+	/*if v, ok := fake.stats["sth"]; ok {
+		if v.avg != 8*time.Millisecond {
+			t.Errorf("Statistics update avg %d not as expected 8ms!\n", v.avg)
+		}
+		if v.min != 8*time.Millisecond {
+			t.Errorf("Statistics update min %d not as expected 8ms!\n", v.min)
+		}
+		if v.max != 8*time.Millisecond {
+			t.Errorf("Statistics update max %d not as expected 8ms!\n", v.max)
+		}
+	} else {
+		t.Errorf("Update failed to insert a value for 'sth'!")
+	}*/
+}
+
+/*
+// Collect all measurements. It blocks until measurements channel is closed.
+func (test *TestStatistics) Collect() <-chan bool {
+	done := make(chan bool)
+	go func(test *TestStatistics) {
+		for metric := range test.measurements {
+			// call the default reporter
+			test.default_reporter(metric)
+			// call the plugged in reporters
+			for _, reporter := range test.reporters {
+				reporter.Update(metric)
+			}
+		}
+		done <- true
+	}(test)
+	return done
+}
+*/

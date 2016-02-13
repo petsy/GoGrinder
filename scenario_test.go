@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"encoding/json"
 	time "github.com/finklabs/ttime"
 )
 
@@ -174,7 +175,7 @@ func TestTestscenario(t *testing.T) {
 	}
 }
 
-func TestTeststep(t *testing.T) {
+func TestTeststepBasic(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
 
@@ -182,6 +183,47 @@ func TestTeststep(t *testing.T) {
 	step := func(Meta) { time.Sleep(20) }
 
 	its := fake.TeststepBasic("sth", step)
+
+	if v, ok := fake.teststeps["sth"]; ok {
+		sf1 := reflect.ValueOf(v)
+		sf2 := reflect.ValueOf(its)
+		if sf1.Pointer() != sf2.Pointer() {
+			t.Fatal("Teststep 'sth' does not contain step function!")
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing!")
+	}
+
+	// run the teststep (note: a different angle would be to mock out update)
+	done := fake.Collect() // this needs a collector to unblock update
+	its(Meta{Teststep: "sth"})
+	fake.wg.Wait()
+	close(fake.measurements)
+	<-done
+
+	if v, ok := fake.stats["sth"]; ok {
+
+		if v.avg != 20.0 {
+			t.Fatalf("Teststep 'sth' measurement %v not 20ns!\n", v.avg)
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing in stats!")
+	}
+}
+
+func TestTeststepWithSomeMetric(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	var fake = NewTest()
+	step := func(m Meta) (interface{}, Metric) {
+		time.Sleep(20)
+		// in this variant we have to proved all measurements
+		m.Elapsed = Elapsed(20) // 20ns
+		return nil, someMetric{m, 100}
+	}
+
+	its := fake.Teststep("sth", step)
 
 	if v, ok := fake.teststeps["sth"]; ok {
 		sf1 := reflect.ValueOf(v)
@@ -331,5 +373,48 @@ func TestCheckTestScenarioImplementsConfigInterface(t *testing.T) {
 
 	if _, ok := interface{}(nt).(Config); !ok {
 		t.Errorf("TestScenario does not implement the Config interface!")
+	}
+}
+
+func TestInitiateScenarioStop(t *testing.T) {
+	var fake = NewTest()
+	fake.status = Running
+	fake.Stop()
+
+	if fake.status != Stopping {
+		t.Errorf("Test scenatio status exptected Stopping, but was: %d", fake.status)
+	}
+}
+
+func TestGetScenarioStatus(t *testing.T) {
+	var fake = NewTest()
+	fake.status = Running
+
+	if fake.Status() != Running {
+		t.Errorf("Test scenatio status exptected Running, but was: %d", fake.status)
+	}
+}
+
+func TestTimestampMarshalJSON(t *testing.T) {
+	tt := time.Now()
+	ts := Timestamp(tt)
+
+	tt_json, _ := json.Marshal(tt)
+	ts_json, _ := json.Marshal(ts)
+
+	if string(ts_json) != string(tt_json) {
+		t.Errorf("Timstamp JSON Marshal expected: %s, but was: %s",
+			string(tt_json), string(ts_json))
+	}
+}
+
+func TestElapsedMarshalJSON(t *testing.T) {
+	d50 := Elapsed(50 * time.Millisecond)
+	exp := "50.000000"
+	d50_json, _ := json.Marshal(d50)
+
+	if string(d50_json) != exp {
+		t.Errorf("Elapsed JSON Marshal expected: %s, but was: %s",
+			exp, string(d50_json))
 	}
 }

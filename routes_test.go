@@ -14,25 +14,6 @@ import (
 
 // TODO func TestHandlerServeHTTPInvalidJson(t *testing.T) ?
 
-//func TestGetLoadmodel(t *testing.T) {
-//	// use since query with ISO8601 datetime
-//	//request, _ := http.NewRequest("GET", "/loadmodel", nil)
-//	//response := httptest.NewRecorder()
-//
-//	var fake = NewTest()
-//	response, err := fake.getLoadmodel(nil, nil)
-//
-//	if err != nil {
-//		t.Fatalf("Error while processing: %s", err)
-//	}
-//
-//	//body := response.Body
-//	b := book{"Ender's Game", "Orson Scott Card", 1}
-//	if response.(book) != b {
-//		t.Fatalf("Response not as expected: %v", response)
-//	}
-//}
-
 ////////////////////////////////
 // test routes
 ////////////////////////////////
@@ -43,10 +24,10 @@ func TestRouteGetCsv(t *testing.T) {
 	srv.test = fake
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
-	now := time.Now().UTC()
-	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: now})
-	fake.Update(Meta{Teststep: "sth", Elapsed: 10 * time.Millisecond, Timestamp: now})
-	fake.Update(Meta{Teststep: "sth", Elapsed: 2 * time.Millisecond, Timestamp: now})
+	now := Timestamp(time.Now().UTC())
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(10 * time.Millisecond), Timestamp: now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(2 * time.Millisecond), Timestamp: now})
 	close(fake.measurements)
 	<-done
 
@@ -74,9 +55,9 @@ func TestRouteGetStatistics(t *testing.T) {
 	// put 3 measurements into the fake server
 	done := fake.Collect() // this needs a collector to unblock update
 	now := time.Now().UTC()
-	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: now})
-	fake.Update(Meta{Teststep: "sth", Elapsed: 10 * time.Millisecond, Timestamp: now})
-	fake.Update(Meta{Teststep: "sth", Elapsed: 2 * time.Millisecond, Timestamp: now})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(now)})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(now)})
+	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(now)})
 	close(fake.measurements)
 	<-done
 
@@ -97,71 +78,71 @@ func TestRouteGetStatistics(t *testing.T) {
 	}
 }
 
-// TODO test the routes as well
-func TestHandlerStatisticsWithQuery(t *testing.T) {
+func TestRouteHandlerStatisticsWithQuery(t *testing.T) {
 	// test with 3 measurements (two stats)
-	var fake = NewTest()
-	done := fake.Collect() // this needs a collector to unblock update
+	srv := TestServer{}
+	fake := NewTest()
+	srv.test = fake
+	done := srv.test.Collect() // this needs a collector to unblock update
 	t1 := time.Now().UTC()
-	fake.Update(Meta{Teststep: "sth", Elapsed: 8 * time.Millisecond, Timestamp: t1})
+	srv.test.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond),
+		Timestamp: Timestamp(t1)})
 	time.Sleep(5 * time.Millisecond)
 	t2 := t1.Add(2 * time.Millisecond)
-	fake.Update(Meta{Teststep: "else", Elapsed: 10 * time.Millisecond, Timestamp: t1})
-	fake.Update(Meta{Teststep: "else", Elapsed: 2 * time.Millisecond, Timestamp: t2})
+	srv.test.Update(Meta{Teststep: "else", Elapsed: Elapsed(10 *
+		time.Millisecond), Timestamp: Timestamp(t1)})
+	srv.test.Update(Meta{Teststep: "else", Elapsed: Elapsed(2 *
+		time.Millisecond), Timestamp: Timestamp(t2)})
 	t3 := t2.Add(2 * time.Millisecond)
 	close(fake.measurements)
 	<-done
 
-	// invoke REST service for stats update
-	//iso8601 := "2006-01-02T15:04:05.999Z"
-	ts2 := t2.Format(ISO8601)
-	request, _ := http.NewRequest("GET", "/statistics?since="+ts2, nil)
-	srv := TestServer{}
-	srv.test = fake
-	response, err := srv.getStatistics(request)
-	if err != nil {
-		t.Fatalf("Error while processing: %s", err.Message)
-	}
-	if len(response.(map[string]interface{})["results"].([]Result)) != 1 {
-		t.Fatalf("Response should contain exactly 1 row.")
-	}
-	if response.(map[string]interface{})["results"].([]Result)[0] !=
-		(Result{"else", 6, 2, 10, 2, t2.Format(ISO8601)}) {
-		t.Fatalf("Response not as expected: %v", response.([]Result)[0])
-	}
-
-	// update but no new data
-	ts3 := t3.Format(ISO8601)
-	request, _ = http.NewRequest("GET", "/statistics?since="+ts3, nil)
-	response, err = srv.getStatistics(request)
-
-	if len(response.(map[string]interface{})["results"].([]Result)) != 0 {
-		t.Fatalf("Response should contain 0 rows.")
+	{
+		// startTest
+		//iso8601 := "2006-01-02T15:04:05.999Z"
+		ts2 := t2.Format(ISO8601)
+		req, _ := http.NewRequest("GET", "/statistics?since="+ts2, nil)
+		rsp := httptest.NewRecorder()
+		srv.Router().ServeHTTP(rsp, req)
+		if rsp.Code != http.StatusOK {
+			t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
+		}
+		results := rsp.Body.String()
+		if results != fmt.Sprintf(`{"results":[{"teststep":"else","avg_ms":6,"min_ms":2,"max_ms":10,`+
+			`"count":2,"last":"%s"}],"running":false}`, t2.Format(ISO8601)) {
+			t.Errorf("Results not as expected: %s!", results)
+		}
 	}
 
-	// get all rows
-	request, _ = http.NewRequest("GET", "/statistics", nil)
-	response, err = srv.getStatistics(request)
+	{
+		// update but no new data
+		ts3 := t3.Format(ISO8601)
+		req, _ := http.NewRequest("GET", "/statistics?since="+ts3, nil)
+		rsp := httptest.NewRecorder()
+		srv.Router().ServeHTTP(rsp, req)
+		if rsp.Code != http.StatusOK {
+			t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
+		}
+		results := rsp.Body.String()
+		if results != `{"results":[],"running":false}` {
+			t.Errorf("Results not as expected: %s!", results)
+		}
+	}
 
-	if err != nil {
-		t.Fatalf("Error while processing: %s", err.Message)
-	}
-	if len(response.(map[string]interface{})["results"].([]Result)) != 2 {
-		t.Fatalf("Response should contain exactly 2 rows.")
-	}
-	// "else" is [0]
-	if response.(map[string]interface{})["results"].([]Result)[0] !=
-		(Result{"else", 6, 2, 10, 2, t2.Format(ISO8601)}) {
-		t.Log(t2.Format(ISO8601))
-		t.Logf("Response 0: %v", response.(map[string]interface{})["results"].([]Result)[0])
-		t.Logf("Response 1: %v", response.(map[string]interface{})["results"].([]Result)[1])
-		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[0])
-	}
-	// "sth" is [1]
-	if response.(map[string]interface{})["results"].([]Result)[1] !=
-		(Result{"sth", 8, 8, 8, 1, t1.Format(ISO8601)}) {
-		t.Log(t1)
-		t.Fatalf("Response not as expected: %v", response.(map[string]interface{})["results"].([]Result)[1])
+	{
+		// get all rows
+		req, _ := http.NewRequest("GET", "/statistics", nil)
+		rsp := httptest.NewRecorder()
+		srv.Router().ServeHTTP(rsp, req)
+		if rsp.Code != http.StatusOK {
+			t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
+		}
+		results := rsp.Body.String()
+		if results != fmt.Sprintf(`{"results":[{"teststep":"else","avg_ms":6,"min_ms":2,"max_ms":10,`+
+			`"count":2,"last":"%s"},{"teststep":"sth","avg_ms":8,"min_ms":8,"max_ms":8,"count":1,`+
+			`"last":"%s"}],"running":false}`, t2.Format(ISO8601), t1.Format(ISO8601)) {
+			t.Errorf("Results not as expected: %s!", results)
+		}
 	}
 }
 
@@ -276,5 +257,16 @@ func TestRouteApp(t *testing.T) {
 
 	if rsp.Code != http.StatusOK {
 		t.Fatalf("Status code expected: %v but was: %v", http.StatusOK, rsp.Code)
+	}
+}
+
+func TestRouteWebserverStop(t *testing.T) {
+	srv := TestServer{}
+	srv.test = NewTest()
+	req, _ := http.NewRequest("DELETE", "/stop", nil)
+	rsp := httptest.NewRecorder()
+	srv.Router().ServeHTTP(rsp, req)
+	if rsp.Code != http.StatusOK {
+		t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
 	}
 }

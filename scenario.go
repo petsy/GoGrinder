@@ -6,7 +6,9 @@ import (
 	"reflect"
 	"sync"
 
+	"errors"
 	time "github.com/finklabs/ttime"
+	"strconv"
 )
 
 // Scenario builds on interfaces Config and Statistics.
@@ -25,18 +27,56 @@ type Scenario interface {
 	Exec() error
 	Thinktime(tt float64)
 	Status() Status
+	Stop()
+}
+
+type Timestamp time.Time
+
+func (ts Timestamp) MarshalJSON() ([]byte, error) {
+	t := time.Time(ts)
+	if y := t.Year(); y < 0 || y >= 10000 {
+		// RFC 3339 is clear that years are 4 digits exactly.
+		// See golang.org/issue/4556#c15 for more discussion.
+		return nil, errors.New("Time.MarshalJSON: year outside of range [0,9999]")
+	}
+	return []byte(t.Format(`"` + time.RFC3339Nano + `"`)), nil
+}
+
+type Elapsed time.Duration
+
+func (e Elapsed) MarshalJSON() ([]byte, error) {
+	// explicit marshaling of ts and elapsed!
+	// from here: http://choly.ca/post/go-json-marshalling/
+	return strconv.AppendFloat(nil, float64(e)/
+		float64(time.Millisecond), 'f', 6, 64), nil
 }
 
 // Datatype to collect reference information about the execution of a teststep
 type Meta struct {
-	Testcase  string        `json:"testcase"`
-	Teststep  string        `json:"teststep"`
-	User      int           `json:"user"`
-	Iteration int           `json:"iteration"`
-	Timestamp time.Time     `json:"ts"`
-	Elapsed   time.Duration `json:"elapsed"` // elapsed time [ns]
-	Error     string        `json:"error,omitempty"`
+	Testcase  string    `json:"testcase"`
+	Teststep  string    `json:"teststep"`
+	User      int       `json:"user"`
+	Iteration int       `json:"iteration"`
+	Timestamp Timestamp `json:"ts"`
+	Elapsed   Elapsed   `json:"elapsed"` // elapsed time [ns]
+	Error     string    `json:"error,omitempty"`
 }
+
+/*// TODO write test for this!
+func (m Meta) MarshalJSON() ([]byte, error) {
+	// explicit marshaling of ts and elapsed!
+	// from here: http://choly.ca/post/go-json-marshalling/
+	type Alias Meta
+	return json.Marshal(&struct {
+		Elapsed []byte `json:"elapsed"`
+		Alias
+	}{
+		Elapsed: strconv.AppendFloat(nil, float64(m.Elapsed) /
+			float64(time.Millisecond), 'f', 6, 64),
+		//Elapsed: "moin",
+		Alias:    (Alias)(m),
+	})
+}*/
 
 // TestScenario datastructure that brings all the GoGrinder functionality together.
 // TestScenario supports multiple interfaces (TestConfig, TestStatistics).
@@ -116,10 +156,10 @@ func (test *TestScenario) TeststepBasic(name string, step func(Meta)) func(Meta)
 	its := func(meta Meta) interface{} {
 		start := time.Now()
 		meta.Teststep = name
-		meta.Timestamp = start
+		meta.Timestamp = Timestamp(start)
 		step(meta)
 
-		meta.Elapsed = time.Now().Sub(start)
+		meta.Elapsed = Elapsed(time.Now().Sub(start))
 		test.Update(meta)
 		return nil
 	}
@@ -275,4 +315,11 @@ func (test *TestScenario) Thinktime(tt float64) {
 // Read the Status of the test: Running, Stopping, Stopped
 func (test *TestScenario) Status() Status {
 	return test.status
+}
+
+// Initiate scenario stopping.
+func (test *TestScenario) Stop() {
+	if test.Status() != Stopped {
+		test.status = Stopping
+	}
 }

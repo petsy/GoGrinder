@@ -37,7 +37,7 @@ func TestFirstByteAfterReader(t *testing.T) {
 	if !(body == "mark") {
 		t.Fatalf("Read buffer was expected '%s', but was: '%v'", "mark", body)
 	}
-	if fbr.firstByteAfter != 55*time.Millisecond {
+	if fbr.firstByteAfter != gogrinder.Elapsed(55*time.Millisecond) {
 		t.Fatalf("First byte was expected after 55 ms but was: %v", fbr.firstByteAfter)
 	}
 

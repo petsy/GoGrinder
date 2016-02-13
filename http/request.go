@@ -18,19 +18,19 @@ import (
 type metricReader struct {
 	bytes          int
 	start          time.Time
-	firstByteAfter time.Duration
+	firstByteAfter gogrinder.Elapsed
 	readFrom       *bufio.Reader
 }
 
 func newMetricReader(start time.Time, readFrom io.Reader) *metricReader {
 	// wrap into buffered reader
-	return &metricReader{0, start, time.Duration(0), bufio.NewReader(readFrom)}
+	return &metricReader{0, start, gogrinder.Elapsed(0), bufio.NewReader(readFrom)}
 }
 
 func (fb *metricReader) Read(p []byte) (n int, err error) {
-	if fb.firstByteAfter == time.Duration(0) {
+	if fb.firstByteAfter == gogrinder.Elapsed(0) {
 		fb.readFrom.ReadByte()
-		fb.firstByteAfter = time.Now().Sub(fb.start)
+		fb.firstByteAfter = gogrinder.Elapsed(time.Now().Sub(fb.start))
 		fb.readFrom.UnreadByte()
 	}
 	n, err = fb.readFrom.Read(p)
@@ -69,7 +69,7 @@ func doJson(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		m.Error += err.Error()
 	}
 
-	m.Elapsed = time.Now().Sub(start)
+	m.Elapsed = gogrinder.Elapsed(time.Now().Sub(start))
 
 	return ResponseJson{doc, resp.Header}, HttpMetric{m, mr.firstByteAfter, mr.bytes,
 		resp.StatusCode}
@@ -145,7 +145,7 @@ func doRaw(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		m.Error += err.Error()
 	}
 
-	m.Elapsed = time.Now().Sub(start)
+	m.Elapsed = gogrinder.Elapsed(time.Now().Sub(start))
 	return ResponseRaw{raw, resp.Header}, HttpMetric{m, mr.firstByteAfter, mr.bytes,
 		resp.StatusCode}
 }
@@ -218,7 +218,7 @@ func do(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		m.Error += err.Error()
 	}
 
-	m.Elapsed = time.Now().Sub(start)
+	m.Elapsed = gogrinder.Elapsed(time.Now().Sub(start))
 	return Response{doc, resp.Header}, HttpMetric{m, mr.firstByteAfter, mr.bytes,
 		resp.StatusCode}
 }

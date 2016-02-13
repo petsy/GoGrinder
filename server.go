@@ -105,10 +105,7 @@ func (srv *TestServer) startTest(r *http.Request) (interface{}, *handlerError) {
 }
 
 func (srv *TestServer) stopTest(r *http.Request) (interface{}, *handlerError) {
-	if srv.test.Status() != Stopped {
-		// FIXME
-		//srv.test.status = Stopping
-	}
+	srv.test.Stop()
 	return make(map[string]string), nil
 }
 
