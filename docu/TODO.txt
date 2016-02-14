@@ -12,14 +12,11 @@ frontend
 
 backend
 * fix TODOs
-* what happened to error in event log?
-* timestamp in event log?
 
 scenario
 
 tests
 * test resource consumption
-* integration test using http/request maybe airbiscuit
 * use params in teststeps in Teststep and TeststepBasic
 
 defects
@@ -32,14 +29,15 @@ samples
 
 docu
 * add some description on how to get things together with prometheus and grafana
-
+* develop docu
 
 plugins
 =======
 
 http
-* server not available panic: runtime error: invalid memory address or nil pointer dereference
+* add documentation!!!
 
+util
 
 
 Version 0.01
