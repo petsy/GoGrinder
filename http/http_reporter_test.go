@@ -10,6 +10,30 @@ import (
 	dto "github.com/prometheus/client_model/go"
 )
 
+func TestCheckHttpMetricReporterImplementsReporterInterface(t *testing.T) {
+	mr := NewHttpMetricReporter()
+	if _, ok := interface{}(mr).(gogrinder.Reporter); !ok {
+		t.Errorf("HttpMetricReporter does not implement the Reporter interface!")
+	}
+}
+
+func TestCheckHttpMetricImplementsMetricInterface(t *testing.T) {
+	mr := HttpMetric{}
+	if _, ok := interface{}(mr).(gogrinder.Metric); !ok {
+		t.Errorf("HttpMetric does not implement the Metric interface!")
+	}
+}
+
+/* FIXME
+func TestCheckHttpMetricEmbedsMeta(t *testing.T) {
+	//mr := HttpMetric{gogrinder.Meta{}, time.Duration(0), 0, 0}
+	mr := HttpMetric{}
+	if _, ok := (gogrinder.Metric(mr)).(gogrinder.Meta); !ok {
+		t.Errorf("HttpMetric does not embed Meta!")
+	}
+}
+*/
+
 // TODO: Pending prometheus/client_golang#58
 // read metric helpers needs rework once testability is improved!
 func readSummaryVec(m *prometheus.SummaryVec, l prometheus.Labels) []*dto.Quantile {
@@ -57,27 +81,3 @@ func TestHttpMetricUpdate(t *testing.T) {
 		t.Errorf("Expected code counter %f, got %f.", exp, got)
 	}
 }
-
-func TestCheckHttpMetricReporterImplementsReporterInterface(t *testing.T) {
-	mr := NewHttpMetricReporter()
-	if _, ok := interface{}(mr).(gogrinder.Reporter); !ok {
-		t.Errorf("HttpMetricReporter does not implement the Reporter interface!")
-	}
-}
-
-func TestCheckHttpMetricImplementsMetricInterface(t *testing.T) {
-	mr := HttpMetric{}
-	if _, ok := interface{}(mr).(gogrinder.Metric); !ok {
-		t.Errorf("HttpMetric does not implement the Metric interface!")
-	}
-}
-
-/* FIXME
-func TestCheckHttpMetricEmbedsMeta(t *testing.T) {
-	//mr := HttpMetric{gogrinder.Meta{}, time.Duration(0), 0, 0}
-	mr := HttpMetric{}
-	if _, ok := (gogrinder.Metric(mr)).(gogrinder.Meta); !ok {
-		t.Errorf("HttpMetric does not embed Meta!")
-	}
-}
-*/

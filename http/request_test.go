@@ -189,7 +189,7 @@ func TestPostRaw(t *testing.T) {
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
 	r := strings.NewReader("abcdefghijklmnopq")
-	val, metric := PostRaw(ts.URL, r)(m)
+	val, metric := PostRaw(ts.URL)(m, r)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -208,7 +208,7 @@ func TestPutRaw(t *testing.T) {
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
 	r := strings.NewReader("abcdefghijklmnopq")
-	val, metric := PutRaw(ts.URL, r)(m)
+	val, metric := PutRaw(ts.URL)(m, r)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -311,4 +311,33 @@ func TestPut(t *testing.T) {
 			t.Fatalf("Name was expected '%s', but was: '%s'", "A green door", s.Text())
 		}
 	})
+}
+
+func TestRegisterRequestWithGoGrinderTeststep(t *testing.T) {
+	// echo server
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body)
+	}))
+	defer ts.Close()
+
+	fake := gogrinder.NewTest()
+
+	step := func(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
+		r := strings.NewReader(args[0].(string))
+		return PostRaw(ts.URL)(m, r)
+	}
+
+	instr := fake.Teststep("a_step", step)
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+
+	// run the teststep (note: a different angle would be to mock out update)
+	done := fake.Collect() // this needs a collector to unblock update
+	resp := instr(m, "greetings").(ResponseRaw)
+
+	fake.Wait()
+	<-done
+
+	if string(resp.Raw) != "greetings" {
+		t.Fatalf("Echo from PostRaw was not as expected: %s", string(resp.Raw))
+	}
 }

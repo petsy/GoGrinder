@@ -8,6 +8,12 @@ import (
 	time "github.com/finklabs/ttime"
 )
 
+func TestCheckTestStatisticsImplementsStatisticsInterface(t *testing.T) {
+	s := &TestStatistics{}
+	if _, ok := interface{}(s).(Statistics); !ok {
+		t.Errorf("TestStatistics does not implement the Statistics interface!")
+	}
+}
 func TestUpdateOneMeasurement(t *testing.T) {
 	fake := NewTest()
 	// first measurement
@@ -141,13 +147,6 @@ func TestCsv(t *testing.T) {
 	}
 }
 
-func TestCheckTestStatisticsImplementsStatisticsInterface(t *testing.T) {
-	s := &TestStatistics{}
-	if _, ok := interface{}(s).(Statistics); !ok {
-		t.Errorf("TestStatistics does not implement the Statistics interface!")
-	}
-}
-
 func TestSetReportPlugins(t *testing.T) {
 	mr := NewMetricReporter()
 	ts := &TestStatistics{}
@@ -221,36 +220,4 @@ func TestCollectCallsReporterUpdate(t *testing.T) {
 	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
-	/*if v, ok := fake.stats["sth"]; ok {
-		if v.avg != 8*time.Millisecond {
-			t.Errorf("Statistics update avg %d not as expected 8ms!\n", v.avg)
-		}
-		if v.min != 8*time.Millisecond {
-			t.Errorf("Statistics update min %d not as expected 8ms!\n", v.min)
-		}
-		if v.max != 8*time.Millisecond {
-			t.Errorf("Statistics update max %d not as expected 8ms!\n", v.max)
-		}
-	} else {
-		t.Errorf("Update failed to insert a value for 'sth'!")
-	}*/
 }
-
-/*
-// Collect all measurements. It blocks until measurements channel is closed.
-func (test *TestStatistics) Collect() <-chan bool {
-	done := make(chan bool)
-	go func(test *TestStatistics) {
-		for metric := range test.measurements {
-			// call the default reporter
-			test.default_reporter(metric)
-			// call the plugged in reporters
-			for _, reporter := range test.reporters {
-				reporter.Update(metric)
-			}
-		}
-		done <- true
-	}(test)
-	return done
-}
-*/

@@ -14,8 +14,8 @@ import (
 var gg = NewTest()
 
 // sleep step factory
-func myStep(duration time.Duration) func(Meta) {
-	return func(meta Meta) {
+func myStep(duration time.Duration) func(Meta, ...interface{}) {
+	return func(meta Meta, args ...interface{}) {
 		time.Sleep(duration * time.Millisecond)
 	}
 }
@@ -370,7 +370,7 @@ func TestSettings(t *testing.T) {
 	defer func() { stdout = bak }()
 
 	test := NewTest()
-	tsts1 := test.TeststepBasic("tsts1", func(meta Meta) { time.Sleep(50 * time.Millisecond) })
+	tsts1 := test.TeststepBasic("tsts1", func(meta Meta, args ...interface{}) { time.Sleep(50 * time.Millisecond) })
 
 	tstc1 := func(meta Meta, settings Settings) {
 		// we want to make sure, that the settings work E2E so we verify them

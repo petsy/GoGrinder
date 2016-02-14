@@ -8,6 +8,13 @@ import (
 	dto "github.com/prometheus/client_model/go"
 )
 
+func TestCheckMetricReporterImplementsReporterInterface(t *testing.T) {
+	mr := NewMetricReporter()
+	if _, ok := interface{}(mr).(Reporter); !ok {
+		t.Errorf("MetricReporter does not implement the Reporter interface!")
+	}
+}
+
 // TODO: Pending prometheus/client_golang#58
 // read metric helpers needs rework once testability is improved!
 func readSummaryVec(m *prometheus.SummaryVec, l prometheus.Labels) []*dto.Quantile {

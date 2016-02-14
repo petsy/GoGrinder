@@ -8,18 +8,19 @@ frontend
 * mtime format (is there a std. json time format)?
 * fix sorting UI
 * exit only if test is stopped
+* check refresh
 
 backend
 * fix TODOs
+* what happened to error in event log?
+* timestamp in event log?
 
 scenario
 
 tests
 * test resource consumption
-* stop webserver route
-* metrics
-* check all components implement their interface
-* code looks better but test coverage goes down?
+* integration test using http/request maybe airbiscuit
+* use params in teststeps in Teststep and TeststepBasic
 
 defects
 * loadmodel json format error not detected / reported

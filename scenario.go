@@ -1,14 +1,14 @@
 package gogrinder
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"reflect"
+	"strconv"
 	"sync"
 
-	"errors"
 	time "github.com/finklabs/ttime"
-	"strconv"
 )
 
 // Scenario builds on interfaces Config and Statistics.
@@ -16,8 +16,8 @@ type Scenario interface {
 	Config
 	Statistics
 	Testscenario(name string, scenario interface{})
-	TeststepBasic(name string, step func(Meta)) func(Meta) interface{}
-	Teststep(name string, step func(Meta) (interface{}, Metric)) func(Meta) interface{}
+	TeststepBasic(name string, step func(Meta, ...interface{})) func(Meta, ...interface{}) interface{}
+	Teststep(name string, step func(Meta, ...interface{}) (interface{}, Metric)) func(Meta, ...interface{}) interface{}
 	Schedule(name string, testcase func(Meta, Settings)) error
 	DoIterations(testcase func(Meta, Settings),
 		iterations int, pacing float64, parallel bool)
@@ -28,6 +28,7 @@ type Scenario interface {
 	Thinktime(tt float64)
 	Status() Status
 	Stop()
+	Wait()
 }
 
 type Timestamp time.Time
@@ -62,31 +63,15 @@ type Meta struct {
 	Error     string    `json:"error,omitempty"`
 }
 
-/*// TODO write test for this!
-func (m Meta) MarshalJSON() ([]byte, error) {
-	// explicit marshaling of ts and elapsed!
-	// from here: http://choly.ca/post/go-json-marshalling/
-	type Alias Meta
-	return json.Marshal(&struct {
-		Elapsed []byte `json:"elapsed"`
-		Alias
-	}{
-		Elapsed: strconv.AppendFloat(nil, float64(m.Elapsed) /
-			float64(time.Millisecond), 'f', 6, 64),
-		//Elapsed: "moin",
-		Alias:    (Alias)(m),
-	})
-}*/
-
 // TestScenario datastructure that brings all the GoGrinder functionality together.
 // TestScenario supports multiple interfaces (TestConfig, TestStatistics).
 type TestScenario struct {
 	TestConfig // needs to be anonymous to promote access to struct field and methods
 	TestStatistics
-	testscenarios map[string]interface{}            // testscenarios registry for testscenarios
-	teststeps     map[string]func(Meta) interface{} // registry for teststeps
-	wg            sync.WaitGroup                    // waitgroup for teststeps
-	status        Status                            // status (stopped, running, stopping) (used in Report())
+	testscenarios map[string]interface{}
+	teststeps     map[string]func(Meta, ...interface{}) interface{}
+	wg            sync.WaitGroup  // waitgroup for teststeps
+	status        Status          // status (stopped, running, stopping)
 }
 
 // Constants of internal test status.
@@ -102,7 +87,7 @@ const (
 func NewTest() *TestScenario {
 	t := TestScenario{
 		testscenarios: make(map[string]interface{}),
-		teststeps:     make(map[string]func(Meta) interface{}),
+		teststeps:     make(map[string]func(Meta, ...interface{}) interface{}),
 		status:        Stopped,
 
 		TestConfig: TestConfig{
@@ -152,12 +137,12 @@ func (test *TestScenario) Testscenario(name string, scenario interface{}) {
 
 // Instrument a teststep and add it to the teststeps registry.
 // This implements Elapsed. For more detailed metrics please implement Teststep.
-func (test *TestScenario) TeststepBasic(name string, step func(Meta)) func(Meta) interface{} {
-	its := func(meta Meta) interface{} {
+func (test *TestScenario) TeststepBasic(name string, step func(Meta, ...interface{})) func(Meta, ...interface{}) interface{} {
+	its := func(meta Meta, args ...interface{}) interface{} {
 		start := time.Now()
 		meta.Teststep = name
 		meta.Timestamp = Timestamp(start)
-		step(meta)
+		step(meta, args...)
 
 		meta.Elapsed = Elapsed(time.Now().Sub(start))
 		test.Update(meta)
@@ -169,10 +154,10 @@ func (test *TestScenario) TeststepBasic(name string, step func(Meta)) func(Meta)
 
 // Instrument a teststep and add it to the teststeps registry.
 // Teststeps need to return payload and Metric.
-func (test *TestScenario) Teststep(name string, step func(Meta) (interface{}, Metric)) func(Meta) interface{} {
-	its := func(meta Meta) interface{} {
+func (test *TestScenario) Teststep(name string, step func(Meta, ...interface{}) (interface{}, Metric)) func(Meta, ...interface{}) interface{} {
+	its := func(meta Meta, args ...interface{}) interface{} {
 		meta.Teststep = name
-		result, metric := step(meta)
+		result, metric := step(meta, args...)
 		test.Update(metric)
 		return result
 	}
@@ -291,10 +276,11 @@ func (test *TestScenario) Exec() error {
 		}
 		// wait for testcases to finish
 		// note: keep this in the foreground - do not put any of this into a goroutine!
-		test.wg.Wait()           // wait till end
-		close(test.measurements) // need to close the channel so that collect can exit, too
+		test.Wait()
+		//test.wg.Wait()           // wait till end
+		//close(test.measurements) // need to close the channel so that collect can exit, too
 		<-done                   // wait for collector to finish
-		test.status = Stopped
+		//test.status = Stopped
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)
 	}
@@ -322,4 +308,12 @@ func (test *TestScenario) Stop() {
 	if test.Status() != Stopped {
 		test.status = Stopping
 	}
+}
+
+// Careful this is an internal exposed to ease testing.
+// you need to also pull from the Collectors done channel!
+func (test *TestScenario) Wait() {
+	test.wg.Wait()           // wait till end
+	close(test.measurements) // need to close the channel so that collect can exit, too
+	test.status = Stopped
 }

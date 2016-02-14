@@ -1,12 +1,36 @@
 package gogrinder
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
-	"encoding/json"
 	time "github.com/finklabs/ttime"
 )
+
+func TestCheckTestScenarioImplementsScenarioInterface(t *testing.T) {
+	nt := NewTest()
+
+	if _, ok := interface{}(nt).(Scenario); !ok {
+		t.Errorf("TestScenario does not implement the Scenario interface!")
+	}
+}
+
+func TestCheckTestScenarioImplementsStatisticsInterface(t *testing.T) {
+	nt := NewTest()
+
+	if _, ok := interface{}(nt).(Statistics); !ok {
+		t.Errorf("TestScenario does not implement the Statistics interface!")
+	}
+}
+
+func TestCheckTestScenarioImplementsConfigInterface(t *testing.T) {
+	nt := NewTest()
+
+	if _, ok := interface{}(nt).(Config); !ok {
+		t.Errorf("TestScenario does not implement the Config interface!")
+	}
+}
 
 func TestThinktimeNoVariance(t *testing.T) {
 	// create a fake loadmodel for testing
@@ -180,7 +204,7 @@ func TestTeststepBasic(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
-	step := func(Meta) { time.Sleep(20) }
+	step := func(Meta, ...interface{}) { time.Sleep(20) }
 
 	its := fake.TeststepBasic("sth", step)
 
@@ -216,7 +240,7 @@ func TestTeststepWithSomeMetric(t *testing.T) {
 	defer time.Unfreeze()
 
 	var fake = NewTest()
-	step := func(m Meta) (interface{}, Metric) {
+	step := func(m Meta, args ...interface{}) (interface{}, Metric) {
 		time.Sleep(20)
 		// in this variant we have to proved all measurements
 		m.Elapsed = Elapsed(20) // 20ns
@@ -349,30 +373,6 @@ func TestExecErrorFunctionWithThreeParams(t *testing.T) {
 	e := err.Error()
 	if e != "expected a function with zero or two parameters to implement 01_testcase" {
 		t.Errorf("Error msg for function one or more than two params not as expected: %s", e)
-	}
-}
-
-func TestCheckTestScenarioImplementsScenarioInterface(t *testing.T) {
-	nt := NewTest()
-
-	if _, ok := interface{}(nt).(Scenario); !ok {
-		t.Errorf("TestScenario does not implement the Scenario interface!")
-	}
-}
-
-func TestCheckTestScenarioImplementsStatisticsInterface(t *testing.T) {
-	nt := NewTest()
-
-	if _, ok := interface{}(nt).(Statistics); !ok {
-		t.Errorf("TestScenario does not implement the Statistics interface!")
-	}
-}
-
-func TestCheckTestScenarioImplementsConfigInterface(t *testing.T) {
-	nt := NewTest()
-
-	if _, ok := interface{}(nt).(Config); !ok {
-		t.Errorf("TestScenario does not implement the Config interface!")
 	}
 }
 
