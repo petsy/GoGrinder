@@ -1,3 +1,10 @@
+Copyright Fink Labs GmbH and other contributors, http://www.finklabs.org/
+
+The following license applies to all parts of this software except as
+documented below:
+
+=====
+
 The MIT License (MIT)
 
 Copyright (c) 2015 
@@ -20,3 +27,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+=====
+
+All files located in the bower_components, node_modules, libs and external
+directories are externally maintained libraries used by this software which
+have their own licenses; we recommend you read them, as their terms may differ
+from the terms above.
