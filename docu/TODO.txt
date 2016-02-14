@@ -34,6 +34,14 @@ docu
 * add some description on how to get things together with prometheus and grafana
 
 
+plugins
+=======
+
+http
+* server not available panic: runtime error: invalid memory address or nil pointer dereference
+
+
+
 Version 0.01
 ============
 * prometheus reporter for Meta

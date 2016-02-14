@@ -70,8 +70,8 @@ type TestScenario struct {
 	TestStatistics
 	testscenarios map[string]interface{}
 	teststeps     map[string]func(Meta, ...interface{}) interface{}
-	wg            sync.WaitGroup  // waitgroup for teststeps
-	status        Status          // status (stopped, running, stopping)
+	wg            sync.WaitGroup // waitgroup for teststeps
+	status        Status         // status (stopped, running, stopping)
 }
 
 // Constants of internal test status.
@@ -279,7 +279,7 @@ func (test *TestScenario) Exec() error {
 		test.Wait()
 		//test.wg.Wait()           // wait till end
 		//close(test.measurements) // need to close the channel so that collect can exit, too
-		<-done                   // wait for collector to finish
+		<-done // wait for collector to finish
 		//test.status = Stopped
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)

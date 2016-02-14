@@ -24,14 +24,13 @@ type Statistics interface {
 
 // Every type implements the Metric type since it is so simple.
 // Only important thing is that every Metric type embeds Meta.
-type Metric interface {}
+type Metric interface{}
 
 type TestStatistics struct {
 	lock         sync.RWMutex           // lock that is used on stats
 	stats        map[string]stats_value // collect and aggregate results
 	measurements chan Metric
 	reporters    []Reporter
-	d            chan bool
 }
 
 // Internal datastructure to collect and aggregate measurements.
