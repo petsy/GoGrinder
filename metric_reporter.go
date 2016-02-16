@@ -44,11 +44,9 @@ func NewMetricReporter() *MetricReporter {
 // We did not find out a way to implement a generic prometheus reporter.
 // So this is a specific prometheus reporter that deals with HttpMetric values.
 func (r *MetricReporter) Update(m Metric) {
-	// find out if we deal with a Meta
-	if h, ok := m.(Meta); ok {
-		r.elapsed.WithLabelValues(h.Teststep).Observe(float64(h.Elapsed) / float64(time.Millisecond))
-		if len(h.Error) > 0 {
-			r.error.WithLabelValues(h.Teststep).Inc()
-		}
+	r.elapsed.WithLabelValues(m.GetTeststep()).Observe(float64(m.GetElapsed()) /
+		float64(time.Millisecond))
+	if len(m.GetError()) > 0 {
+		r.error.WithLabelValues(m.GetTeststep()).Inc()
 	}
 }

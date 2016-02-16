@@ -8,6 +8,13 @@ import (
 	time "github.com/finklabs/ttime"
 )
 
+func TestCheckMetaImplementsMetricInterface(t *testing.T) {
+	m := Meta{}
+
+	if _, ok := interface{}(m).(Metric); !ok {
+		t.Errorf("Meta does not implement the Metric interface!")
+	}
+}
 func TestCheckTestScenarioImplementsScenarioInterface(t *testing.T) {
 	nt := NewTest()
 

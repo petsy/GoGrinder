@@ -24,7 +24,12 @@ type Statistics interface {
 
 // Every type implements the Metric type since it is so simple.
 // Only important thing is that every Metric type embeds Meta.
-type Metric interface{}
+type Metric interface {
+	GetTeststep() string
+	GetTimestamp() Timestamp
+	GetElapsed() Elapsed
+	GetError() string
+}
 
 type TestStatistics struct {
 	lock         sync.RWMutex           // lock that is used on stats
@@ -94,12 +99,15 @@ func (test *TestStatistics) Collect() <-chan bool {
 // function to process the incoming measurements and update the stats
 // this is also the default-reporter. All other reporters are in reporter.go
 func (test *TestStatistics) default_reporter(m Metric) {
-	v := reflect.ValueOf(m)
+	//v := reflect.ValueOf(m)
 	// use of m.GetMeta() is kind of lame...
 	// but reading the fields through reflection appears very wrong, too
-	teststep := v.FieldByName("Teststep").Interface().(string)
-	elapsed := time.Duration(v.FieldByName("Elapsed").Interface().(Elapsed))
-	timestamp := time.Time(v.FieldByName("Timestamp").Interface().(Timestamp))
+	//teststep := v.FieldByName("Teststep").Interface().(string)
+	//elapsed := time.Duration(v.FieldByName("Elapsed").Interface().(Elapsed))
+	//timestamp := time.Time(v.FieldByName("Timestamp").Interface().(Timestamp))
+	teststep := m.GetTeststep()
+	elapsed := time.Duration(m.GetElapsed())
+	timestamp := time.Time(m.GetTimestamp())
 	test.lock.RLock()
 	val, exists := test.stats[teststep]
 	test.lock.RUnlock()

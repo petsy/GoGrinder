@@ -1,14 +1,20 @@
 package util
 
-import(
+import (
+	"fmt"
+	"io/ioutil"
 	"testing"
 )
 
-func TestRandString(t *testing.T) {
+func TestRandReader(t *testing.T) {
 
-	r := RandString(2000)
+	r := NewRandReader(2000)
+	buf, _ := ioutil.ReadAll(r)
+	str := string(buf)
 
-	if len(r) != 2000 {
-		t.Errorf("RandString length not as exptected: %d", len(r))
+	fmt.Println(str)
+
+	if len(str) != 2000 {
+		t.Errorf("RandReader result length not as exptected: %d", len(str))
 	}
 }

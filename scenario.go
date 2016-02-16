@@ -63,6 +63,27 @@ type Meta struct {
 	Error     string    `json:"error,omitempty"`
 }
 
+// I think these should be pointer receivers!
+// Access from Metric interface
+func (m Meta) GetTeststep() string {
+	return m.Teststep
+}
+
+// Access from Metric interface
+func (m Meta) GetElapsed() Elapsed {
+	return m.Elapsed
+}
+
+// Access from Metric interface
+func (m Meta) GetTimestamp() Timestamp {
+	return m.Timestamp
+}
+
+// Access from Metric interface
+func (m Meta) GetError() string {
+	return m.Error
+}
+
 // TestScenario datastructure that brings all the GoGrinder functionality together.
 // TestScenario supports multiple interfaces (TestConfig, TestStatistics).
 type TestScenario struct {
