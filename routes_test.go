@@ -42,7 +42,7 @@ func TestRouteGetCsv(t *testing.T) {
 	}
 
 	body := rsp.Body.String()
-	if body != `"teststep, avg_ms, min_ms, max_ms, count\nsth, 6.666666, 2.000000, 10.000000, 3\n"` {
+	if body != `"teststep, avg_ms, min_ms, max_ms, count, error\nsth, 6.666666, 2.000000, 10.000000, 3, 0\n"` {
 		t.Fatalf("Response not as expected: %s", body)
 	}
 }
@@ -73,7 +73,8 @@ func TestRouteGetStatistics(t *testing.T) {
 
 	body := rsp.Body.String()
 	if body != fmt.Sprintf(`{"results":[{"teststep":"sth","avg_ms":6.666666,"min_ms":2,`+
-		`"max_ms":10,"count":3,"last":"%s"}],"running":false}`, now.Format(ISO8601)) {
+		`"max_ms":10,"count":3,"error":0,"last":"%s"}],"running":false}`,
+		now.Format(ISO8601)) {
 		t.Fatalf("Response not as expected: %s", body)
 	}
 }
@@ -108,8 +109,9 @@ func TestRouteHandlerStatisticsWithQuery(t *testing.T) {
 			t.Fatalf("Status code expected: %s but was: %v", "200", rsp.Code)
 		}
 		results := rsp.Body.String()
-		if results != fmt.Sprintf(`{"results":[{"teststep":"else","avg_ms":6,"min_ms":2,"max_ms":10,`+
-			`"count":2,"last":"%s"}],"running":false}`, t2.Format(ISO8601)) {
+		if results != fmt.Sprintf(`{"results":[{"teststep":"else","avg_ms":6,"min_ms":2,`+
+			`"max_ms":10,"count":2,"error":0,"last":"%s"}],"running":false}`,
+			t2.Format(ISO8601)) {
 			t.Errorf("Results not as expected: %s!", results)
 		}
 	}
@@ -139,8 +141,9 @@ func TestRouteHandlerStatisticsWithQuery(t *testing.T) {
 		}
 		results := rsp.Body.String()
 		if results != fmt.Sprintf(`{"results":[{"teststep":"else","avg_ms":6,"min_ms":2,"max_ms":10,`+
-			`"count":2,"last":"%s"},{"teststep":"sth","avg_ms":8,"min_ms":8,"max_ms":8,"count":1,`+
-			`"last":"%s"}],"running":false}`, t2.Format(ISO8601), t1.Format(ISO8601)) {
+			`"count":2,"error":0,"last":"%s"},{"teststep":"sth","avg_ms":8,"min_ms":8,"max_ms":8,` +
+			`"count":1,"error":0,"last":"%s"}],"running":false}`,
+			t2.Format(ISO8601), t1.Format(ISO8601)) {
 			t.Errorf("Results not as expected: %s!", results)
 		}
 	}

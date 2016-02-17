@@ -16,7 +16,6 @@ backend
 scenario
 
 tests
-* test resource consumption
 * use params in teststeps in Teststep and TeststepBasic
 * think about "real" e2e test to run for 1 second?
 * find out how the long-running test flag works

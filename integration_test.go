@@ -130,9 +130,9 @@ func TestBaseline1(t *testing.T) {
 	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
-	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 500\n" +
-		"02_01_teststep, 100.000000, 100.000000, 100.000000, 500\n" +
-		"03_01_teststep, 150.000000, 150.000000, 150.000000, 500\n") {
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 500, 0\n" +
+		"02_01_teststep, 100.000000, 100.000000, 100.000000, 500, 0\n" +
+		"03_01_teststep, 150.000000, 150.000000, 150.000000, 500, 0\n") {
 		t.Fatalf("Report output of baseline scenario not as expected: %s", report)
 	}
 }
@@ -175,9 +175,9 @@ func TestBaseline2(t *testing.T) {
 	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
-	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 18\n" +
-		"02_01_teststep, 100.000000, 100.000000, 100.000000, 9\n" +
-		"03_01_teststep, 150.000000, 150.000000, 150.000000, 6\n") {
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 18, 0\n" +
+		"02_01_teststep, 100.000000, 100.000000, 100.000000, 9, 0\n" +
+		"03_01_teststep, 150.000000, 150.000000, 150.000000, 6, 0\n") {
 		t.Fatalf("Report output of baseline2 scenario not as expected: %s", report)
 	}
 }
@@ -220,7 +220,7 @@ func TestDebug(t *testing.T) {
 	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
-	if report != "01_01_teststep, 50.000000, 50.000000, 50.000000, 1\n" {
+	if report != "01_01_teststep, 50.000000, 50.000000, 50.000000, 1, 0\n" {
 		t.Fatalf("Report output of debug test not as expected: %s", report)
 	}
 }
@@ -251,7 +251,7 @@ func TestAScenarioAvoidingConcurrency(t *testing.T) {
 	gg.Report(stdout)
 	// verify Report!
 	report := stdout.(*bytes.Buffer).String()
-	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 2000\n") {
+	if report != ("01_01_teststep, 50.000000, 50.000000, 50.000000, 2000, 0\n") {
 		t.Fatalf("Report output of scenario1 not as expected: %s", report)
 	}
 }
@@ -401,7 +401,7 @@ func TestSettings(t *testing.T) {
 	// verify Report to make sure the teststep was executed
 	test.Report(stdout)
 	report := stdout.(*bytes.Buffer).String()
-	if report != ("tsts1, 50.000000, 50.000000, 50.000000, 500\n") {
+	if report != ("tsts1, 50.000000, 50.000000, 50.000000, 500, 0\n") {
 		t.Fatalf("Report output of 'fake' scenario not as expected: %s", report)
 	}
 }

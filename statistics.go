@@ -44,6 +44,7 @@ type stats_value struct {
 	min   time.Duration
 	max   time.Duration
 	count int64
+	error int64
 	last  time.Time
 }
 
@@ -55,6 +56,7 @@ type Result struct {
 	Min      float64 `json:"min_ms"`
 	Max      float64 `json:"max_ms"`
 	Count    int64   `json:"count"`
+	Error    int64   `json:"error"`
 	Last     string  `json:"last"`
 }
 
@@ -99,15 +101,11 @@ func (test *TestStatistics) Collect() <-chan bool {
 // function to process the incoming measurements and update the stats
 // this is also the default-reporter. All other reporters are in reporter.go
 func (test *TestStatistics) default_reporter(m Metric) {
-	//v := reflect.ValueOf(m)
-	// use of m.GetMeta() is kind of lame...
-	// but reading the fields through reflection appears very wrong, too
-	//teststep := v.FieldByName("Teststep").Interface().(string)
-	//elapsed := time.Duration(v.FieldByName("Elapsed").Interface().(Elapsed))
-	//timestamp := time.Time(v.FieldByName("Timestamp").Interface().(Timestamp))
 	teststep := m.GetTeststep()
 	elapsed := time.Duration(m.GetElapsed())
 	timestamp := time.Time(m.GetTimestamp())
+	err_count := int64(0)
+	if len(m.GetError()) > 0 { err_count = 1 }
 	test.lock.RLock()
 	val, exists := test.stats[teststep]
 	test.lock.RUnlock()
@@ -122,13 +120,14 @@ func (test *TestStatistics) default_reporter(m Metric) {
 		}
 		val.last = timestamp
 		val.count++
+		val.error += err_count
 		test.lock.Lock()
 		test.stats[teststep] = val
 		test.lock.Unlock()
 	} else {
 		// create a new statistic for t
 		test.lock.Lock()
-		test.stats[teststep] = stats_value{elapsed, elapsed, elapsed, 1, timestamp}
+		test.stats[teststep] = stats_value{elapsed, elapsed, elapsed, 1, err_count, timestamp}
 		test.lock.Unlock()
 	}
 }
@@ -158,7 +157,7 @@ func (test *TestStatistics) Results(since string) []Result {
 	for k, v := range test.stats {
 		if all || (v.last.After(s)) {
 			copy = append(copy, Result{k, d2f(v.avg), d2f(v.min), d2f(v.max),
-				v.count, v.last.UTC().Format(ISO8601)})
+				v.count, v.error, v.last.UTC().Format(ISO8601)})
 		}
 	}
 	sort.Sort(byTeststep(copy))
@@ -169,8 +168,8 @@ func (test *TestStatistics) Results(since string) []Result {
 func (test *TestStatistics) Report(w io.Writer) {
 	res := test.Results("") // get all results
 	for _, s := range res {
-		fmt.Fprintf(w, "%s, %f, %f, %f, %d\n", s.Teststep, s.Avg,
-			s.Min, s.Max, s.Count)
+		fmt.Fprintf(w, "%s, %f, %f, %f, %d, %d\n", s.Teststep, s.Avg,
+			s.Min, s.Max, s.Count, s.Error)
 	}
 }
 
@@ -187,8 +186,8 @@ func (test *TestStatistics) Csv() (string, error) {
 	var b bytes.Buffer
 
 	// write the header (using json tags)
-	_, err := fmt.Fprintf(&b, "%s, %s, %s, %s, %s\n", f2j("Teststep"), f2j("Avg"),
-		f2j("Min"), f2j("Max"), f2j("Count"))
+	_, err := fmt.Fprintf(&b, "%s, %s, %s, %s, %s, %s\n", f2j("Teststep"), f2j("Avg"),
+		f2j("Min"), f2j("Max"), f2j("Count"), f2j("Error"))
 	if err != nil {
 		return b.String(), err
 	}
