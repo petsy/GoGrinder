@@ -206,6 +206,8 @@ func TestTestscenario(t *testing.T) {
 	}
 }
 
+// TODO add params to teststeps in Teststep and Basic tests
+
 func TestTeststepBasic(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
@@ -228,6 +230,48 @@ func TestTeststepBasic(t *testing.T) {
 	// run the teststep (note: a different angle would be to mock out update)
 	done := fake.Collect() // this needs a collector to unblock update
 	its(Meta{Teststep: "sth"})
+	fake.wg.Wait()
+	close(fake.measurements)
+	<-done
+
+	if v, ok := fake.stats["sth"]; ok {
+
+		if v.avg != 20.0 {
+			t.Fatalf("Teststep 'sth' measurement %v not 20ns!\n", v.avg)
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing in stats!")
+	}
+}
+
+func TestTeststepBasicWithParameter(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	var fake = NewTest()
+	step := func(m Meta, args ...interface{}) {
+		// this teststep uses a parameter
+		if args[0].(string) != "sth" {
+			t.Fatal("Teststep first parameter not as expected: %s.", args[0].(string))
+		}
+		time.Sleep(20)
+	}
+
+	its := fake.TeststepBasic("sth", step)
+
+	if v, ok := fake.teststeps["sth"]; ok {
+		sf1 := reflect.ValueOf(v)
+		sf2 := reflect.ValueOf(its)
+		if sf1.Pointer() != sf2.Pointer() {
+			t.Fatal("Teststep 'sth' does not contain step function!")
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing!")
+	}
+
+	// run the teststep (note: a different angle would be to mock out update)
+	done := fake.Collect() // this needs a collector to unblock update
+	its(Meta{Teststep: "sth"}, "sth")
 	fake.wg.Wait()
 	close(fake.measurements)
 	<-done
@@ -269,6 +313,51 @@ func TestTeststepWithSomeMetric(t *testing.T) {
 	// run the teststep (note: a different angle would be to mock out update)
 	done := fake.Collect() // this needs a collector to unblock update
 	its(Meta{Teststep: "sth"})
+	fake.wg.Wait()
+	close(fake.measurements)
+	<-done
+
+	if v, ok := fake.stats["sth"]; ok {
+
+		if v.avg != 20.0 {
+			t.Fatalf("Teststep 'sth' measurement %v not 20ns!\n", v.avg)
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing in stats!")
+	}
+}
+
+func TestTeststepWithSomeMetricAndParameter(t *testing.T) {
+	time.Freeze(time.Now())
+	defer time.Unfreeze()
+
+	var fake = NewTest()
+	step := func(m Meta, args ...interface{}) (interface{}, Metric) {
+		// this teststep uses a parameter
+		if args[0].(string) != "else" {
+			t.Fatal("Teststep first parameter not as expected: %s.", args[0].(string))
+		}
+		time.Sleep(20)
+		// in this variant we have to proved all measurements
+		m.Elapsed = Elapsed(20) // 20ns
+		return nil, someMetric{m, 100}
+	}
+
+	its := fake.Teststep("sth", step)
+
+	if v, ok := fake.teststeps["sth"]; ok {
+		sf1 := reflect.ValueOf(v)
+		sf2 := reflect.ValueOf(its)
+		if sf1.Pointer() != sf2.Pointer() {
+			t.Fatal("Teststep 'sth' does not contain step function!")
+		}
+	} else {
+		t.Fatal("Teststep 'sth' missing!")
+	}
+
+	// run the teststep (note: a different angle would be to mock out update)
+	done := fake.Collect() // this needs a collector to unblock update
+	its(Meta{Teststep: "sth"}, "else")
 	fake.wg.Wait()
 	close(fake.measurements)
 	<-done
