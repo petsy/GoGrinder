@@ -141,7 +141,7 @@ func TestRouteHandlerStatisticsWithQuery(t *testing.T) {
 		}
 		results := rsp.Body.String()
 		if results != fmt.Sprintf(`{"results":[{"teststep":"else","avg_ms":6,"min_ms":2,"max_ms":10,`+
-			`"count":2,"error":0,"last":"%s"},{"teststep":"sth","avg_ms":8,"min_ms":8,"max_ms":8,` +
+			`"count":2,"error":0,"last":"%s"},{"teststep":"sth","avg_ms":8,"min_ms":8,"max_ms":8,`+
 			`"count":1,"error":0,"last":"%s"}],"running":false}`,
 			t2.Format(ISO8601), t1.Format(ISO8601)) {
 			t.Errorf("Results not as expected: %s!", results)

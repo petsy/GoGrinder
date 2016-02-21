@@ -105,7 +105,9 @@ func (test *TestStatistics) default_reporter(m Metric) {
 	elapsed := time.Duration(m.GetElapsed())
 	timestamp := time.Time(m.GetTimestamp())
 	err_count := int64(0)
-	if len(m.GetError()) > 0 { err_count = 1 }
+	if len(m.GetError()) > 0 {
+		err_count = 1
+	}
 	test.lock.RLock()
 	val, exists := test.stats[teststep]
 	test.lock.RUnlock()
