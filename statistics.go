@@ -175,7 +175,7 @@ func (test *TestStatistics) Report(w io.Writer) {
 	}
 }
 
-// helper to convert the field name into json-tag
+// helper to convert the field name into json-tag-string
 func f2j(field string) string {
 	f, ok := reflect.TypeOf((*Result)(nil)).Elem().FieldByName(field)
 	if !ok {

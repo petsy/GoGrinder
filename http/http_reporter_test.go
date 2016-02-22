@@ -24,16 +24,6 @@ func TestCheckHttpMetricImplementsMetricInterface(t *testing.T) {
 	}
 }
 
-/* FIXME
-func TestCheckHttpMetricEmbedsMeta(t *testing.T) {
-	//mr := HttpMetric{gogrinder.Meta{}, time.Duration(0), 0, 0}
-	mr := HttpMetric{}
-	if _, ok := (gogrinder.Metric(mr)).(gogrinder.Meta); !ok {
-		t.Errorf("HttpMetric does not embed Meta!")
-	}
-}
-*/
-
 // TODO: Pending prometheus/client_golang#58
 // read metric helpers needs rework once testability is improved!
 func readSummaryVec(m *prometheus.SummaryVec, l prometheus.Labels) []*dto.Quantile {

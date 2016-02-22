@@ -160,7 +160,6 @@ func TestPutJson(t *testing.T) {
 }
 
 // RAW
-
 func TestGetRaw(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
@@ -342,4 +341,17 @@ func TestRegisterRequestWithGoGrinderTeststep(t *testing.T) {
 	}
 }
 
-// TODO test handling of missing params e.g. url,
+func TestGetRawMissingUrlParameter(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
+		"<p>My first paragraph.</p></body></html>"))
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	_, metric := GetRaw(m)  // usually: GetRaw(m, ts.URL)
+	if metric.(HttpMetric).Error != "GetRaw requires a string url argument.\n" {
+		t.Fatalf("GetRaw error handling for missing url not as expected: '%s'",
+			metric.(HttpMetric).Error)
+	}
+}

@@ -206,8 +206,6 @@ func TestTestscenario(t *testing.T) {
 	}
 }
 
-// TODO add params to teststeps in Teststep and Basic tests
-
 func TestTeststepBasic(t *testing.T) {
 	time.Freeze(time.Now())
 	defer time.Unfreeze()
