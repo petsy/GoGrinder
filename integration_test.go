@@ -113,8 +113,10 @@ func TestBaseline1(t *testing.T) {
 	gg.Testscenario("baseline", baseline1)
 
 	// main part
-	gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
-	//gogrinder.Webserver()  // not necessary for the integration test
+	err := gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 
 	start := time.Now()
 
@@ -149,7 +151,7 @@ func TestBaseline2(t *testing.T) {
 	  "Scenario": "baseline",
 	  "ThinkTimeFactor": 2.0,
 	  "ThinkTimeVariance": 0.1,
-	  "PacingVariance": 0.0,
+	  "PacingVariance": 0.0
 	}`
 	//  no Loadmodel required! ,"Loadmodel": []
 
@@ -157,8 +159,10 @@ func TestBaseline2(t *testing.T) {
 	gg.Testscenario("baseline", baseline2)
 
 	// main part
-	gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
-	//gogrinder.Webserver()  // not necessary for the integration test
+	err := gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 
 	start := time.Now()
 
@@ -204,7 +208,10 @@ func TestDebug(t *testing.T) {
 	gg.Testscenario("01_testcase", tc1)
 
 	// main part
-	gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	err := gg.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 
 	start := time.Now()
 
@@ -236,7 +243,10 @@ func TestAScenarioAvoidingConcurrency(t *testing.T) {
 	gg.Testscenario("scenario1", scenario1)
 
 	// main part
-	gg.ReadConfigValidate(noConcurrencyLoadmodel, LoadmodelSchema)
+	err := gg.ReadConfigValidate(noConcurrencyLoadmodel, LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 
 	start := time.Now()
 
@@ -396,7 +406,10 @@ func TestSettings(t *testing.T) {
 	  "Awesome": "yeah!"
 	}`
 
-	test.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	err := test.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 	test.Exec() // exec the scenario that has been selected in the config file
 	// verify Report to make sure the teststep was executed
 	test.Report(stdout)

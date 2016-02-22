@@ -57,7 +57,10 @@ func TestIntegrationOfHttpPackage(t *testing.T) {
 	gg.Testscenario("scenario1", endurance)
 
 	// main part
-	gg.ReadConfigValidate(airbiscuitLoadmodel, gogrinder.LoadmodelSchema)
+	err := gg.ReadConfigValidate(airbiscuitLoadmodel, gogrinder.LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 
 	// start the airbiscuit server
 	s := &airbiscuit.Stats{50 * time.Millisecond, 0, 0}

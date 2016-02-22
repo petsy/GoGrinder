@@ -18,7 +18,6 @@ scenario
 tests
 
 defects
-* loadmodel json format error not detected / reported
 * need to check if frontend port is available at startup
 
 samples

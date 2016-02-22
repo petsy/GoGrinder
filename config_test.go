@@ -187,7 +187,10 @@ func TestGetTestcaseConfigMissingTestcase(t *testing.T) {
 func TestReadLoadmodelSchema(t *testing.T) {
 	fake := NewTest()
 
-	fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	err := fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 
 	count := len(fake.config["Loadmodel"].([]interface{}))
 	if count != 3 {
@@ -335,7 +338,10 @@ func TestGetSettings(t *testing.T) {
 	  "PacingVariance": 0.0,
 	  "AdditionalProperty": 123
 	}`
-	fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	err := fake.ReadConfigValidate(loadmodel, LoadmodelSchema)
+	if err != nil {
+		t.Fatalf("Error while reading loadmodel config: %s!", err.Error())
+	}
 
 	opts := fake.GetSettings()
 
