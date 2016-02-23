@@ -284,7 +284,7 @@ func (test *TestScenario) Exec() error {
 			if fnType.NumIn() == 2 {
 				// debugging of single testcase executions
 				meta := Meta{}
-				settings := Settings{}
+				settings := test.GetSettings()
 				fn.Call([]reflect.Value{reflect.ValueOf(meta),
 					reflect.ValueOf(settings)},
 				)

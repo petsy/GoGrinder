@@ -62,14 +62,26 @@ func doJson(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 		mr := newMetricReader(start, resp.Body)
 
 		// read the response body and parse as json
-		doc := make(map[string]interface{})
 		raw, err := ioutil.ReadAll(mr)
 		if err != nil {
 			m.Error += err.Error()
 		}
-		err = json.Unmarshal(raw, &doc)
-		if err != nil {
-			m.Error += err.Error()
+		doc := make(map[string]interface{})
+		if len(raw) > 0 {
+			if raw[0] == '[' {
+				// a REST service response to be an array does not seem to be a good idea:
+				// http://stackoverflow.com/questions/12293979/how-do-i-return-a-json-array-with-bottle
+				// many applications do this anyway...
+				// so for now we need a workaround:
+				var array []interface{}
+				err = json.Unmarshal(raw, &array)
+				doc["data"] = array
+			} else {
+				err = json.Unmarshal(raw, &doc)
+			}
+			if err != nil {
+				m.Error += err.Error()
+			}
 		}
 		rr = ResponseJson{doc, resp.Header}
 		//...
