@@ -63,7 +63,7 @@ func TestIntegrationOfHttpPackage(t *testing.T) {
 	}
 
 	// start the airbiscuit server
-	s := &airbiscuit.Stats{50 * time.Millisecond, 0, 0}
+	s := &airbiscuit.Stats{Sleep: 50 * time.Millisecond}
 	r := airbiscuit.Router(s)
 
 	srv := graceful.Server{
