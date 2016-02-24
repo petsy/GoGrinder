@@ -237,56 +237,6 @@ func TestReadLoadmodelSchemaInvalid(t *testing.T) {
 	}
 }
 
-/*
-func TestReadLoadmodelSchemaMissingRequired(t *testing.T) {
-	fake := NewTest()
-	//invalid := `{"this": "is NOT a loadmodel"}`
-	slightlyInvalid := `{
-	  "Scenario": "scenario1",
-	  "ThinkTimeFactor": 0,
-	  "ThinkTimeVariance": 0,
-	  "PacingVariance": 0,
-	  "Loadmodel": [
-		{"Pacing":0,"Testcase":"01_testcase","Users":10},
-		{"Pacing":0,"Runfor":0.95,"Testcase":"02_testcase","Users":10}
-	  ]
-	}`
-
-	err := fake.ReadConfigValidate(slightlyInvalid, LoadmodelSchema)
-
-	expected := "the loadmodel is not valid:\n" +
-	"- Scenario: Scenario is required"
-	e := err.Error()
-	if e != expected {
-		t.Errorf("Error msg not as expected: %s", e)
-	}
-}
-
-func TestReadLoadmodelSchemaAdditionalButNotAllowed(t *testing.T) {
-	fake := NewTest()
-	//invalid := `{"this": "is NOT a loadmodel"}`
-	slightlyInvalid := `{
-	  "Scenario": "scenario1",
-	  "ThinkTimeFactor": 0,
-	  "ThinkTimeVariance": 0,
-	  "PacingVariance": 0,
-	  "Loadmodel": [
-		{"Pacing":0,"Runfor":0.95,"Testcase":"01_testcase","Users":10},
-		{"Pacing":0,"Runfor":0.95,"Testcase":"02_testcase","Users":10}
-	  ]
-	}`
-
-	err := fake.ReadConfigValidate(slightlyInvalid, LoadmodelSchema)
-
-	expected := "the loadmodel is not valid:\n" +
-	"- Scenario: Scenario is required"
-	e := err.Error()
-	if e != expected {
-		t.Errorf("Error msg not as expected: %s", e)
-	}
-}
-*/
-
 func TestReadLoadmodel(t *testing.T) {
 	file, _ := ioutil.TempFile(os.TempDir(), "gogrinder_test")
 	defer os.Remove(file.Name())

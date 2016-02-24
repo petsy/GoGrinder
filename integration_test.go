@@ -72,7 +72,7 @@ var noConcurrencyLoadmodel string = `{
 	    {
 		  "Testcase": "01_testcase",
 		  "Delay": 60.0,
-		  "Runfor": 301.0,
+		  "Runfor": 300.0,
 		  "Rampup": 1.0,
 		  "Users": 1,
 		  "Pacing": 0.110
@@ -254,7 +254,7 @@ func TestAScenarioAvoidingConcurrency(t *testing.T) {
 	execution := time.Now().Sub(start)
 
 	// verify total run time of the baseline senario
-	if execution != 361*time.Second {
+	if execution != 360*time.Second {
 		t.Errorf("Error: execution time of scenario1 not as expected: %v\n", execution)
 	}
 
