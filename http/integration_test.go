@@ -99,8 +99,8 @@ func TestIntegrationOfHttpPackage(t *testing.T) {
 	if results[0].Teststep != "01_01_teststep" {
 		t.Errorf("Teststep name not as expected: %s!", results[0].Teststep)
 	}
-	if results[0].Count < 180 {
-		t.Errorf("Less than 180 get requests: %v!", results[0].Count)
+	if results[0].Count < 170 {
+		t.Errorf("Less than 170 get requests: %v!", results[0].Count)
 	}
 	if results[0].Avg < 50.0 && results[0].Avg > 62.0 {
 		t.Errorf("Average not as expected: %f!", results[0].Avg)
