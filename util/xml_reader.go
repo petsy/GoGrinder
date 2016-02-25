@@ -44,6 +44,7 @@ func XmlReader(filename string, element string) <-chan string {
 				}
 			}
 		}
+		close(read)
 	}()
 	return read
 }
