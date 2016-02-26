@@ -243,7 +243,7 @@ func (test *TestScenario) Run(name string, testcase func(Meta, Settings),
 			// start user
 			go func(nbr int) {
 				defer test.wg.Done()
-				time.Sleep(time.Duration(float64(nbr)*rampup*float64(time.Second)))
+				time.Sleep(time.Duration(float64(nbr) * rampup * float64(time.Second)))
 
 				for j := 0; time.Now().Sub(userStart) <
 					time.Duration(runfor*float64(time.Second)); j++ {

@@ -48,7 +48,7 @@ app.service('ConfigService', function ($http, $timeout) {
         'loadmodel': "",
         'mtime': "",
         'readConfig': function () {
-            $http.get('http://localhost:3030/config')
+            $http.get('/config')
                 .success(function(data, status, headers, config) {
                     self.loadmodel = JSON.stringify(data["config"], null, 2);
                     self.mtime = data["mtime"];
@@ -59,7 +59,7 @@ app.service('ConfigService', function ($http, $timeout) {
         },
         'saveConfig': function (cb_ok) {
             console.log('save file');
-            $http.put('http://localhost:3030/config', self.loadmodel)
+            $http.put('/config', self.loadmodel)
                 .success(function(data, status, headers, config) {
                     // TODO add some confirmation
                     console.log("config saved!");
@@ -113,26 +113,21 @@ app.service('TestService', function ($http, $timeout) {
             }
         },
         'loadResults': function () {
-            $http.get('http://localhost:3030/statistics?since=' + self.last())
+            $http.get('/statistics?since=' + self.last())
                 .success(function (data, status, headers, config) {
                     self.updateResults(data.results);
                     self.running = data.running;
                 })
                 .error(function (data, status, headers, config) {
-                    // log error
+                    console.log("Waiting for the user to  restart the test from console...");
                 });
         },
         'dataPoller': function () {
             // update results while test is running
             $timeout(function () {
-                if (self.running) {
-                    self.loadResults();
-                }
-                if (self.running) {
-                    self.dataPoller();
-                }
+                self.loadResults();
+                self.dataPoller();
             }, 1000)
-
         },
         'start': function () {
             if (self.running) {
@@ -140,8 +135,7 @@ app.service('TestService', function ($http, $timeout) {
             }
             self.running = true;
             self.results = [];
-            self.dataPoller();
-            $http.post('http://localhost:3030/test')
+            $http.post('/test')
                 .success(function (data, status, headers, config) {
                     console.log('test started');
                 })
@@ -153,7 +147,7 @@ app.service('TestService', function ($http, $timeout) {
             if (!self.running) {
                 return;
             }
-            $http.delete('http://localhost:3030/test')
+            $http.delete('/test')
                 .success(function (data, status, headers, config) {
                     console.log('test stopped');
                 })
@@ -162,7 +156,7 @@ app.service('TestService', function ($http, $timeout) {
                 });
         },
         'exit': function () {
-            $http.delete('http://localhost:3030/stop')
+            $http.delete('/stop')
                 .success(function (data, status, headers, config) {
                     console.log('webserver stopped');
                 })
