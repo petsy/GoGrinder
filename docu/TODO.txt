@@ -7,6 +7,7 @@ frontend
 * mtime format (is there a std. json time format)?
 * fix sorting UI
 * exit only if test is stopped
+* add more frontend tests
 
 backend
 * fix TODOs
@@ -36,8 +37,9 @@ http
 util
 
 
-Version 0.01
-============
+Version 0.1
+===========
+* http requests handle forms and cookies
 * implement supercars test in gogrinder
 * prometheus reporter for Meta
 * added metrics_reporter for response kbytes and first-byte-after

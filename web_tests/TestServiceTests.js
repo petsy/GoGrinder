@@ -17,7 +17,7 @@ describe('TestService', function () {
     describe('exit()', function () {
         it('should call DELETE on REST service method /stop', function () {
             httpBackend
-                .expect('DELETE', 'http://localhost:3030/stop')
+                .expect('DELETE', '/stop')
                 .respond(200, '');
 
             test.exit();
@@ -103,7 +103,7 @@ describe('TestService', function () {
             test.results = []
 
             httpBackend
-                .expect('GET', 'http://localhost:3030/statistics?since=')
+                .expect('GET', '/statistics?since=')
                 .respond(200, {"results": [{"teststep": "01", "last": "0816"}], "running": true});
             test.loadResults();
             httpBackend.flush();
@@ -116,7 +116,7 @@ describe('TestService', function () {
             test.results = [{"teststep": "01", "last": "0815"}]
 
             httpBackend
-                .expect('GET', 'http://localhost:3030/statistics?since=0815')
+                .expect('GET', '/statistics?since=0815')
                 .respond(200, {"results": [{"teststep": "01", "last": "0816"}], "running": true});
             test.loadResults();
             httpBackend.flush();
@@ -128,19 +128,17 @@ describe('TestService', function () {
 
 
     describe('dataPoller()', function () {
-        it('should run until test stops', function () {
+        it('should run', function () {
             test.results = [{"teststep": "01", "last": "0815"}];
             // note: dataPoller runs automatically with TestService
 
             httpBackend
-                .expect('GET', 'http://localhost:3030/statistics?since=0815')
+                .expect('GET', '/statistics?since=0815')
                 .respond(200, {"results": [{"teststep": "01", "last": "0816"}], "running": false});
             timeout.flush();
             httpBackend.flush();
 
-            // note: now the test ist stopped ("running": false)
-            // dataPoller has exited (test would complain about unexpected requests!)
-            timeout.flush();
+            // note: datapoller does not stop any more
         });
     });
 
