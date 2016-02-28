@@ -8,11 +8,25 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/finklabs/GoGrinder"
 	time "github.com/finklabs/ttime"
 )
+
+// Default client which implements cookiejar
+func NewDefaultClient() *http.Client {
+	cookieJar, _ := cookiejar.New(nil)
+
+	client := &http.Client{
+		Jar: cookieJar,
+	}
+
+	return client
+}
 
 // Assemble Reader from bufio that measures time until first byte
 type metricReader struct {
@@ -46,13 +60,12 @@ type ResponseJson struct {
 	Header http.Header
 }
 
-func doJson(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+func doJson(m gogrinder.Meta, c *http.Client, r *http.Request) (interface{}, gogrinder.Metric) {
 	start := time.Now()
 	hm := HttpMetric{m, gogrinder.Elapsed(0), 0, 421} // http status Misdirected Request
 	hm.Timestamp = gogrinder.Timestamp(start)
 	rr := ResponseJson{}
 
-	c := &http.Client{} // Defaultclient
 	resp, err := c.Do(r)
 	if err != nil {
 		hm.Error += err.Error()
@@ -96,26 +109,28 @@ func doJson(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 }
 
 func GetJson(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 1 {
-		m.Error += "GetJson requires a string url argument.\n"
+	if len(args) != 2 {
+		m.Error += "GetJson requires http.Client and a string url argument.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
 	r, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return doJson(r, m)
+	return doJson(m, c, r)
 }
 
 func PostJson(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 2 {
-		m.Error += "PostJson requires string url and map[string]interface{} arguments.\n"
+	if len(args) != 3 {
+		m.Error += "PostJson requires http.Client, string url and map[string]interface{} arguments.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
-	msg := args[1].(map[string]interface{})
+	c := args[0].(*http.Client)
+	url := args[1].(string)
+	msg := args[2].(map[string]interface{})
 	b, err := json.Marshal(msg)
 	if err != nil {
 		m.Error += err.Error()
@@ -127,16 +142,17 @@ func PostJson(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Met
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return doJson(r, m)
+	return doJson(m, c, r)
 }
 
 func PutJson(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 2 {
-		m.Error += "PutJson requires string url and map[string]interface{} arguments.\n"
+	if len(args) != 3 {
+		m.Error += "PutJson requires http.Client, string url and map[string]interface{} arguments.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
-	msg := args[1].(map[string]interface{})
+	c := args[0].(*http.Client)
+	url := args[1].(string)
+	msg := args[2].(map[string]interface{})
 	b, err := json.Marshal(msg)
 	if err != nil {
 		m.Error += err.Error()
@@ -148,7 +164,7 @@ func PutJson(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metr
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return doJson(r, m)
+	return doJson(m, c, r)
 }
 
 // RAW
@@ -170,13 +186,12 @@ func responseRaw(mr metricReader, resp ResponseRaw) *ResponseRaw {
 }
 */
 
-func doRaw(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+func doRaw(m gogrinder.Meta, c *http.Client, r *http.Request) (interface{}, gogrinder.Metric) {
 	start := time.Now()
 	hm := HttpMetric{m, gogrinder.Elapsed(0), 0, 421} // http status Misdirected Request
 	hm.Timestamp = gogrinder.Timestamp(start)
 	rr := ResponseRaw{}
 
-	c := &http.Client{} // Defaultclient
 	resp, err := c.Do(r)
 	if err != nil {
 		hm.Error += err.Error()
@@ -202,61 +217,82 @@ func doRaw(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 }
 
 func GetRaw(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 1 {
-		m.Error += "GetRaw requires a string url argument.\n"
+	if len(args) != 2 {
+		m.Error += "GetRaw requires http.Client and string url argument.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
 	r, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return doRaw(r, m)
+	return doRaw(m, c, r)
 }
 
 func PostRaw(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 2 {
-		m.Error += "PostRaw requires string url and io.Reader arguments.\n"
+	if len(args) != 3 {
+		m.Error += "PostRaw requires http.Client, string url and io.Reader arguments.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
-	r := args[1].(io.Reader)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
+	r := args[2].(io.Reader)
 	req, err := http.NewRequest("POST", url, r)
 	if err != nil {
 		m.Error = err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return doRaw(req, m)
+	return doRaw(m, c, req)
+}
+
+func FormRaw(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
+	if len(args) != 3 {
+		m.Error += "FormRaw requires http.Client, string url and url.Values arguments.\n"
+		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+	}
+	c := args[0].(*http.Client)
+	u := args[1].(string)
+	f := args[2].(url.Values)
+	req, err := http.NewRequest("POST", u, strings.NewReader(f.Encode()))
+	if err != nil {
+		m.Error = err.Error()
+		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	return doRaw(m, c, req)
 }
 
 func PutRaw(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 2 {
-		m.Error += "PutRaw requires string url and io.Reader arguments.\n"
+	if len(args) != 3 {
+		m.Error += "PutRaw requires http.Client, string url and io.Reader arguments.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
-	r := args[1].(io.Reader)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
+	r := args[2].(io.Reader)
 	req, err := http.NewRequest("PUT", url, r)
 	if err != nil {
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return doRaw(req, m)
+	return doRaw(m, c, req)
 }
 
 func DeleteRaw(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 1 {
-		m.Error += "DeleteRaw requires a string url argument.\n"
+	if len(args) != 2 {
+		m.Error += "DeleteRaw requires http.Client and a string url argument.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
 	r, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return doRaw(r, m)
+	return doRaw(m, c, r)
 }
 
 // DOC
@@ -266,13 +302,12 @@ type Response struct {
 	Header http.Header
 }
 
-func do(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
+func do(m gogrinder.Meta, c *http.Client, r *http.Request) (interface{}, gogrinder.Metric) {
 	start := time.Now()
 	hm := HttpMetric{m, gogrinder.Elapsed(0), 0, 421} // http status Misdirected Request
 	hm.Timestamp = gogrinder.Timestamp(start)
 	rr := Response{}
 
-	c := &http.Client{} // Defaultclient
 	resp, err := c.Do(r)
 	if err != nil {
 		hm.Error += err.Error()
@@ -301,26 +336,28 @@ func do(r *http.Request, m gogrinder.Meta) (interface{}, gogrinder.Metric) {
 // I used https://github.com/puerkitobio/goquery
 // because it provides JQuery features and is based on Go's net/http.
 func Get(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 1 {
-		m.Error += "Get requires a string url argument.\n"
+	if len(args) != 2 {
+		m.Error += "Get requires http.Client and a string url argument.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
 	r, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return do(r, m)
+	return do(m, c, r)
 }
 
 func Post(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 2 {
-		m.Error += "Post requires string url and html.Node arguments.\n"
+	if len(args) != 3 {
+		m.Error += "Post requires http.Client, string url and html.Node arguments.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
-	msg := args[1].(*html.Node)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
+	msg := args[2].(*html.Node)
 	var buf bytes.Buffer // alternatively use io.Pipe()
 	err := html.Render(&buf, msg)
 
@@ -334,16 +371,17 @@ func Post(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric)
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return do(r, m)
+	return do(m, c, r)
 }
 
 func Put(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
-	if len(args) != 2 {
-		m.Error += "Put requires string url and html.Node arguments.\n"
+	if len(args) != 3 {
+		m.Error += "Put requires http.Client, string url and html.Node arguments.\n"
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	url := args[0].(string)
-	msg := args[1].(*html.Node)
+	c := args[0].(*http.Client)
+	url := args[1].(string)
+	msg := args[2].(*html.Node)
 	var buf bytes.Buffer // alternatively use io.Pipe()
 	err := html.Render(&buf, msg)
 
@@ -357,5 +395,5 @@ func Put(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) 
 		m.Error += err.Error()
 		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
 	}
-	return do(r, m)
+	return do(m, c, r)
 }

@@ -84,7 +84,8 @@ func TestGetJson(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	val, metric := GetJson(m, ts.URL)
+	c := NewDefaultClient()
+	val, metric := GetJson(m, c, ts.URL)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -113,7 +114,8 @@ func TestPostJson(t *testing.T) {
 	json.Unmarshal(msg, &data)
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	val, metric := PostJson(m, ts.URL, data)
+	c := NewDefaultClient()
+	val, metric := PostJson(m, c, ts.URL, data)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -142,7 +144,8 @@ func TestPutJson(t *testing.T) {
 	json.Unmarshal(msg, &data)
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	val, metric := PutJson(m, ts.URL, data)
+	c := NewDefaultClient()
+	val, metric := PutJson(m, c, ts.URL, data)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -168,7 +171,8 @@ func TestGetRaw(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	val, metric := GetRaw(m, ts.URL)
+	c := NewDefaultClient()
+	val, metric := GetRaw(m, c, ts.URL)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -187,8 +191,9 @@ func TestPostRaw(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	c := NewDefaultClient()
 	r := strings.NewReader("abcdefghijklmnopq")
-	val, metric := PostRaw(m, ts.URL, r)
+	val, metric := PostRaw(m, c, ts.URL, r)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -206,8 +211,9 @@ func TestPutRaw(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	c := NewDefaultClient()
 	r := strings.NewReader("abcdefghijklmnopq")
-	val, metric := PutRaw(m, ts.URL, r)
+	val, metric := PutRaw(m, c, ts.URL, r)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -224,7 +230,8 @@ func TestDeleteRaw(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	tmp1, tmp2 := DeleteRaw(m, ts.URL)
+	c := NewDefaultClient()
+	tmp1, tmp2 := DeleteRaw(m, c, ts.URL)
 	metric := tmp2.(HttpMetric)
 	if len(metric.Error) > 0 {
 		t.Fatal(metric.Error)
@@ -236,6 +243,8 @@ func TestDeleteRaw(t *testing.T) {
 	}
 }
 
+// TODO: add test for FormRaw!
+
 // DOC
 func TestGet(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -245,7 +254,8 @@ func TestGet(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	val, metric := Get(m, ts.URL)
+	c := NewDefaultClient()
+	val, metric := Get(m, c, ts.URL)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -265,6 +275,7 @@ func TestPost(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	c := NewDefaultClient()
 	doc := "<doc><id>1</id><name>A green door</name><price>12.50</price>" +
 		"<tags><tag>home</tag><tag>green</tag></tags></doc>"
 	//msg, err := goquery.NewDocument(doc)
@@ -272,7 +283,7 @@ func TestPost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while creating message from XML document: %s", err.Error())
 	}
-	val, metric := Post(m, ts.URL, msg)
+	val, metric := Post(m, c, ts.URL, msg)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -292,6 +303,7 @@ func TestPut(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	c := NewDefaultClient()
 	doc := "<doc><id>1</id><name>A green door</name><price>12.50</price>" +
 		"<tags><tag>home</tag><tag>green</tag></tags></doc>"
 	//msg, err := goquery.NewDocument(doc)
@@ -299,7 +311,7 @@ func TestPut(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while creating message from XML document: %s", err.Error())
 	}
-	val, metric := Put(m, ts.URL, msg)
+	val, metric := Put(m, c, ts.URL, msg)
 	if len(metric.(HttpMetric).Error) > 0 {
 		t.Fatal(metric.(HttpMetric).Error)
 	}
@@ -322,8 +334,9 @@ func TestRegisterRequestWithGoGrinderTeststep(t *testing.T) {
 	fake := gogrinder.NewTest()
 
 	step := func(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
+		c := NewDefaultClient()
 		r := strings.NewReader(args[0].(string))
-		return PostRaw(m, ts.URL, r)
+		return PostRaw(m, c, ts.URL, r)
 	}
 
 	instr := fake.Teststep("a_step", step)
@@ -349,8 +362,9 @@ func TestGetRawMissingUrlParameter(t *testing.T) {
 	defer ts.Close()
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
-	_, metric := GetRaw(m) // usually: GetRaw(m, ts.URL)
-	if metric.(HttpMetric).Error != "GetRaw requires a string url argument.\n" {
+	c := NewDefaultClient()
+	_, metric := GetRaw(m, c) // usually: GetRaw(m, ts.URL)
+	if metric.(HttpMetric).Error != "GetRaw requires http.Client and string url argument.\n" {
 		t.Fatalf("GetRaw error handling for missing url not as expected: '%s'",
 			metric.(HttpMetric).Error)
 	}
