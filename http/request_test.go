@@ -7,12 +7,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/finklabs/GoGrinder"
 	time "github.com/finklabs/ttime"
+	ti "time"
 )
 
 type testReader struct {
@@ -243,7 +245,32 @@ func TestDeleteRaw(t *testing.T) {
 	}
 }
 
-// TODO: add test for FormRaw!
+func TestFormRaw(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		if username, ok := r.Form["username"]; ok && username[0] == "gogrinder" {
+			expiration := ti.Now().Add(24 * ti.Hour)
+			//s.users[username[0]] = true
+			cookie := http.Cookie{Name: "username", Value: username[0], Expires: expiration}
+			http.SetCookie(w, &cookie)
+		} else {
+			t.Fatalf("FormRaw request does not contain username 'gogrinder'!")
+			http.Error(w, "Error: form does not contain username!", 400)
+		}
+		io.Copy(w, r.Body) // echo server
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	c := NewDefaultClient()
+	//r := strings.NewReader("abcdefghijklmnopq")
+	form := url.Values{}
+	form.Add("username", "gogrinder")
+	_, metric := FormRaw(m, c, ts.URL, form)
+	if len(metric.(HttpMetric).Error) > 0 {
+		t.Fatal(metric.(HttpMetric).Error)
+	}
+}
 
 // DOC
 func TestGet(t *testing.T) {
@@ -363,9 +390,34 @@ func TestGetRawMissingUrlParameter(t *testing.T) {
 
 	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
 	c := NewDefaultClient()
-	_, metric := GetRaw(m, c) // usually: GetRaw(m, ts.URL)
+	_, metric := GetRaw(m, c) // usually: GetRaw(m, c, ts.URL)
 	if metric.(HttpMetric).Error != "GetRaw requires http.Client and string url argument.\n" {
 		t.Fatalf("GetRaw error handling for missing url not as expected: '%s'",
 			metric.(HttpMetric).Error)
+	}
+}
+
+func TestDefaultClientProvidesCookiejar(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// add a cookie
+		expiration := ti.Now().Add(24 * ti.Hour)
+		cookie := http.Cookie{Name: "username", Value: "gogrinder", Expires: expiration}
+		http.SetCookie(w, &cookie)
+		w.Write([]byte("<!DOCTYPE html><html><body><h1>My First Heading</h1>" +
+			"<p>My first paragraph.</p></body></html>"))
+	}))
+	defer ts.Close()
+
+	m := gogrinder.Meta{Testcase: "sth", Teststep: "else", User: 0, Iteration: 0}
+	c := NewDefaultClient()
+
+	u, _ := url.Parse(ts.URL)
+	if len(c.Jar.Cookies(u)) != 0 {
+		t.Fatalf("Cookiejar is not empty!")
+	}
+	GetRaw(m, c, ts.URL)
+
+	if len(c.Jar.Cookies(u)) != 1 {
+		t.Fatalf("Cookiejar is empty!")
 	}
 }

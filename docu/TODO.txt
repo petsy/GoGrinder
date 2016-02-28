@@ -32,7 +32,6 @@ plugins
 
 http
 * add documentation!!!
-* check cookie handling and add a test for it!!1
 
 util
 
