@@ -1,0 +1,36 @@
+=======================
+Run the jmeter loadtest
+=======================
+
+Start the containerized petclinic sample
+========================================
+
+Run petclinic:
+
+$ docker run --rm -it -p 8080:8080 finklabs/petclinic
+
+--rm removes the container as soon as you stop it
+-p forwards the port to your host (or if you use boot2docker to this IP)
+-it allows interactive mode, so you see if something get's deployed
+
+Then point your browser to:
+
+http://localhost:8080/petclinic/
+
+
+Start jmeter
+============
+
+simple:
+
+$ ./run.sh
+
+
+Running the loadtest
+====================
+
+I found the petclinic_test_plan.jmx here:
+
+http://blog.ippon.fr/2013/03/11/improving-the-performance-of-the-spring-petclinic-sample-application-part-1-of-5/
+
+

@@ -1,0 +1,5 @@
+{"Loadmodel":[
+	{"Pacing":0,"Runfor":20,"Testcase":"01_get","Users":300},
+	{"Pacing":0,"Runfor":20,"Testcase":"02_post","Users":300}
+],
+"Scenario":"scenario1","ThinkTimeFactor":0,"ThinkTimeVariance":0}

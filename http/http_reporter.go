@@ -3,7 +3,7 @@ package http
 import (
 	"strconv"
 
-	"github.com/finklabs/GoGrinder"
+	"github.com/finklabs/GoGrinder/gogrinder"
 	time "github.com/finklabs/ttime"
 	"github.com/prometheus/client_golang/prometheus"
 )

@@ -1,0 +1,7 @@
+{
+  "Scenario": "01_testcase",
+  "Pacing": true,
+  "ThinkTimeFactor": 0.99,
+  "Loadmodel": [
+  ]
+}

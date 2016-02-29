@@ -14,6 +14,12 @@ six-*.egg/
 *.orig
 .idea/
 web/revision.txt
+event-log.txt
+apache-jmeter-2.13.tgz
+jmeter.log
+examples/benchmark/callgraph.png
+examples/benchmark/cpu.pprof
+examples/*/gogrinder
 
 bak
 output
@@ -24,10 +30,9 @@ venv3
 chameleon_cache
 cache
 coverage
-samples/petsy_2015/
-samples/petsy_2014/
-samples/petsy_2014_bak/
-samples/petsy_2014_exp/
-samples/finklabs-site/
 node_modules
 bower_components
+apache-jmeter-2.13/
+examples/reflection/
+examples/gorillasample/
+

@@ -1,0 +1,7 @@
+{
+  "Scenario": "baseline",
+  "Pacing": true,
+  "ThinkTimeFactor": 0.99,
+  "Loadmodel": [
+  ]
+}

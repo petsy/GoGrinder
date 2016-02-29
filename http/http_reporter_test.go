@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/finklabs/GoGrinder"
+	"github.com/finklabs/GoGrinder/gogrinder"
 	time "github.com/finklabs/ttime"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"

@@ -1,0 +1,4 @@
+{"Loadmodel":[
+	{"Pacing":6,"Runfor":20,"Testcase":"xmlcowboys_01_post","Users":2,"Rampup":3}
+],
+"Scenario":"endurance","ThinkTimeFactor":0,"ThinkTimeVariance":0,"PacingVariance":0.1,"server_url":"http://localhost:3001"}

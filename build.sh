@@ -22,10 +22,13 @@ cd ..
 # http://stackoverflow.com/questions/16765461/git-add-revision-number-to-file-on-commit
 git rev-parse --short HEAD > web/revision.txt
 
-
+cd ./gogrinder
 # embedd the frontend
 rice embed-syso
 
-
 # build the go package
 go build
+mv ../*.syso ./
+go build
+
+cd ..

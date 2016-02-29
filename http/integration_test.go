@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/finklabs/GoGrinder"
+	"github.com/finklabs/GoGrinder/gogrinder"
 	"github.com/finklabs/GoGrinder/util"
 	"github.com/finklabs/airbiscuit"
 	"github.com/finklabs/graceful"

@@ -1,0 +1,25 @@
+{
+  "Scenario": "scenario1",
+  "ThinkTimeFactor": 0.99,
+  "ThinkTimeVariance": 0.1,
+  "Loadmodel": [
+    {
+      "Testcase": "01_testcase",
+      "Users": 1,
+      "Runfor": 1.980,
+      "Pacing": 0.110
+    },
+    {
+      "Testcase": "02_testcase",
+      "Users": 2,
+      "Runfor": 1.980,
+      "Pacing": 0.220
+    },
+    {
+      "Testcase": "03_testcase",
+      "Users": 3,
+      "Runfor": 1.980,
+      "Pacing": 0.330
+    }
+  ]
+}

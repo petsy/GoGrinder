@@ -22,7 +22,7 @@ We had some significant API changes recently. So currently it looks good and sta
 
 If you submit a pull-request (https://help.github.com/articles/using-pull-requests/), then please make sure that it contains a file <your_name>.md in docu/contributors. The file should contain something like the following: "I <first> <last>, <email> have read, understand and fully agree to the contributors license agreement (docu/contributors/CLA.md)"
 
-If you contribute code there are some important things: test coverage, test coverage, test coverage... Did I say test coverage?
+If you contribute code there are some important things: test coverage, test coverage, test coverage... Did I mention test coverage?
 
 In order to make your contribution useful to others you should at least add some basic documentation and if possible a small sample. For non Go samples we use Docker to simplify things. 
 

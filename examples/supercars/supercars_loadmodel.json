@@ -1,0 +1,8 @@
+{"Loadmodel":[
+	{"Pacing":12,"Runfor":1800,"Testcase":"supercars_01_list","Users":2,"Delay":2,"Rampup":1},
+	{"Pacing":12,"Runfor":1800,"Testcase":"supercars_02_read","Users":2,"Delay":4,"Rampup":1},
+	{"Pacing":12,"Runfor":1800,"Testcase":"supercars_03_create","Users":2,"Delay":0,"Rampup":1},
+	{"Pacing":12,"Runfor":1800,"Testcase":"supercars_04_update","Users":2,"Delay":6,"Rampup":1},
+	{"Pacing":12,"Runfor":1800,"Testcase":"supercars_05_delete","Users":2,"Delay":8,"Rampup":1}
+],
+"Scenario":"endurance","ThinkTimeFactor":0,"ThinkTimeVariance":0,"PacingVariance":0.05,"supercars_url":"http://localhost:8000","redis_srv":"localhost:6379"}
