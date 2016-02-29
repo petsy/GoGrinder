@@ -36,6 +36,12 @@ http
 util
 
 
+Version 0.x
+===========
+* restructure repository to make finding stuff more obvious
+* improvments on documentation and showcases
+
+
 Version 0.1
 ===========
 * http requests handle forms and cookies

@@ -338,14 +338,14 @@ func do(m gogrinder.Meta, c *http.Client, r *http.Request) (interface{}, gogrind
 func Get(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
 	if len(args) != 2 {
 		m.Error += "Get requires http.Client and a string url argument.\n"
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	c := args[0].(*http.Client)
 	url := args[1].(string)
 	r, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		m.Error += err.Error()
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	return do(m, c, r)
 }
@@ -353,7 +353,7 @@ func Get(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) 
 func Post(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
 	if len(args) != 3 {
 		m.Error += "Post requires http.Client, string url and html.Node arguments.\n"
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	c := args[0].(*http.Client)
 	url := args[1].(string)
@@ -363,13 +363,13 @@ func Post(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric)
 
 	if err != nil {
 		m.Error += err.Error()
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	r, err := http.NewRequest("POST", url, &buf)
 	r.Header.Set("Content-Type", "application/xml")
 	if err != nil {
 		m.Error += err.Error()
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	return do(m, c, r)
 }
@@ -377,7 +377,7 @@ func Post(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric)
 func Put(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
 	if len(args) != 3 {
 		m.Error += "Put requires http.Client, string url and html.Node arguments.\n"
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	c := args[0].(*http.Client)
 	url := args[1].(string)
@@ -387,13 +387,13 @@ func Put(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) 
 
 	if err != nil {
 		m.Error += err.Error()
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	r, err := http.NewRequest("PUT", url, &buf)
 	r.Header.Set("Content-Type", "application/xml")
 	if err != nil {
 		m.Error += err.Error()
-		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+		return Response{}, HttpMetric{m, 0, 0, 400}
 	}
 	return do(m, c, r)
 }

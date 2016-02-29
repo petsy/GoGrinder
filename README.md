@@ -1,102 +1,106 @@
-# GoGrinder
+GoGrinder
+==============
 
 [![Build Status](https://drone.io/github.com/finklabs/GoGrinder/status.png)](https://drone.io/github.com/finklabs/GoGrinder/latest)
 [![GoDoc](https://godoc.org/github.com/finklabs/GoGrinder?status.svg)](https://godoc.org/github.com/finklabs/GoGrinder)
 [![License](http://img.shields.io/badge/license-MIT-yellowgreen.svg)](MIT_LICENSE)
 
-Efficient load-generator that integrates in Prometheus for reporting and analysis.
+GoGrinder helps you and your team to check the stability and performance of your code. GoGrinder provides you with an efficient load generator that comes without license restrictions.
 
-## GoGrinder usage
-The GoGrinder is not used directly. You can use GoGrinder as a library to write your load and performance tests. The following sample shows you how: [simple GoGrinder sample]/https://github.com/finklabs/GoGrinder-samples/tree/master/simple)
+Modeling a realistic load profile is easy using loadmodel.json format. Necessary configuration to run the test-scenario with 600 virtual users for half an hour, ramping up 20 users per second:
 
+{"Loadmodel":[
+	{"Pacing":0,"Runfor":1800,"Testcase":"01_testcase","Users":300,"Rampup":0.1},
+	{"Pacing":0,"Runfor":1800,"Testcase":"02_testcase","Users":300,"Rampup":0.1}
+],
+"Scenario":"scenario1","ThinkTimeFactor":0,"ThinkTimeVariance":0}
 
-## Backend development
-The reminder of the document contains information is intended for developers who work on the backend and frontend of GoGrinder.
+You can simulate from a few to dozens to many hundreds of virtual users using GoGrinder.
 
-### Run the go package docu (for offline use)
+For more information, see the
 
-    $ godoc -http=:6060 &
-
-
-### Embedd the single page app
-
-    $ rice embed-syso
-
-
-### Run the tests with coverage report
-
-    $ gocov test | gocov report
+* go doc
+* quickstart
 
 
-### build the package
+## Installation
 
-    $ ./build.sh
+Compile your test-scenarios into a single executable. Usually we keep test-scenarios in the gogrinder.go source file. You do not need to install a compiler. Simply use Docker to run the compiler:
 
-build the package:
+$ docker run bla bla TODO -o gogrinder
 
-    $ go build
+This compiles your testscenario including everything that is necessary into the gogrinder executable. Just put the gogrinder executable and loadmodel.json wherever you want to run the test.
 
-install into pkg folder:
+$ ./gogrinder yourcode_loadmodel.json
 
-    $ go install
+Alternatively, if you have Go installed you can also use this compiler:
 
-
-## Frontend development
-The frontend is packaged with the executable. To access the frontend start your test and point your browser to:
-http://localhost:3030/app/index.html
+$ go build -o gogrinder
 
 
-### adding frontend dependencies using bower
+## Examples
 
-    $ bower install --save angular 
-    $ bower install --save angular-ladda
-    ...
-    $ bower install --save-dev angular-mocks
+* xmlcowboys - showcase demonstrates how to read data from XML files and use it as http requests.
 
-
-### testing ui code
-
-* http://www.bradoncode.com/blog/2015/05/19/karma-angularjs-testing/
-* http://bendetat.com/karma-and-mocha-for-angular-testing.html
-
-=> we are using mocha, chai, sinon
-
-running the tests unsing karma:
-
-    $ npm test
+* supercars - a more complete sample uses redis to exchange data between virtual users.
 
 
-## Releasing 
-Not yet sure what the prevailing strategies for maintaining versions in Golang are. Golang itself has no notation of a package version. I guess this has its origins in the Google development model. As far as I know everyone in Google is on trunk. This approach probably makes a lot of sense within Google - at least I see many of benefits. Obviously for the rest of the world there is no way to avoid dealing with the "dependency hell".
- 
-One approach that made a lot of sense to me is http://labix.org/gopkg.in. gopkg helps you to maintain multiple versions in one repository:
+## Grafana and Prometheus
 
-    gopkg.in/user/pkg.v3 → github.com/user/pkg   (branch or tag v3)
+Use Grafana and Prometheus to visualize metrics and test results. Don't worry this won't become a headache! We use Docker to setup these tools in minutes and we give you the instructions to do the same.
+
+use LICEcap to make an visualization animation
 
 
-## Where are we now
-For this kind of application I believe it is essential to have a core of highest quality. A smaller code base makes this easier to achieve. The Golang concurrency features allow me to keep the code concise and maintainable.  I ran line-counting which came up with 1100 lines of Go code for the core functionality. To me this means two things:
- 
-1. The goal of a reliable core is in reach and will be achieved soon
-2. Golang was the right technology choice for this project
+## Key Features
 
-Statistics from 14th January 2016:
+The key features of GoGrinder are:
 
-    $ cloc --exclude-dir=bower_components,node_modules,web/libs .
-        27 text files.
-        27 unique files.                              
-     11835 files ignored.
-    
-    http://cloc.sourceforge.net v 1.60  T=0.59 s (33.6 files/s, 3643.5 lines/s)
-    -------------------------------------------------------------------------------
-    Language                     files          blank        comment           code
-    -------------------------------------------------------------------------------
-    Go                              10            193            176           1079
-    Javascript                       3             67             62            262
-    HTML                             2             18             19            153
-    CSS                              2              5             10             56
-    YAML                             2              8              8             27
-    Bourne Shell                     1              6              3             15
-    -------------------------------------------------------------------------------
-    SUM:                            20            297            278           1592
-    -------------------------------------------------------------------------------
+* **Unlimited-Load**: GoGrinder does not limit the number of virtual users or transactions per second or anything. No dual-licensing, nothing. All we ask from you is to contribute back and to help us promote GoGrinder. 
+
+* **Efficient**: run hundreds of virtual users
+
+* **learning-curve**: GoGrinder is build in a way to help you setup tests quickly and easily. In this way will supports your team to developing skills from running first performance tests into more advance performance management. 
+
+* **Workflow**: GoGrinder is made so it can be run fully automated to support the continuous-performance usecase. The built-in web console (http://localhost:3030/app). Makes it easy to start and debug your performance test-scenarios right from the beginning.
+
+* **Deployment**: GoGrinder test-scenarios are compiled into single executables. You need only the executable plus the loadmodel.json file to deploy your test.
+
+* **Visualization**: GoGrinder ... best of breed monitoring and visualization tools
+
+* **Extensibility**: Many enterprise applications are using proprietary or exotic client server protocols. GoGrinder is extensible so you can add support for these protocols yourself.
+
+* **Docker**: GoGrinder encourages the use of Docker. Applications can be containerized
+  to make deployments and performance testing easier without changing the developer
+  workflow. GoGrinder recommends to use Docker to ease test development and workflow.
+
+* **Quality**: GoGrinder itself has gone through many testing cycles to make sure you get the best experience possible. GoGrinder is covered by a complete unit and integration test suite. GoGrinder performance is checked frequently using runtime/pprof.
+
+
+## Getting help
+
+We think our mode to supporting you is pretty common so please excuse captain-obvious.
+
+In case you are stuck or need help to solve your problem, please follow this checklist:
+
+* look in documentation and examples for a solution
+* for Go related information the std. library docu is a good starting point TODO
+* if you are certain you caught a bug in GoGrinder look for / open an issue
+* search for a solution to your problem on stackexchange
+* if you can not find a solution please open a new question. Please make sure to tag your question with the following tags: "Performance", "GoGrinder" and "Go"
+
+We monitor for GoGrinder related questions and try to help you asap. Please forgive but we all have day-jobs and it might take us a day or two to answer your question.
+
+TODO check fair use
+
+
+## Developing GoGrinder
+
+If you wish to work on GoGrinder itself or any of its built-in systems,
+you'll first need [Go](https://www.golang.org) installed on your
+machine (version 1.4+ is *required*).
+
+For local dev first make sure Go is properly installed, including setting up a
+[GOPATH](https://golang.org/doc/code.html#GOPATH).
+
+I you want to contribute your code please take a look into the contribute... TODO
