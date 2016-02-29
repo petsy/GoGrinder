@@ -2,4 +2,4 @@
 {"Pacing":0.1,"Runfor":180,"Testcase":"01_testcase","Users":10},
 {"Pacing":0.1,"Runfor":180,"Testcase":"02_testcase","Users":10},
 {"Pacing":0.1,"Runfor":180,"Testcase":"03_testcase","Users":10}
-],"Scenario":"scenario1","ThinkTimeFactor":0.99,"ThinkTimeVariance":0.1}
+],"Scenario":"endurance","ThinkTimeFactor":0.99,"ThinkTimeVariance":0.1}

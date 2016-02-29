@@ -68,3 +68,10 @@ We are not yet complete sure what the prevailing strategies for maintaining vers
 One approach that made a lot of sense to me is http://labix.org/gopkg.in. gopkg helps you to maintain multiple versions in one repository:
 
 gopkg.in/user/pkg.v3 → github.com/user/pkg   (branch or tag v3)
+
+
+## Some Statistics
+
+```sh
+$ cloc --exclude-dir=bower_components,node_modules,web/libs,examples .
+```

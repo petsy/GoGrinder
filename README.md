@@ -2,7 +2,7 @@ GoGrinder
 ==============
 
 [![Build Status](https://drone.io/github.com/finklabs/GoGrinder/status.png)](https://drone.io/github.com/finklabs/GoGrinder/latest)
-[![GoDoc](https://godoc.org/github.com/finklabs/GoGrinder?status.svg)](https://godoc.org/github.com/finklabs/GoGrinder/core)
+[![GoDoc](https://godoc.org/github.com/finklabs/GoGrinder?status.svg)](https://godoc.org/github.com/finklabs/GoGrinder/gogrinder)
 [![License](http://img.shields.io/badge/license-MIT-yellowgreen.svg)](MIT_LICENSE)
 
 GoGrinder helps you and your team to check the stability and performance of your code. GoGrinder provides you with an efficient load generator that comes without license restrictions.
@@ -21,7 +21,7 @@ With GoGrinder you can simulate from a few to dozens to many hundreds of virtual
 
 For more information, see the
 
-* [GoDoc Documentation](https://godoc.org/github.com/finklabs/GoGrinder/core)
+* [GoDoc Documentation](https://godoc.org/github.com/finklabs/GoGrinder/gogrinder)
 * [Quickstart](docu/quickstart.md)
 
 

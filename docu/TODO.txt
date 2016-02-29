@@ -19,6 +19,7 @@ tests
 defects
 * need to check if frontend port is available at startup
 * check and report missing testcase config from endurance scenario!
+* gogrinder hangs if scenario does not exist
 
 samples
 * recreate jmeter petclinic test in gogrinder
@@ -38,8 +39,8 @@ util
 
 Version 0.x
 ===========
-* restructure repository to make finding stuff more obvious
-* improvments on documentation and showcases
+* restructure repository so finding stuff becomes more obvious
+* improvements on documentation and showcases
 
 
 Version 0.1

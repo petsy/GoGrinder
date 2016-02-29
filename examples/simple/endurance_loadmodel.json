@@ -1,5 +1,5 @@
 {
-  "Scenario": "scenario1",
+  "Scenario": "endurance",
   "ThinkTimeFactor": 0.99,
   "ThinkTimeVariance": 0.1,
   "Loadmodel": [
