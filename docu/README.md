@@ -1,7 +1,6 @@
 GoGrinder Documentation
 =================================
 
-
 ## Getting Started
 
 you are probably looking for the quickstart documentation
@@ -12,7 +11,6 @@ GoGrinder examples and showcases you will find here
 
 ## Documentation
 
-* 
 * windows tm
 * GoLang documentation
 
@@ -26,8 +24,3 @@ GoGrinder examples and showcases you will find here
 
 * developing
 * contributing
-
-
-
-
-

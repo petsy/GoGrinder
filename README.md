@@ -2,54 +2,61 @@ GoGrinder
 ==============
 
 [![Build Status](https://drone.io/github.com/finklabs/GoGrinder/status.png)](https://drone.io/github.com/finklabs/GoGrinder/latest)
-[![GoDoc](https://godoc.org/github.com/finklabs/GoGrinder?status.svg)](https://godoc.org/github.com/finklabs/GoGrinder)
+[![GoDoc](https://godoc.org/github.com/finklabs/GoGrinder?status.svg)](https://godoc.org/github.com/finklabs/GoGrinder/core)
 [![License](http://img.shields.io/badge/license-MIT-yellowgreen.svg)](MIT_LICENSE)
 
 GoGrinder helps you and your team to check the stability and performance of your code. GoGrinder provides you with an efficient load generator that comes without license restrictions.
 
-Modeling a realistic load profile is easy using loadmodel.json format. Necessary configuration to run the test-scenario with 600 virtual users for half an hour, ramping up 20 users per second:
+Modeling a realistic load profile is easy using loadmodel.json format. The following sample shows the necessary configuration to run the test-scenario with 600 virtual users for half an hour, ramping up 20 users per second:
 
+```javascript
 {"Loadmodel":[
 	{"Pacing":0,"Runfor":1800,"Testcase":"01_testcase","Users":300,"Rampup":0.1},
 	{"Pacing":0,"Runfor":1800,"Testcase":"02_testcase","Users":300,"Rampup":0.1}
 ],
 "Scenario":"scenario1","ThinkTimeFactor":0,"ThinkTimeVariance":0}
+```
 
-You can simulate from a few to dozens to many hundreds of virtual users using GoGrinder.
+With GoGrinder you can simulate from a few to dozens to many hundreds of virtual users using GoGrinder.
 
 For more information, see the
 
-* go doc
-* quickstart
+* [GoDoc Documentation](https://godoc.org/github.com/finklabs/GoGrinder/core)
+* [Quickstart](docu/quickstart.md)
 
 
 ## Installation
 
 Compile your test-scenarios into a single executable. Usually we keep test-scenarios in the gogrinder.go source file. You do not need to install a compiler. Simply use Docker to run the compiler:
 
+```sh
 $ docker run bla bla TODO -o gogrinder
+```
 
 This compiles your testscenario including everything that is necessary into the gogrinder executable. Just put the gogrinder executable and loadmodel.json wherever you want to run the test.
 
+```sh
 $ ./gogrinder yourcode_loadmodel.json
+```
 
 Alternatively, if you have Go installed you can also use this compiler:
 
+```sh
 $ go build -o gogrinder
+```
 
 
 ## Examples
 
-* xmlcowboys - showcase demonstrates how to read data from XML files and use it as http requests.
-
-* supercars - a more complete sample uses redis to exchange data between virtual users.
+* **xmlcowboys** - showcase demonstrates how to read data from XML files and use it as http requests.
+* **supercars** - a more complete sample uses redis to exchange data between virtual users.
 
 
 ## Grafana and Prometheus
 
 Use Grafana and Prometheus to visualize metrics and test results. Don't worry this won't become a headache! We use Docker to setup these tools in minutes and we give you the instructions to do the same.
 
-use LICEcap to make an visualization animation
+TODO: use LICEcap to make an visualization animation
 
 
 ## Key Features
@@ -103,4 +110,4 @@ machine (version 1.4+ is *required*).
 For local dev first make sure Go is properly installed, including setting up a
 [GOPATH](https://golang.org/doc/code.html#GOPATH).
 
-I you want to contribute your code please take a look into the contribute... TODO
+I you want to contribute your code please take a look into [how to contribute](docu/contributing.md).

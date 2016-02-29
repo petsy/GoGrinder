@@ -12,17 +12,23 @@ This documentation contains information relevant to maintaining developing GoGri
 
 ### Run the go package docu (for offline use)
 
-    $ godoc -http=:6060 &
+```sh
+$ godoc -http=:6060 &
+```
 
 
 ### Run the tests with coverage report
 
-    $ gocov test | gocov report
+```sh
+$ gocov test | gocov report
+```
 
 
 ### build the package
 
-    $ ./build.sh
+```sh
+$ ./build.sh
+```
 
 
 ## Frontend development
@@ -33,10 +39,12 @@ http://localhost:3030/app/index.html
 
 ### adding frontend dependencies using bower
 
-    $ bower install --save angular 
-    $ bower install --save angular-ladda
-    ...
-    $ bower install --save-dev angular-mocks
+```sh
+$ bower install --save angular 
+$ bower install --save angular-ladda
+...
+$ bower install --save-dev angular-mocks
+```
 
 
 ### testing ui code
@@ -48,12 +56,15 @@ http://localhost:3030/app/index.html
 
 running the tests unsing karma:
 
-    $ npm test
+```sh
+$ npm test
+```
 
 
 ## Releasing 
-Not yet sure what the prevailing strategies for maintaining versions in Golang are. Golang itself has no notation of a package version. I guess this has its origins in the Google development model. As far as I know everyone in Google is on trunk. This approach probably makes a lot of sense within Google - at least I see many of benefits. Obviously for the rest of the world there is no way to avoid dealing with the "dependency hell".
+
+We are not yet complete sure what the prevailing strategies for maintaining versions in Golang are. Golang itself has no notation of a package version. I guess this has its origins in the Google development model. As far as I know everyone in Google is on trunk. This approach probably makes a lot of sense within Google - at least I see many of benefits. Obviously for the rest of the world there is no way to avoid dealing with the "dependency hell".
  
 One approach that made a lot of sense to me is http://labix.org/gopkg.in. gopkg helps you to maintain multiple versions in one repository:
 
-    gopkg.in/user/pkg.v3 → github.com/user/pkg   (branch or tag v3)
+gopkg.in/user/pkg.v3 → github.com/user/pkg   (branch or tag v3)
