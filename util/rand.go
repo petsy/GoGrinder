@@ -1,3 +1,7 @@
+// Package util is part of the gogrinder load & performance test tool.
+// It provides a collection of utilities with the intend to
+// ease the implementation of test-secenarios.
+//
 package util
 
 import (

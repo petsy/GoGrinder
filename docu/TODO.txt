@@ -25,11 +25,16 @@ samples
 * recreate jmeter petclinic test in gogrinder
 
 docu
+* examples
+* docu main page
+* quickstart (new example based on benchmark)
 * add some description on how to get things together with prometheus and grafana
-* develop docu
+* developer docu
+* loadmodel
 
-plugins
-=======
+
+sub-packages
+============
 
 http
 * add documentation!!!
