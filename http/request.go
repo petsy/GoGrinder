@@ -1,4 +1,4 @@
-// Package http is part of the gogrinder load & performance test tool.
+// Package http is part of the GoGrinder load & performance test tool.
 // It adds instrumentation to the net/http package and a prometheus reporter.
 //
 package http

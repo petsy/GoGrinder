@@ -50,11 +50,11 @@ $ go build -o gogrinder
 
 We provide some examples to get you started using GoGrinder to test performance of your code:
 
-* [**quickstart**](quickstart/README.md) - simple walkthrough on how to use GoGrinder to test the performance of your code.
-* [**xmlcowboys**](xmlcowboys/README.md) - showcase on how to read data from massive XML files and send it to a webservice.
-* [**cookies**](cookies/README.md) - demonstrate how to use a login-form and cookies.
-* [**supercars**](supercars/README.md) - a more advanced but complete http example including monitoring. We use redis to exchange data between virtual users.
-* [**simple**](simple/README.md) - a oversimplified sample used for testing and to demonstrate the core concepts of GoGrinder.
+* [**quickstart**](examples/quickstart/README.md) - simple walkthrough on how to use GoGrinder to test the performance of your code.
+* [**xmlcowboys**](examples/xmlcowboys/README.md) - showcase on how to read data from massive XML files and send it to a webservice.
+* [**cookies**](examples/cookies/README.md) - demonstrate how to use a login-form and cookies.
+* [**supercars**](examples/supercars/README.md) - a more advanced but complete http example including monitoring. We use redis to exchange data between virtual users.
+* [**simple**](examples/simple/README.md) - a oversimplified sample used for testing and to demonstrate the core concepts of GoGrinder.
 
 
 ## Grafana and Prometheus
@@ -87,15 +87,13 @@ We think our mode to supporting you is pretty common so please excuse captain-ob
 
 In case you are stuck or need help to solve your problem, please follow this checklist:
 
-* look in documentation and examples for a solution
-* for Go related information the std. library docu is a good starting point TODO
-* if you are certain you caught a bug in GoGrinder look for / open an issue
-* search for a solution to your problem on stackexchange
-* if you can not find a solution please open a new question. Please make sure to tag your question with the following tags: "Performance", "GoGrinder" and "Go"
+* look in [documentation](docu/README.md) and [examples](examples/README.md) for a solution
+* for Go related information the [std. library docu](https://golang.org/pkg/net/http/) is a good starting point
+* if you feel you caught a bug in GoGrinder look for [related issues](https://github.com/finklabs/GoGrinder/issues)
+* search for a solution to your problem on [StackOverflow](http://stackoverflow.com/questions/tagged/gogrinder)
+* if you can not find a solution on StackOverflow we suggest you ask a new question. Please make sure to tag your question with the following tags: "Performance", "GoGrinder" and "Go"
 
-We monitor for GoGrinder related questions and try to help you asap. Please forgive but we all have day-jobs and it might take us a day or two to answer your question.
-
-TODO check fair use
+We monitor the [GoGrinder](http://stackoverflow.com/questions/tagged/gogrinder) tag on StackOverflow and try to answer asap. Please forgive but we all have day-jobs and it might take us a day to answer your question.
 
 
 ## Developing GoGrinder
