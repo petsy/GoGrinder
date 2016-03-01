@@ -50,11 +50,11 @@ $ go build -o gogrinder
 
 We provide some examples to get you started using GoGrinder to test performance of your code:
 
-* [**quickstart**](examples/quickstart/README.md) - simple walkthrough on how to use GoGrinder to test the performance of your code.
-* [**xmlcowboys**](examples/xmlcowboys/README.md) - showcase on how to read data from massive XML files and send it to a webservice.
-* [**cookies**](examples/cookies/README.md) - demonstrate how to use a login-form and cookies.
-* [**supercars**](examples/supercars/README.md) - a more advanced but complete http example including monitoring. We use redis to exchange data between virtual users.
-* [**simple**](examples/simple/README.md) - a oversimplified sample used for testing and to demonstrate the core concepts of GoGrinder.
+* [**quickstart**](examples/quickstart/) - simple walkthrough on how to use GoGrinder to test the performance of your code.
+* [**xmlcowboys**](examples/xmlcowboys/) - showcase on how to read data from massive XML files and send it to a webservice.
+* [**cookies**](examples/cookies/) - demonstrate how to use a login-form and cookies.
+* [**supercars**](examples/supercars/) - a more advanced but complete http example including monitoring. We use redis to exchange data between virtual users.
+* [**simple**](examples/simple/) - a oversimplified sample used for testing and to demonstrate the core concepts of GoGrinder.
 
 
 ## Grafana and Prometheus
@@ -87,7 +87,7 @@ We think our mode to supporting you is pretty common so please excuse captain-ob
 
 In case you are stuck or need help to solve your problem, please follow this checklist:
 
-* look in [documentation](docu/README.md) and [examples](examples/README.md) for a solution
+* look in [documentation](docu/) and [examples](examples/) for a solution
 * for Go related information the [std. library docu](https://golang.org/pkg/net/http/) is a good starting point
 * if you feel you caught a bug in GoGrinder look for [related issues](https://github.com/finklabs/GoGrinder/issues)
 * search for a solution to your problem on [StackOverflow](http://stackoverflow.com/questions/tagged/gogrinder)
