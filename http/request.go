@@ -63,6 +63,14 @@ type ResponseJson struct {
 	Header http.Header
 }
 
+func DoJson(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
+	if len(args) != 2 {
+		m.Error += "DoJson requires http.Client and http.Request arguments.\n"
+		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+	}
+	return doJson(m, args[0].(*http.Client), args[1].(*http.Request))
+}
+
 func doJson(m gogrinder.Meta, c *http.Client, r *http.Request) (interface{}, gogrinder.Metric) {
 	start := time.Now()
 	hm := HttpMetric{m, gogrinder.Elapsed(0), 0, 421} // http status Misdirected Request
@@ -189,6 +197,14 @@ func responseRaw(mr metricReader, resp ResponseRaw) *ResponseRaw {
 }
 */
 
+func DoRaw(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
+	if len(args) != 2 {
+		m.Error += "DoRaw requires http.Client and http.Request arguments.\n"
+		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+	}
+	return doRaw(m, args[0].(*http.Client), args[1].(*http.Request))
+}
+
 func doRaw(m gogrinder.Meta, c *http.Client, r *http.Request) (interface{}, gogrinder.Metric) {
 	start := time.Now()
 	hm := HttpMetric{m, gogrinder.Elapsed(0), 0, 421} // http status Misdirected Request
@@ -303,6 +319,14 @@ func DeleteRaw(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Me
 type Response struct {
 	Doc    *goquery.Document
 	Header http.Header
+}
+
+func Do(m gogrinder.Meta, args ...interface{}) (interface{}, gogrinder.Metric) {
+	if len(args) != 2 {
+		m.Error += "Do requires http.Client and http.Request arguments.\n"
+		return ResponseJson{}, HttpMetric{m, 0, 0, 400}
+	}
+	return do(m, args[0].(*http.Client), args[1].(*http.Request))
 }
 
 func do(m gogrinder.Meta, c *http.Client, r *http.Request) (interface{}, gogrinder.Metric) {
