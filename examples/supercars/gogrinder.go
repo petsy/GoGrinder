@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/finklabs/GoGrinder/gogrinder"
-	"github.com/finklabs/GoGrinder/http"
+	"github.com/finklabs/GoGrinder/req"
 	"github.com/xuyu/goredis"
 )
 
@@ -19,17 +19,17 @@ const (
 var gg = gogrinder.NewTest()
 
 // instrument teststeps
-var tsList = gg.Teststep("01_01_supercars_list", http.GetJson)
-var tsRead = gg.Teststep("02_01_supercars_read", http.GetJson)
-var tsCreate = gg.Teststep("03_01_supercars_create", http.PostJson)
-var tsUpdate = gg.Teststep("04_01_supercars_update", http.PutJson)
-var tsDelete = gg.Teststep("05_01_supercars_delete", http.DeleteRaw)
+var tsList = gg.Teststep("01_01_supercars_list", req.GetJson)
+var tsRead = gg.Teststep("02_01_supercars_read", req.GetJson)
+var tsCreate = gg.Teststep("03_01_supercars_create", req.PostJson)
+var tsUpdate = gg.Teststep("04_01_supercars_update", req.PutJson)
+var tsDelete = gg.Teststep("05_01_supercars_delete", req.DeleteRaw)
 
 // define testcases using teststeps
 func supercars_01_list(m gogrinder.Meta, s gogrinder.Settings) {
-	c := http.NewDefaultClient()
+	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
-	resp := tsList(m, c, base+"/rest/supercars/").(http.ResponseJson).Json
+	resp := tsList(m, c, base+"/rest/supercars/").(req.ResponseJson).Json
 
 	// assert record count
 	count := len(resp["data"].([]interface{}))
@@ -39,11 +39,11 @@ func supercars_01_list(m gogrinder.Meta, s gogrinder.Settings) {
 }
 
 func supercars_02_read(m gogrinder.Meta, s gogrinder.Settings) {
-	c := http.NewDefaultClient()
+	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
 	id := rand.Intn(RECORDS-1) + 1
 	url := fmt.Sprintf("%s/rest/supercars/%05d", base, id)
-	resp := tsRead(m, c ,url).(http.ResponseJson).Json
+	resp := tsRead(m, c, url).(req.ResponseJson).Json
 
 	// assert record id
 	i, err := strconv.Atoi(resp["_id"].(string))
@@ -53,14 +53,14 @@ func supercars_02_read(m gogrinder.Meta, s gogrinder.Settings) {
 }
 
 func supercars_03_create(m gogrinder.Meta, s gogrinder.Settings) {
-	c := http.NewDefaultClient()
+	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
 	newCar := map[string]interface{}{"name": "Ferrari Enzo", "country": "Italy",
 		"top_speed": "218", "0-60": "3.4", "power": "650", "engine": "5998", "weight": "1365",
 		"description": "The Enzo Ferrari is a 12 cylinder mid-engine berlinetta named " +
 			"after the company's founder, Enzo Ferrari.", "image": "050.png"}
 
-	resp := tsCreate(m, c, base+"/rest/supercars/", newCar).(http.ResponseJson).Json
+	resp := tsCreate(m, c, base+"/rest/supercars/", newCar).(req.ResponseJson).Json
 	id := resp["_id"].(string)
 	if i, err := strconv.Atoi(id); err != nil || i <= RECORDS {
 		m.Error += "Error: something went wrong during new record creation!"
@@ -78,7 +78,7 @@ func supercars_03_create(m gogrinder.Meta, s gogrinder.Settings) {
 }
 
 func supercars_04_update(m gogrinder.Meta, s gogrinder.Settings) {
-	c := http.NewDefaultClient()
+	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
 	change := map[string]interface{}{"cylinders": "12", "name": "Ferrari Enzo",
 		"country": "Italy", "top_speed": "218", "0-60": "3.4", "power": "650", "engine": "5998",
@@ -105,7 +105,7 @@ func supercars_04_update(m gogrinder.Meta, s gogrinder.Settings) {
 }
 
 func supercars_05_delete(m gogrinder.Meta, s gogrinder.Settings) {
-	c := http.NewDefaultClient()
+	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
 
 	redis, err := goredis.Dial(&goredis.DialConfig{Address: s["redis_srv"].(string)})

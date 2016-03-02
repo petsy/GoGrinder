@@ -2,7 +2,6 @@ package gogrinder
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 
 	time "github.com/finklabs/ttime"
@@ -19,7 +18,7 @@ func TestUpdateOneMeasurement(t *testing.T) {
 	// first measurement
 	done := fake.Collect() // this needs a collector to unblock update
 
-	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(&Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -40,9 +39,9 @@ func TestUpdateOneMeasurement(t *testing.T) {
 func TestUpdateMultipleMeasurements(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
-	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
-	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
-	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(&Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(&Meta{Teststep: "sth", Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(&Meta{Teststep: "sth", Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
 	if v, ok := fake.stats["sth"]; ok {
@@ -64,7 +63,7 @@ func TestReset(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	// first measurement
-	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(&Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
 	if _, ok := fake.stats["sth"]; ok {
@@ -86,9 +85,9 @@ func TestReport(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
-		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
-		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(&Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(&Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(&Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	}
 	insert("tc2")
 	insert("tc1")
@@ -127,9 +126,9 @@ func TestCsv(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
-		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
-		fake.Update(Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(&Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(&Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+		fake.Update(&Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	}
 	insert("tc2")
 	insert("tc1")
@@ -181,9 +180,9 @@ func TestReportWithSomeMetric(t *testing.T) {
 	fake := NewTest()
 	done := fake.Collect() // this needs a collector to unblock update
 	insert := func(name string) {
-		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 100}))
-		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 200}))
-		fake.Update(Metric(someMetric{Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 300}))
+		fake.Update(Metric(&someMetric{Meta{Teststep: name, Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 100}))
+		fake.Update(Metric(&someMetric{Meta{Teststep: name, Elapsed: Elapsed(10 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 200}))
+		fake.Update(Metric(&someMetric{Meta{Teststep: name, Elapsed: Elapsed(2 * time.Millisecond), Timestamp: Timestamp(time.Now())}, 300}))
 	}
 	insert("tc2")
 	insert("tc1")
@@ -203,8 +202,9 @@ func TestReportWithSomeMetric(t *testing.T) {
 type someReporter struct{}
 
 func (s someReporter) Update(m Metric) {
-	v := reflect.ValueOf(m)
-	teststep := v.FieldByName("Teststep").Interface().(string)
+	//v := reflect.ValueOf(m)
+	//teststep := v.FieldByName("Teststep").Interface().(string)
+	teststep := m.GetTeststep()
 	if teststep != "sth" {
 		panic("Error: invalid teststep name during test execution.")
 	}
@@ -217,7 +217,7 @@ func TestCollectCallsReporterUpdate(t *testing.T) {
 	// first measurement
 	done := fake.Collect() // this needs a collector to unblock update
 
-	fake.Update(Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
+	fake.Update(&Meta{Teststep: "sth", Elapsed: Elapsed(8 * time.Millisecond), Timestamp: Timestamp(time.Now())})
 	close(fake.measurements)
 	<-done
 }

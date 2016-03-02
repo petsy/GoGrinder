@@ -6,7 +6,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/finklabs/GoGrinder/gogrinder"
-	"github.com/finklabs/GoGrinder/http"
+	"github.com/finklabs/GoGrinder/req"
 	"github.com/finklabs/GoGrinder/util"
 )
 
@@ -14,8 +14,8 @@ import (
 var gg = gogrinder.NewTest()
 
 // instrument teststeps
-var ts1 = gg.Teststep("01_01_teststep", http.GetRaw)
-var ts2 = gg.Teststep("02_01_teststep", http.PostRaw)
+var ts1 = gg.Teststep("01_01_teststep", req.GetRaw)
+var ts2 = gg.Teststep("02_01_teststep", req.PostRaw)
 
 // no thinktime here
 //var thinktime = gg.Thinktime

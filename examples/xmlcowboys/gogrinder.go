@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
 	"github.com/finklabs/GoGrinder/gogrinder"
-	"github.com/finklabs/GoGrinder/http"
+	"github.com/finklabs/GoGrinder/req"
 	"github.com/finklabs/GoGrinder/util"
 )
 
@@ -19,17 +20,26 @@ func main() {
 	// initialize the GoGrinder
 	gg := gogrinder.NewTest()
 
-	// instrument teststeps
-	post := gg.Teststep("01_01_xmlcowboys_post", http.PostRaw)
-
 	// define testcases using teststeps
-	xmlcowboys_01_post := func(m gogrinder.Meta, s gogrinder.Settings) {
-		c := http.NewDefaultClient()
+	xmlcowboys_01_post := func(m *gogrinder.Meta, s gogrinder.Settings) {
+		var mm *req.HttpMetric
+		c := req.NewDefaultClient()
 		r := rec[m.User]
 		str := <-r
 		//fmt.Println(str)
 		base := s["server_url"].(string)
-		post(m, c, base+"/post_stuff", strings.NewReader(str)) //.(http.ResponseRaw).Raw
+		b := gg.NewBracket("01_01_xmlcowboys_post")
+		{
+			r, err := http.NewRequest("POST", base+"/post_stuff",
+				strings.NewReader(str))
+			if err != nil {
+				m.Error += err.Error()
+				mm = &req.HttpMetric{*m, 0, 0, 400}
+			}
+			_, _, mm = req.DoRaw(c, r, m)
+		}
+		b.End(mm)
+
 	}
 
 	// this is my endurance test scenario
@@ -50,7 +60,7 @@ func main() {
 	// register the testcases as scenarios to allow single execution mode
 	gg.Testscenario("xmlcowboys_01_post", xmlcowboys_01_post)
 
-	gg.AddReportPlugin(http.NewHttpMetricReporter())
+	gg.AddReportPlugin(req.NewHttpMetricReporter())
 	err := gogrinder.GoGrinder(gg)
 	if err != nil {
 		fmt.Println(err.Error())

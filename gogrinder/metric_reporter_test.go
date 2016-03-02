@@ -35,7 +35,7 @@ func TestHttpMetricUpdate(t *testing.T) {
 	mr := NewMetricReporter()
 
 	// add datapoint
-	m := Meta{"01_tc", "01_01_ts", 0, 0, Timestamp(time.Now()),
+	m := &Meta{"01_tc", "01_01_ts", 0, 0, Timestamp(time.Now()),
 		Elapsed(600 * time.Millisecond), "something went wrong!"}
 	mr.Update(m)
 

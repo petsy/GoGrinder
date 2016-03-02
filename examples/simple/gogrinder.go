@@ -3,39 +3,41 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/finklabs/GoGrinder/gogrinder"
+	time "github.com/finklabs/ttime"
 )
 
 // initialize the GoGrinder
 var gg = gogrinder.NewTest()
 
-// sleep step factory
-func myStep(duration time.Duration) func(m gogrinder.Meta, args ...interface{}) {
-	return func(m gogrinder.Meta, args ...interface{}) {
-		time.Sleep(duration * time.Millisecond)
-	}
-}
-
-// instrument teststeps
-var ts1 = gg.TeststepBasic("01_01_teststep", myStep(50))
-var ts2 = gg.TeststepBasic("02_01_teststep", myStep(100))
-var ts3 = gg.TeststepBasic("03_01_teststep", myStep(150))
 var thinktime = gg.Thinktime
 
 // define testcases using teststeps
-func tc1(m gogrinder.Meta, s gogrinder.Settings) {
+func tc1(m *gogrinder.Meta, s gogrinder.Settings) {
 	//fmt.Println(meta["Iteration"])
-	ts1(m)
+	b := gg.NewBracket("01_01_teststep")
+	time.Sleep(20 * time.Millisecond)
+	b.End(m)
+
 	thinktime(0.050)
+
+	b = gg.NewBracket("01_02_teststep")
+	time.Sleep(30 * time.Millisecond)
+	b.End(m)
 }
-func tc2(m gogrinder.Meta, s gogrinder.Settings) {
-	ts2(m)
+
+func tc2(m *gogrinder.Meta, s gogrinder.Settings) {
+	b := gg.NewBracket("02_01_teststep")
+	time.Sleep(100 * time.Millisecond)
+	b.End(m)
 	thinktime(0.100)
 }
-func tc3(m gogrinder.Meta, s gogrinder.Settings) {
-	ts3(m)
+
+func tc3(m *gogrinder.Meta, s gogrinder.Settings) {
+	b := gg.NewBracket("03_01_teststep")
+	time.Sleep(150 * time.Millisecond)
+	b.End(m)
 	thinktime(0.150)
 }
 

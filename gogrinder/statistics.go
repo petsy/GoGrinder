@@ -26,8 +26,11 @@ type Statistics interface {
 // Only important thing is that every Metric type embeds Meta.
 type Metric interface {
 	GetTeststep() string
+	SetTeststep(name string)
 	GetTimestamp() Timestamp
+	SetTimestamp(t Timestamp)
 	GetElapsed() Elapsed
+	SetElapsed(e Elapsed)
 	GetError() string
 }
 

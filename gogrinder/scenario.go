@@ -16,12 +16,11 @@ type Scenario interface {
 	Config
 	Statistics
 	Testscenario(name string, scenario interface{})
-	TeststepBasic(name string, step func(Meta, ...interface{})) func(Meta, ...interface{}) interface{}
-	Teststep(name string, step func(Meta, ...interface{}) (interface{}, Metric)) func(Meta, ...interface{}) interface{}
-	Schedule(name string, testcase func(Meta, Settings)) error
-	DoIterations(testcase func(Meta, Settings),
+	NewBracket(name string) *Bracket
+	Schedule(name string, testcase func(*Meta, Settings)) error
+	DoIterations(testcase func(*Meta, Settings),
 		iterations int, pacing float64, parallel bool)
-	Run(name string, testcase func(Meta, Settings),
+	Run(name string, testcase func(*Meta, Settings),
 		delay float64, runfor float64, rampup float64, users int, pacing float64,
 		settings Settings)
 	Exec() error
@@ -65,22 +64,37 @@ type Meta struct {
 
 // I think these should be pointer receivers!
 // Access from Metric interface
-func (m Meta) GetTeststep() string {
+func (m *Meta) GetTeststep() string {
 	return m.Teststep
 }
 
 // Access from Metric interface
-func (m Meta) GetElapsed() Elapsed {
+func (m *Meta) SetTeststep(name string) {
+	m.Teststep = name
+}
+
+// Access from Metric interface
+func (m *Meta) GetElapsed() Elapsed {
 	return m.Elapsed
 }
 
 // Access from Metric interface
-func (m Meta) GetTimestamp() Timestamp {
+func (m *Meta) SetElapsed(e Elapsed) {
+	m.Elapsed = e
+}
+
+// Access from Metric interface
+func (m *Meta) GetTimestamp() Timestamp {
 	return m.Timestamp
 }
 
 // Access from Metric interface
-func (m Meta) GetError() string {
+func (m *Meta) SetTimestamp(t Timestamp) {
+	m.Timestamp = t
+}
+
+// Access from Metric interface
+func (m *Meta) GetError() string {
 	return m.Error
 }
 
@@ -90,9 +104,8 @@ type TestScenario struct {
 	TestConfig // needs to be anonymous to promote access to struct field and methods
 	TestStatistics
 	testscenarios map[string]interface{}
-	teststeps     map[string]func(Meta, ...interface{}) interface{}
-	wg            sync.WaitGroup // waitgroup for teststeps
-	status        Status         // status (stopped, running, stopping)
+	wg     sync.WaitGroup // waitgroup for testcases
+	status Status         // status (stopped, running, stopping)
 }
 
 // Constants of internal test status.
@@ -108,8 +121,7 @@ const (
 func NewTest() *TestScenario {
 	t := TestScenario{
 		testscenarios: make(map[string]interface{}),
-		teststeps:     make(map[string]func(Meta, ...interface{}) interface{}),
-		status:        Stopped,
+		status: Stopped,
 
 		TestConfig: TestConfig{
 			config: make(map[string]interface{}),
@@ -156,39 +168,31 @@ func (test *TestScenario) Testscenario(name string, scenario interface{}) {
 	test.testscenarios[name] = scenario
 }
 
-// Instrument a teststep and add it to the teststeps registry.
-// This implements Elapsed. For more detailed metrics please implement Teststep.
-func (test *TestScenario) TeststepBasic(name string, step func(Meta, ...interface{})) func(Meta, ...interface{}) interface{} {
-	its := func(meta Meta, args ...interface{}) interface{} {
-		start := time.Now()
-		meta.Teststep = name
-		meta.Timestamp = Timestamp(start)
-		step(meta, args...)
-
-		meta.Elapsed = Elapsed(time.Now().Sub(start))
-		test.Update(meta)
-		return nil
-	}
-	test.teststeps[name] = its
-	return its
+// The name is probably self explanatory... Bracket forms a bracket around a code
+// block (= test-step) so the execution time of the code block can be measured.
+// In case an error occurs within the code block Bracket is used to report that, too.
+type Bracket struct {
+	name   string
+	start  time.Time
+	update func(Metric)
 }
 
-// Instrument a teststep and add it to the teststeps registry.
-// Teststeps need to return payload and Metric.
-func (test *TestScenario) Teststep(name string, step func(Meta, ...interface{}) (interface{}, Metric)) func(Meta, ...interface{}) interface{} {
-	its := func(meta Meta, args ...interface{}) interface{} {
-		meta.Teststep = name
-		result, metric := step(meta, args...)
-		test.Update(metric)
-		return result
-	}
+// NewBracket forms the opening "bracket" of a test-step. NewBracket receives
+// the test-step-name as parameter.
+func (test *TestScenario) NewBracket(name string) *Bracket {
+	return &Bracket{name, time.Now(), test.Update}
+}
 
-	test.teststeps[name] = its
-	return its
+// End forms the closing bracket of a test-step
+func (b *Bracket) End(m Metric) {
+	m.SetTimestamp(Timestamp(b.start))
+	m.SetElapsed(Elapsed(time.Now().Sub(b.start)))
+	m.SetTeststep(b.name)
+	b.update(m)
 }
 
 // Schedule a testcase according to its config in the loadmodel.json config file.
-func (test *TestScenario) Schedule(name string, testcase func(Meta, Settings)) error {
+func (test *TestScenario) Schedule(name string, testcase func(*Meta, Settings)) error {
 	delay, runfor, rampup, users, pacing, err := test.GetTestcaseConfig(name)
 	settings := test.GetSettings()
 	if err != nil {
@@ -198,7 +202,7 @@ func (test *TestScenario) Schedule(name string, testcase func(Meta, Settings)) e
 	return nil
 }
 
-func (test *TestScenario) DoIterations(testcase func(Meta, Settings),
+func (test *TestScenario) DoIterations(testcase func(*Meta, Settings),
 	iterations int, pacing float64, parallel bool) {
 	f := func(test *TestScenario) {
 		settings := test.GetSettings()
@@ -206,7 +210,7 @@ func (test *TestScenario) DoIterations(testcase func(Meta, Settings),
 
 		for i := 0; i < iterations; i++ {
 			start := time.Now()
-			meta := Meta{Iteration: i, User: 0}
+			meta := &Meta{Iteration: i, User: 0}
 			if test.status == Stopping {
 				break
 			}
@@ -228,7 +232,7 @@ func (test *TestScenario) DoIterations(testcase func(Meta, Settings),
 }
 
 // Run a testcase. Settings are specified in Seconds!
-func (test *TestScenario) Run(name string, testcase func(Meta, Settings),
+func (test *TestScenario) Run(name string, testcase func(*Meta, Settings),
 	delay float64, runfor float64, rampup float64, users int, pacing float64,
 	settings Settings) {
 	test.wg.Add(1) // the "Scheduler" itself is a goroutine!
@@ -249,7 +253,7 @@ func (test *TestScenario) Run(name string, testcase func(Meta, Settings),
 					time.Duration(runfor*float64(time.Second)); j++ {
 					// next iteration
 					start := time.Now()
-					meta := Meta{Testcase: name, Iteration: j, User: nbr}
+					meta := &Meta{Testcase: name, Iteration: j, User: nbr}
 					if test.status == Stopping {
 						break
 					}
@@ -283,7 +287,7 @@ func (test *TestScenario) Exec() error {
 			}
 			if fnType.NumIn() == 2 {
 				// debugging of single testcase executions
-				meta := Meta{}
+				meta := &Meta{}
 				settings := test.GetSettings()
 				fn.Call([]reflect.Value{reflect.ValueOf(meta),
 					reflect.ValueOf(settings)},
@@ -298,10 +302,7 @@ func (test *TestScenario) Exec() error {
 		// wait for testcases to finish
 		// note: keep this in the foreground - do not put any of this into a goroutine!
 		test.Wait()
-		//test.wg.Wait()           // wait till end
-		//close(test.measurements) // need to close the channel so that collect can exit, too
 		<-done // wait for collector to finish
-		//test.status = Stopped
 	} else {
 		return fmt.Errorf("scenario %s does not exist", sel)
 	}

@@ -15,6 +15,7 @@ backend
 scenario
 
 tests
+* gogrinder/integration_test.go Setting
 
 defects
 * need to check if frontend port is available at startup
@@ -36,8 +37,9 @@ docu
 sub-packages
 ============
 
-http
+req
 * add documentation!!!
+* check status code not in [4xx, 5xx] HttpMetric?
 
 util
 

@@ -20,6 +20,7 @@ jmeter.log
 examples/benchmark/callgraph.png
 examples/benchmark/cpu.pprof
 examples/*/gogrinder
+*.bak
 
 bak
 output
@@ -35,4 +36,6 @@ bower_components
 apache-jmeter-2.13/
 examples/reflection/
 examples/gorillasample/
+examples/brackets/
+examples/html/
 

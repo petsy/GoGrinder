@@ -26,7 +26,7 @@ func TestEventReporterUpdateWithSomeMetric(t *testing.T) {
 	done := fake.Collect() // this needs a collector to unblock update
 
 	now := time.Now()
-	fake.Update(Metric(someMetric{Meta{Teststep: "sth", Elapsed: Elapsed(8 *
+	fake.Update(Metric(&someMetric{Meta{Teststep: "sth", Elapsed: Elapsed(8 *
 		time.Millisecond), Timestamp: Timestamp(now)}, 100}))
 	exp := fmt.Sprintf(`{"testcase":"","teststep":"sth","user":0,"iteration"`+
 		`:0,"ts":"%s","elapsed":8.000000,"status":100}`, now.Format(time.RFC3339Nano))
@@ -50,7 +50,7 @@ func TestEventReporterUpdateWithSomeMetricError(t *testing.T) {
 	done := fake.Collect() // this needs a collector to unblock update
 
 	now := time.Now()
-	fake.Update(Metric(someMetric{Meta{Teststep: "sth", Elapsed: Elapsed(8 *
+	fake.Update(Metric(&someMetric{Meta{Teststep: "sth", Elapsed: Elapsed(8 *
 		time.Millisecond), Timestamp: Timestamp(now), Error: "something went wrong!"}, 100}))
 	exp := fmt.Sprintf(`{"testcase":"","teststep":"sth","user":0,"iteration"`+
 		`:0,"ts":"%s","elapsed":8.000000,"error":"something went wrong!",`+
