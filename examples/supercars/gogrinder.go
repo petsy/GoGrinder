@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
 
@@ -18,96 +19,131 @@ const (
 // initialize the GoGrinder
 var gg = gogrinder.NewTest()
 
-// instrument teststeps
-var tsList = gg.Teststep("01_01_supercars_list", req.GetJson)
-var tsRead = gg.Teststep("02_01_supercars_read", req.GetJson)
-var tsCreate = gg.Teststep("03_01_supercars_create", req.PostJson)
-var tsUpdate = gg.Teststep("04_01_supercars_update", req.PutJson)
-var tsDelete = gg.Teststep("05_01_supercars_delete", req.DeleteRaw)
-
 // define testcases using teststeps
-func supercars_01_list(m gogrinder.Meta, s gogrinder.Settings) {
+func supercars_01_list(m *gogrinder.Meta, s gogrinder.Settings) {
+	var mm *req.HttpMetric
+	var resp map[string]interface{}
 	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
-	resp := tsList(m, c, base+"/rest/supercars/").(req.ResponseJson).Json
+	b := gg.NewBracket("01_01_supercars_list")
+	r, err := http.NewRequest("GET", base+"/rest/supercars/", nil)
+	if err != nil {
+		m.Error += err.Error()
+		mm = &req.HttpMetric{*m, 0, 0, 400}
+	} else {
+		resp, _, mm = req.DoJson(c, r, m)
 
-	// assert record count
-	count := len(resp["data"].([]interface{}))
-	if count < RECORDS {
-		m.Error += "Error: less then 30 records in list response!"
+		// assert record count
+		count := len(resp["data"].([]interface{}))
+		if count < RECORDS {
+			mm.Error += "Error: less then 30 records in list response!"
+		}
 	}
+	b.End(mm)
 }
 
 func supercars_02_read(m gogrinder.Meta, s gogrinder.Settings) {
+	var mm *req.HttpMetric
+	var resp map[string]interface{}
 	c := req.NewDefaultClient()
-	base := s["supercars_url"].(string)
+	b := gg.NewBracket("02_01_supercars_read")
 	id := rand.Intn(RECORDS-1) + 1
-	url := fmt.Sprintf("%s/rest/supercars/%05d", base, id)
-	resp := tsRead(m, c, url).(req.ResponseJson).Json
-
-	// assert record id
-	i, err := strconv.Atoi(resp["_id"].(string))
-	if err != nil || i != id {
-		m.Error += "Error: retrived wrong record!"
+	url := fmt.Sprintf("%s/rest/supercars/%05d", s["supercars_url"].(string), id)
+	r, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		m.Error += err.Error()
+		mm = &req.HttpMetric{*m, 0, 0, 400}
+	} else {
+		resp, _, mm = req.DoJson(c, r, m)
+		// assert record id
+		i, err := strconv.Atoi(resp["_id"].(string))
+		if err != nil || i != id {
+			m.Error += "Error: retrived wrong record!"
+		}
 	}
+	b.End(mm)
 }
 
 func supercars_03_create(m gogrinder.Meta, s gogrinder.Settings) {
+	var mm *req.HttpMetric
+	var resp map[string]interface{}
 	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
 	newCar := map[string]interface{}{"name": "Ferrari Enzo", "country": "Italy",
-		"top_speed": "218", "0-60": "3.4", "power": "650", "engine": "5998", "weight": "1365",
-		"description": "The Enzo Ferrari is a 12 cylinder mid-engine berlinetta named " +
-			"after the company's founder, Enzo Ferrari.", "image": "050.png"}
-
-	resp := tsCreate(m, c, base+"/rest/supercars/", newCar).(req.ResponseJson).Json
-	id := resp["_id"].(string)
-	if i, err := strconv.Atoi(id); err != nil || i <= RECORDS {
-		m.Error += "Error: something went wrong during new record creation!"
-		return
-	}
-
-	redis, err := goredis.Dial(&goredis.DialConfig{Address: s["redis_srv"].(string)})
+		"top_speed": "218", "0-60": "3.4", "power": "650", "engine": "5998",
+		"weight": "1365", "description": "The Enzo Ferrari is a 12 cylinder " +
+		"mid-engine berlinetta named after the company's founder, Enzo Ferrari.",
+		"image": "050.png"}
+	b := gg.NewBracket("03_01_supercars_create")
+	r, err := req.NewPostJsonRequest(base+"/rest/supercars/", newCar)
 	if err != nil {
-		// is the redis server running? correct address?
 		m.Error += err.Error()
-		return
+		mm = &req.HttpMetric{*m, 0, 0, 400}
+	} else {
+		resp, _, mm = req.DoJson(c, r, m)
+		id := resp["_id"].(string)
+		if i, err := strconv.Atoi(id); err != nil || i <= RECORDS {
+			m.Error += "Error: something went wrong during new record creation!"
+		} else {
+			redis, err := goredis.Dial(
+				&goredis.DialConfig{Address: s["redis_srv"].(string)})
+			if err != nil {
+				// is the redis server running? correct address?
+				m.Error += err.Error()
+			} else {
+				redis.SAdd("supercars", id) // no way this can go wrong!
+			}
+		}
 	}
-
-	redis.SAdd("supercars", id) // no way this can go wrong!
+	b.End(mm)
 }
 
 func supercars_04_update(m gogrinder.Meta, s gogrinder.Settings) {
+	var mm *req.HttpMetric
+	//var resp map[string]interface{}
 	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
 	change := map[string]interface{}{"cylinders": "12", "name": "Ferrari Enzo",
-		"country": "Italy", "top_speed": "218", "0-60": "3.4", "power": "650", "engine": "5998",
-		"weight": "1365", "description": "The Enzo Ferrari is a 12 cylinder mid-engine " +
-			"berlinetta named after the company's founder, Enzo Ferrari.", "image": "050.png"}
-
+		"country": "Italy", "top_speed": "218", "0-60": "3.4", "power": "650",
+		"engine": "5998", "weight": "1365", "description": "The Enzo Ferrari " +
+			"is a 12 cylinder mid-engine berlinetta named after the company's " +
+			"founder, Enzo Ferrari.", "image": "050.png"}
+	b := gg.NewBracket("04_01_supercars_update")
 	redis, err := goredis.Dial(&goredis.DialConfig{Address: s["redis_srv"].(string)})
 	if err != nil {
 		// is the redis server running? correct address?
 		m.Error += err.Error()
-		return
-	}
+		mm = &req.HttpMetric{*m, 0, 0, 400}
+	} else {
+		id, err := redis.SPop("supercars")
+		if err != nil {
+			// probably run out of data - so it does not make sense to continue
+			m.Error += err.Error()
+			mm = &req.HttpMetric{*m, 0, 0, 400}
+		} else {
+			r, err := req.NewPutJsonRequest(base+"/rest/supercars/"+string(id),
+				change)
+			if err != nil {
+				m.Error += err.Error()
+				mm = &req.HttpMetric{*m, 0, 0, 400}
+			} else {
+				_, _, mm = req.DoJson(c, r, m)
+				//tsUpdate(m, c, base + "/rest/supercars/" + string(id), change)
 
-	id, err := redis.SPop("supercars")
-	if err != nil {
-		// probably run out of data - so it does not make sense to continue
-		m.Error += err.Error()
-		return
+				// add the record back!
+				redis.SAdd("supercars", string(id)) // no way this can go wrong!
+			}
+		}
 	}
-	tsUpdate(m, c, base+"/rest/supercars/"+string(id), change)
-
-	// add the record back!
-	redis.SAdd("supercars", string(id)) // no way this can go wrong!
+	b.End(mm)
 }
 
 func supercars_05_delete(m gogrinder.Meta, s gogrinder.Settings) {
+	var mm *req.HttpMetric
 	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
 
+	b := gg.NewBracket("05_01_supercars_delete")
 	redis, err := goredis.Dial(&goredis.DialConfig{Address: s["redis_srv"].(string)})
 	if err != nil {
 		// is the redis server running? correct address?
@@ -121,7 +157,14 @@ func supercars_05_delete(m gogrinder.Meta, s gogrinder.Settings) {
 		m.Error += err.Error()
 		return
 	}
-	tsDelete(m, c, base+"/rest/supercars/"+string(id))
+	r, err := http.NewRequest("DELETE", base+"/rest/supercars/"+string(id), nil)
+	if err != nil {
+		m.Error += err.Error()
+		mm = &req.HttpMetric{*m, 0, 0, 400}
+	} else {
+		_, _, mm = req.DoRaw(c, r, m)
+	}
+	b.End(mm)
 }
 
 // this is my endurance test scenario
