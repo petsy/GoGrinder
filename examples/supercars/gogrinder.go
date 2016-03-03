@@ -42,7 +42,7 @@ func supercars_01_list(m *gogrinder.Meta, s gogrinder.Settings) {
 	b.End(mm)
 }
 
-func supercars_02_read(m gogrinder.Meta, s gogrinder.Settings) {
+func supercars_02_read(m *gogrinder.Meta, s gogrinder.Settings) {
 	var mm *req.HttpMetric
 	var resp map[string]interface{}
 	c := req.NewDefaultClient()
@@ -64,7 +64,7 @@ func supercars_02_read(m gogrinder.Meta, s gogrinder.Settings) {
 	b.End(mm)
 }
 
-func supercars_03_create(m gogrinder.Meta, s gogrinder.Settings) {
+func supercars_03_create(m *gogrinder.Meta, s gogrinder.Settings) {
 	var mm *req.HttpMetric
 	var resp map[string]interface{}
 	c := req.NewDefaultClient()
@@ -98,7 +98,7 @@ func supercars_03_create(m gogrinder.Meta, s gogrinder.Settings) {
 	b.End(mm)
 }
 
-func supercars_04_update(m gogrinder.Meta, s gogrinder.Settings) {
+func supercars_04_update(m *gogrinder.Meta, s gogrinder.Settings) {
 	var mm *req.HttpMetric
 	//var resp map[string]interface{}
 	c := req.NewDefaultClient()
@@ -138,7 +138,7 @@ func supercars_04_update(m gogrinder.Meta, s gogrinder.Settings) {
 	b.End(mm)
 }
 
-func supercars_05_delete(m gogrinder.Meta, s gogrinder.Settings) {
+func supercars_05_delete(m *gogrinder.Meta, s gogrinder.Settings) {
 	var mm *req.HttpMetric
 	c := req.NewDefaultClient()
 	base := s["supercars_url"].(string)
