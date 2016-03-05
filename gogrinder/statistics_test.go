@@ -98,8 +98,8 @@ func TestReport(t *testing.T) {
 	fake.Report(stdout) // run the report
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("tc1, 6.666666, 2.000000, 10.000000, 3, 0\n" +
-		"tc2, 6.666666, 2.000000, 10.000000, 3, 0\n" +
-		"tc3, 6.666666, 2.000000, 10.000000, 3, 0\n") {
+	"tc2, 6.666666, 2.000000, 10.000000, 3, 0\n" +
+	"tc3, 6.666666, 2.000000, 10.000000, 3, 0\n") {
 		t.Fatalf("Report output not as expected: %s", report)
 	}
 }
@@ -139,9 +139,9 @@ func TestCsv(t *testing.T) {
 
 	report, _ := fake.Csv()
 	if report != ("teststep, avg_ms, min_ms, max_ms, count, error\n" +
-		"tc1, 6.666666, 2.000000, 10.000000, 3, 0\n" +
-		"tc2, 6.666666, 2.000000, 10.000000, 3, 0\n" +
-		"tc3, 6.666666, 2.000000, 10.000000, 3, 0\n") {
+	"tc1, 6.666666, 2.000000, 10.000000, 3, 0\n" +
+	"tc2, 6.666666, 2.000000, 10.000000, 3, 0\n" +
+	"tc3, 6.666666, 2.000000, 10.000000, 3, 0\n") {
 		t.Fatalf("Read output not as expected: %s", report)
 	}
 }
@@ -193,8 +193,8 @@ func TestReportWithSomeMetric(t *testing.T) {
 	fake.Report(stdout) // run the report
 	report := stdout.(*bytes.Buffer).String()
 	if report != ("tc1, 6.666666, 2.000000, 10.000000, 3, 0\n" +
-		"tc2, 6.666666, 2.000000, 10.000000, 3, 0\n" +
-		"tc3, 6.666666, 2.000000, 10.000000, 3, 0\n") {
+	"tc2, 6.666666, 2.000000, 10.000000, 3, 0\n" +
+	"tc3, 6.666666, 2.000000, 10.000000, 3, 0\n") {
 		t.Fatalf("Report output not as expected: %s", report)
 	}
 }

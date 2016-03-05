@@ -22,13 +22,12 @@ cd ..
 # http://stackoverflow.com/questions/16765461/git-add-revision-number-to-file-on-commit
 git rev-parse --short HEAD > web/revision.txt
 
-cd ./gogrinder
-# embedd the frontend
-rice embed-syso
+# embedd the frontend (go.rice turned out to not work on Windows TM)
+#rice embed-syso
+#./embedsyso
 
-# build the go package
-go build
-mv ../*.syso ./
-go build
-
-cd ..
+# now we are using https://github.com/elazarl/go-bindata-assetfs
+# TODO: wait for https://github.com/elazarl/go-bindata-assetfs/issues/34
+# go-bindata-assetfs -pkg gogrinder -o gogrinder/assetfs.go web/...
+go-bindata-assetfs -pkg gogrinder web/...
+mv bindata_assetfs.go gogrinder/assetfs.go

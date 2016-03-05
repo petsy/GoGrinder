@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/GeertJohan/go.rice"
+	//"github.com/GeertJohan/go.rice"
 	log "github.com/Sirupsen/logrus"
 	"github.com/finklabs/graceful"
 	time "github.com/finklabs/ttime"
@@ -150,14 +150,15 @@ func (srv *TestServer) Router() *mux.Router {
 	router := mux.NewRouter()
 
 	// frontend
-	box := rice.MustFindBox("../web")
+	//box := rice.MustFindBox("web")
 	//_ = box
-	appFileServer := http.FileServer(box.HTTPBox())
+	//appFileServer := http.FileServer(box.HTTPBox())
 	// dev mode fallback:
 	//appFileServer := http.FileServer(
 	//	http.Dir("/home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/web/"))
 	// app route:
-	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
+	//router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", appFileServer))
+	router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", http.FileServer(assetFS())))
 
 	// REST routes
 	router.Handle("/statistics", handler(srv.getStatistics)).Methods("GET")

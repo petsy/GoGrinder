@@ -9,14 +9,6 @@ frontend
 * exit only if test is stopped
 * add more frontend tests
 
-panic: could not locate box "../web"
-
-goroutine 1 [running]:
-github.com/GeertJohan/go%2erice.MustFindBox(0x808348, 0x6, 0x0)
-        /home/mark/devel/gocode/src/github.com/GeertJohan/go.rice/box.go:110 +0x82
-github.com/finklabs/GoGrinder/gogrinder.(*TestServer).Router(0x1274e180, 0x1274e180)
-        /home/mark/devel/gocode/src/github.com/finklabs/GoGrinder/gogrinder/server.go:153 +0xae
-
 backend
 * fix TODOs
 
@@ -56,6 +48,7 @@ Version 0.x
 ===========
 * restructure repository so finding stuff becomes more obvious
 * improvements on documentation and showcases
+* fixed frontend issue with Windows TM
 
 
 Version 0.1
