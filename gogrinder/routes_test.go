@@ -42,8 +42,9 @@ func TestRouteGetCsv(t *testing.T) {
 	}
 
 	body := rsp.Body.String()
-	if body != `"teststep, avg_ms, min_ms, max_ms, count, error\nsth, 6.666666, 2.000000, 10.000000, 3, 0\n"` {
-		t.Fatalf("Response not as expected: %s", body)
+	if body != "teststep, avg_ms, min_ms, max_ms, count, error\n" +
+		"sth, 6.666666, 2.000000, 10.000000, 3, 0\n" {
+		t.Fatalf("Response not as expected: %s!", body)
 	}
 }
 

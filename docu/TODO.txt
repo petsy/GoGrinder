@@ -3,7 +3,6 @@ backlog
 
 frontend
 * authenticate frontend
-* download results as csv file
 * mtime format (is there a std. json time format)?
 * fix sorting UI
 * exit only if test is stopped
@@ -46,6 +45,7 @@ util
 
 Version 0.x
 ===========
+* download results as csv file
 * restructure repository so finding stuff becomes more obvious
 * improvements on documentation and showcases
 * fixed frontend issue with Windows TM

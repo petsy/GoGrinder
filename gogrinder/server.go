@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	//"github.com/GeertJohan/go.rice"
 	log "github.com/Sirupsen/logrus"
 	"github.com/finklabs/graceful"
 	time "github.com/finklabs/ttime"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"io"
 )
 
 type TestServer struct {
@@ -75,6 +75,32 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(bytes)
 	log.Debugf("%s %s %s %v", r.RemoteAddr, r.Method, r.URL, http.StatusOK)
 }
+
+type csvHandler func(r *http.Request) (interface{}, *handlerError)
+
+func (fn csvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// call the service function
+	response, err := fn(r)
+	if err != nil {
+		log.Error(err.Error)
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Message), err.Code)
+		return
+	}
+	if response == nil {
+		log.Error("response from method is nil")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, "no response from service method."),
+			http.StatusInternalServerError)
+		return
+	}
+
+	// assemble header
+	w.Header().Set("Content-Type", "applicaton/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename=gogrinder.csv;")
+	// send the response and log
+	io.WriteString(w, response.(string))
+	log.Debugf("%s %s %s %v", r.RemoteAddr, r.Method, r.URL, http.StatusOK)
+}
+
 
 /////////////////////////////////////
 // actual service methods
@@ -162,7 +188,7 @@ func (srv *TestServer) Router() *mux.Router {
 
 	// REST routes
 	router.Handle("/statistics", handler(srv.getStatistics)).Methods("GET")
-	router.Handle("/csv", handler(srv.getCsv)).Methods("GET")
+	router.Handle("/csv", csvHandler(srv.getCsv)).Methods("GET")
 	router.Handle("/config", handler(srv.getConfig)).Methods("GET")
 	router.Handle("/config", handler(srv.updateConfig)).Methods("PUT")
 	router.Handle("/test", handler(srv.startTest)).Methods("POST")

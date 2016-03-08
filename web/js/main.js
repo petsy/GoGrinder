@@ -163,9 +163,6 @@ app.service('TestService', function ($http, $timeout) {
                 .error(function (data, status, headers, config) {
                     // log error
                 });
-        },
-        'csv': function () {
-            console.log("download csv.")
         }
     };
 
