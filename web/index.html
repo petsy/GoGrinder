@@ -119,9 +119,9 @@
 
                         <tr ng-repeat="teststep in test.results | orderBy:order:reverse">
                             <td>{{ teststep.teststep }}</td>
+                            <td>{{ teststep.avg_ms }}</td>
                             <td>{{ teststep.min_ms }}</td>
                             <td>{{ teststep.max_ms }}</td>
-                            <td>{{ teststep.avg_ms }}</td>
                             <td>{{ teststep.count }}</td>
                             <td>{{ teststep.error }}</td>
                         </tr>
