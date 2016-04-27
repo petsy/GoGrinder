@@ -23,7 +23,7 @@ var ISO8601 = "2006-01-02T15:04:05.999Z"
 // or setup then maybe you should start with this code.
 func GoGrinder(test Scenario) error {
 	var err error
-	filename, noExec, noReport, noFrontend, noPrometheus, port, logLevel, err := GetCLI()
+	filename, noExec, noReport, noFrontend, noPrometheus, jtl, port, logLevel, err := GetCLI()
 	if err != nil {
 		return err
 	}
@@ -35,15 +35,26 @@ func GoGrinder(test Scenario) error {
 	}
 
 	// prepare reporter plugins
-	// initialize the event logger
-	fe, err := os.OpenFile("event-log.txt", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Error("can not open event log file: %v", err)
-		// we do not need to stop in this case...
+	if jtl {
+		// initialize the jtl reporter
+		fj, err := os.OpenFile("results.jtl", os.O_CREATE | os.O_TRUNC | os.O_WRONLY, 0666)
+		if err != nil {
+			log.Error("can not open jtl file: %v", err)
+			// we do not need to stop in this case...
+		}
+		defer fj.Close()
+		test.AddReportPlugin(&JtlReporter{fj})
+	} else {
+		// initialize the event reporter
+		fe, err := os.OpenFile("event-log.txt", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
+		if err != nil {
+			log.Error("can not open event log file: %v", err)
+		}
+		defer fe.Close()
+		test.AddReportPlugin(&EventReporter{fe})
 	}
-	defer fe.Close()
-	test.AddReportPlugin(&EventReporter{fe})
 
+    // result reporter
 	exec := func() {
 		err = test.Exec()
 		if !noReport {

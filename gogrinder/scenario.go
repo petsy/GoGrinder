@@ -42,6 +42,14 @@ func (ts Timestamp) MarshalJSON() ([]byte, error) {
 	return []byte(t.Format(`"` + time.RFC3339Nano + `"`)), nil
 }
 
+func (ts Timestamp) Unix() int64 {
+	return time.Time(ts).Unix()
+}
+
+func (ts Timestamp) UnixNano() int64 {
+	return time.Time(ts).UnixNano()
+}
+
 type Elapsed time.Duration
 
 func (e Elapsed) MarshalJSON() ([]byte, error) {

@@ -42,6 +42,13 @@ req
 
 util
 
+plugin system: (options: single or multiprocess plugin system)
+order was packer, terraform, otto
+uses net/rpc for communicating with the subprocesses 
+yamux - real tcp multiplexer (github)
+Go 1.5+ std. plugin lib
+
+
 
 Version 0.x
 ===========

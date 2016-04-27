@@ -16,7 +16,7 @@ Disclaimer: Please note that most of the tools have a completely different focus
 For every benchmark we need to start a tiny HTTP server to act as our backend.
 (we let the server run for 30 seconds and run the test for 20)
 
-$ airbiscuit 30
+$ ./airbiscuit 30
 
 
 ## Vegeta
@@ -36,6 +36,9 @@ $ ab -t 20 -c 1000 http://localhost:3001/get_stuff
 ## Jmeter
 
 $ ./apache-jmeter-2.13/bin/jmeter.sh -t jmeter_test_plan.jmx
+
+non gui mode:
+$ ./apache-jmeter-2.13/bin/jmeter.sh -n -t jmeter_test_plan.jmx -l results.jtl
 
 
 ## GoGrinder
