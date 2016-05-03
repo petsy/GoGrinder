@@ -1,12 +1,12 @@
 # Contributing to GoGrinder
 
-We started at the end of 2015 and consequently there are many areas where you can help. This document contains information for you in case you want to contribute to the GoGrinder.
+We started at the end of 2015 and consequently there are many areas where you can help. This document contains information for you in case you want to contribute to the GoGrinder. The [CLA - Contributing License Agreement] (docu/contributors/CLA.md) applies. 
 
 ## Contributing code
 
 We had some significant API changes recently. So currently it looks good and stable, but working with more plugins we might face new issues that require API changes. We need to deal with that, too.
 
-If you submit a pull-request (https://help.github.com/articles/using-pull-requests/), then please make sure that it contains a file <your_name>.md in docu/contributors. The file should contain something like the following: "I <first> <last>, <email> have read, understand and fully agree to the contributors license agreement (docu/contributors/CLA.md)"
+If you submit a pull-request, then please make sure that it contains a file yourname.md in docu/contributors. The file should contain something like the following: "I (insert first name, last name, email address) have read and understood the contributors license agreement (docu/contributors/CLA.md) and fully agree to it." (Insert location and date).
 
 If you contribute code there are some important things: test coverage, test coverage, test coverage... Did I mention test coverage?
 

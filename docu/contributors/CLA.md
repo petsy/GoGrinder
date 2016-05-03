@@ -29,4 +29,4 @@ Copyright and related rights for sample code as defined in the project's LICENSE
 
 ## Agree to the CLA
 
-If you submit a pull-request, then please make sure that it contains a file <your_name>.md in docu/contributors. The file should contain something like the following: "I <first> <last>, <email> have read, understand and fully AGREE to the contributors license agreement (docu/contributors/CLA.md)"
+If you submit a pull-request, then please make sure that it contains a file yourname.md in docu/contributors. The file should contain something like the following: "I (insert first name, last name, email address) have read and understood the contributors license agreement (docu/contributors/CLA.md) and fully agree to it." (Insert location and date).
