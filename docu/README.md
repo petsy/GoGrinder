@@ -12,8 +12,12 @@ We have [GoGrinder examples and showcases](../examples/) for you to play around 
 ## Documentation
 
 * [GoDoc GoGrinder documentation](https://godoc.org/github.com/finklabs/GoGrinder)
-* [Windows TM](windows_tm.md)
 * [GoLang documentation](https://golang.org/pkg/net/http/)
-* GoGrinder loadmodel.json file coming soon
+* [Contributing] (docu/contributing.md)
+* [Developing] (docu/contributing.md)
+* [GoGrinder loadmodel.json file] (docu/loadmodel.md)
+* [Windows TM](windows_tm.md)
+
+
 
 
