@@ -1,7 +1,7 @@
 GoGrinder examples
 ============================
 
-Please make sure that you visit the [overview on GoGrinder](../) first.
+Please make sure that you visit the [GoGrinder README](/README.md) first.
 
 
 A brief overview on our examples:

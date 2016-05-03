@@ -1,6 +1,6 @@
 GoGrinder core
 =========================
 
-This is the GoGrinder core package. Please start here if you are looking for an overview on GoGrinder.
+This is the GoGrinder core package. Please start with the [GoGrinder README](/README.md) as an overview.
 
-... or here for documentation here
+
