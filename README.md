@@ -25,7 +25,7 @@ The GoGrinder is installed and ready to use within minutes (simple installation 
 
 * **Unlimited-Load**: GoGrinder does not limit the number of virtual users or transactions per second or anything. No dual-licensing, nothing. All we ask from you is to contribute back and to help us promote GoGrinder. 
 * **Efficient**: run hundreds of virtual users
-* **learning-curve**: GoGrinder is build in a way to help you setup tests quickly and easily. In this way will supports your team to developing skills from running first performance tests into more advance performance management. 
+* **Learning-curve**: GoGrinder is build in a way to help you setup tests quickly and easily. In this way will supports your team to developing skills from running first performance tests into more advance performance management. 
 * **Workflow**: GoGrinder is made so it can be run fully automated to support the continuous-performance usecase. The built-in web console (http://localhost:3030/app). Makes it easy to start and debug your performance test-scenarios right from the beginning.
 * **Deployment**: GoGrinder test-scenarios are compiled into single executables. You need only the executable plus the loadmodel.json file to deploy your test.
 * **Visualization**: GoGrinder ... best of breed monitoring and visualization tools

@@ -9,4 +9,4 @@ Modeling a realistic load profile is easy using loadmodel.json format. The follo
 ],
 "Scenario":"scenario1","ThinkTimeFactor":0,"ThinkTimeVariance":0}
 ```
-
+Using GoGrinder you can simulate from a few to dozens to many hundreds of virtual users.
