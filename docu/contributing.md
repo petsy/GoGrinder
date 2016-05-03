@@ -1,6 +1,6 @@
 # Contributing to GoGrinder
 
-We started at the end of 2015 and consequently there are many areas where you can help. This document contains information for you in case you want to contribute to the GoGrinder. The [CLA - Contributing License Agreement](/contributors) applies. 
+We started at the end of 2015 and consequently there are many areas where you can help. This document contains information for you in case you want to contribute to the GoGrinder. The [CLA - Contributing License Agreement](docu/contributors) applies. 
 
 ## Contributing code
 
