@@ -107,6 +107,9 @@ For local dev first make sure Go is properly installed, including setting up a
 
 If you would like to contribute your code please take a look into [how to contribute](docu/contributing.md).
 
+## Licensing
+
+GoGrinder is licesed under the [MIT license (2015)](license). 
 
 
 
