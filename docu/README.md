@@ -5,7 +5,7 @@ GoGrinder Documentation
 
 We are currently working on a Quick Start Guide. 
 
-The [GoGrinder README](README.md/) gives an overview of the project and how pieces fit together. Please make sure you have visited that.
+The [GoGrinder README](/README.md) gives an overview of the project and how pieces fit together. Please make sure you have visited that.
 
 We have [GoGrinder examples and showcases](../examples/) for you to play around with and get familiar with the GoGrinder.
 
