@@ -7,11 +7,11 @@ provide instrumentation for http requests
 
 ## documentation
 
-https://godoc.org/github.com/finklabs/GoGrinder/http
-Unfortunately the http documentation is not yet in an acceptable state. sorry for that.
+https://godoc.org/github.com/finklabs/GoGrinder/
+Unfortunately the http documentation is not yet in an acceptable state. Apologies for that, we are working on it.
 
 
 ## sample use
 
 I provided a working sample (including toy server) that you can use to experiment. 
-see https://github.com/finklabs/GoGrinder-samples/tree/master/benchmark
+See [Benchmark](/examples/benchmark)
