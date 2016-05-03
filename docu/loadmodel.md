@@ -1,3 +1,5 @@
+# loadmodel.json
+
 Modeling a realistic load profile is easy using loadmodel.json format. The following sample shows the necessary configuration to run the test-scenario with 600 virtual users for half an hour, at start it ramps-up 20 users per second:
 
 ```javascript
