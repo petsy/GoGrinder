@@ -109,7 +109,7 @@ If you would like to contribute your code please take a look into [how to contri
 
 ## Licensing
 
-GoGrinder is licesed under the [MIT license (2015)](license). 
+GoGrinder is licesed under the [MIT license (2015)](LICENSE/). 
 
 
 
